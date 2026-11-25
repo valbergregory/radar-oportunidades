@@ -81,13 +81,14 @@ def limpar(texto):
 
 # ----------------------------------------------------------------- coleta
 
-def baixar(url, tentativas=3):
+def baixar(url, tentativas=3, aceita=None):
     """Baixa a página. O gov.br às vezes derruba a conexão: tenta de novo."""
     if url.startswith("file:"):  # usado nos testes locais
         return (RAIZ / url[5:]).read_bytes()
     for n in range(tentativas):
         try:
-            r = requests.get(url, headers=UA, timeout=25)
+            r = requests.get(url, headers=dict(UA, Accept=aceita) if aceita else UA,
+                             timeout=25)
             r.raise_for_status()
             return r.content
         except requests.RequestException:
@@ -152,9 +153,26 @@ def coletar_rss(fonte):
     itens = []
     for e in feed.entries:
         resumo = BeautifulSoup(e.get("summary", ""), "html.parser").get_text(" ")
+        quando = e.get("published_parsed") or e.get("updated_parsed")
         itens.append({"titulo": limpar(e.get("title")), "link": e.get("link"),
-                      "contexto": limpar(e.get("title", "") + " " + resumo)[:600]})
+                      "contexto": limpar(e.get("title", "") + " " + resumo)[:600],
+                      "publicado": time.strftime("%Y-%m-%d", quando) if quando else ""})
     return [i for i in itens if i["titulo"] and i["link"]]
+
+
+def coletar_plone(fonte):
+    """Sites Plone com API aberta (ex.: editais.ufal.br). A url é a da busca
+    "++api++/@search", que devolve JSON com título, endereço e data de publicação."""
+    dados = json.loads(baixar(fonte["url"], aceita="application/json"))
+    itens = []
+    for i in dados.get("items", []):
+        titulo, descricao = limpar(i.get("title")), limpar(i.get("description"))
+        pub = (i.get("effective") or "")[:10]
+        partes = [titulo, descricao if descricao != titulo else "",
+                  f"Publicado em {pub[8:10]}/{pub[5:7]}/{pub[:4]}" if pub else ""]
+        itens.append({"titulo": titulo, "link": i.get("@id"), "publicado": pub,
+                      "contexto": " ".join(p for p in partes if p)[:600]})
+    return [i for i in itens if len(i["titulo"]) >= 10 and i["link"]]
 
 
 def detalhar(link):
@@ -205,9 +223,11 @@ def extrair_prazo(contexto):
     return max(datas).isoformat() if datas else None
 
 
-def antigo(titulo, prazo):
-    """Sem prazo conhecido e com ano anterior no título (ex.: "Edital 02/2023")."""
+def antigo(titulo, prazo, link=""):
+    """Sem prazo conhecido e com ano anterior no título (ex.: "Edital 02/2023")
+    ou no endereço (ex.: ".../2024/02/...")."""
     anos = [int(x) for x in ANO.findall(titulo or "")]
+    anos += [int(x) for x in re.findall(r"/(20\d{2})/\d{2}/", link or "")]
     return not prazo and bool(anos) and max(anos) < HOJE.year
 
 
@@ -280,7 +300,9 @@ def coletar(cfg_fontes, areas):
         if not fonte.get("ativa", True):
             continue
         try:
-            itens = coletar_rss(fonte) if fonte.get("formato") == "rss" else coletar_html(fonte)
+            coletor = {"rss": coletar_rss, "plone": coletar_plone}.get(
+                fonte.get("formato"), coletar_html)
+            itens = coletor(fonte)
             if not itens:
                 raise RuntimeError("nenhum item encontrado (o layout pode ter mudado)")
         except Exception as erro:  # uma fonte fora do ar não derruba as outras
@@ -290,7 +312,13 @@ def coletar(cfg_fontes, areas):
                 persistentes.append(fonte["nome"])
             continue
         registrar(con, fonte["nome"], True)
+        ignorar = fonte.get("ignorar")  # regex de títulos a descartar (sem acento)
+        corte = (HOJE - dt.timedelta(days=fonte.get("dias_max", 180))).isoformat()
         for item in itens:
+            if ignorar and re.search(ignorar, norm(item["titulo"])):
+                continue
+            if item.get("publicado") and item["publicado"] < corte:
+                continue  # publicado há mais de "dias_max" dias
             texto = norm(item["titulo"] + " " + item["contexto"])
             reg = {
                 "id": hashlib.sha1(item["link"].encode()).hexdigest()[:16],
@@ -301,7 +329,7 @@ def coletar(cfg_fontes, areas):
                 "prazo": extrair_prazo(item["contexto"]),
                 "coletado_em": HOJE.isoformat(),
             }
-            if antigo(reg["titulo"], reg["prazo"]):
+            if antigo(reg["titulo"], reg["prazo"], reg["link"]):
                 continue
             cur = con.execute(
                 "INSERT OR IGNORE INTO oportunidades "
@@ -328,7 +356,7 @@ def abertas(con):
         "ORDER BY prazo IS NULL, prazo, coletado_em DESC", (HOJE.isoformat(),))
     unicos = {}  # retificações ("... - Alteração") contam como o mesmo edital
     for l in linhas:
-        if antigo(l["titulo"], l["prazo"]):
+        if antigo(l["titulo"], l["prazo"], l["link"]):
             continue
         chave = (l["fonte"], SUFIXO.sub("", norm(l["titulo"])).strip())
         if chave not in unicos or len(l["titulo"]) < len(unicos[chave]["titulo"]):
