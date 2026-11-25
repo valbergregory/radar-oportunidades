@@ -1,0 +1,87 @@
+name: Teste DOU (dados abertos)
+
+# Teste manual: verifica se o GitHub alcança a base aberta do Diário Oficial
+# e como é o arquivo da Seção 3. Não altera nada no repositório.
+on:
+  workflow_dispatch:
+
+jobs:
+  teste:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Abrir a página e baixar a Seção 3 do mês
+        run: |
+          python3 - <<'EOF'
+          import collections, html, io, re, time, urllib.request, zipfile
+
+          UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                              "(KHTML, like Gecko) Chrome/131.0 Safari/537.36",
+                "Accept-Language": "pt-BR,pt;q=0.9"}
+
+          def baixar(url):
+              for n in range(3):
+                  try:
+                      req = urllib.request.Request(url, headers=UA)
+                      with urllib.request.urlopen(req, timeout=180) as r:
+                          return r.read()
+                  except Exception as erro:
+                      print(f"tentativa {n + 1} falhou: {erro!r}")
+                      time.sleep(5)
+              raise SystemExit("RESULTADO: o GitHub NAO alcancou " + url[:60])
+
+          meses = ["Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho", "Julho",
+                   "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+          agora = time.gmtime()
+          pagina = ("https://www.in.gov.br/acesso-a-informacao/dados-abertos/base-de-dados"
+                    f"?ano={agora.tm_year}&mes={meses[agora.tm_mon - 1]}")
+          t0 = time.time()
+          texto = baixar(pagina).decode("utf-8", "ignore")
+          print(f"pagina aberta: {len(texto)} caracteres em {time.time() - t0:.1f}s")
+          links = [html.unescape(x) for x in re.findall(r'href="([^"]*S03\d{6}[^"]*\.zip[^"]*)"', texto)]
+          print("arquivos da Secao 3 listados:", len(links))
+          if not links:
+              raise SystemExit("RESULTADO: pagina abriu, mas a lista de arquivos nao veio no HTML")
+          def carimbo(u):
+              m = re.search(r"[?&]t=(\d+)", u)
+              return int(m.group(1)) if m else 0
+          link = max(links, key=carimbo)
+          if link.startswith("/"):
+              link = "https://www.in.gov.br" + link
+          print("mais recente:", re.search(r"S03[^/]*\.zip", link).group(0))
+          t0 = time.time()
+          bruto = baixar(link)
+          print(f"zip baixado: {len(bruto) / 1e6:.1f} MB em {time.time() - t0:.1f}s")
+          z = zipfile.ZipFile(io.BytesIO(bruto))
+          nomes = z.namelist()
+          total = sum(i.file_size for i in z.infolist())
+          print(f"arquivos no zip: {len(nomes)}; descompactado: {total / 1e6:.1f} MB")
+          print("exemplos de nomes:", nomes[:3])
+          tipos, orgaos, achados, atributos = collections.Counter(), collections.Counter(), [], None
+          alvo = re.compile(r"Conselho Nacional de Desenvolvimento Cient|Aperfei.oamento de Pessoal de N.vel Superior|Financiadora de Estudos", re.I)
+          for nome in nomes:
+              if not nome.lower().endswith(".xml"):
+                  continue
+              x = z.read(nome).decode("utf-8", "ignore")
+              for art in re.findall(r"<article\b[^>]*>", x):
+                  if atributos is None:
+                      atributos = re.findall(r'(\w+)="', art)
+                  tipo = re.search(r'artType="([^"]*)"', art)
+                  cat = re.search(r'artCategory="([^"]*)"', art)
+                  tipos[tipo.group(1) if tipo else "?"] += 1
+                  if cat and alvo.search(cat.group(1)):
+                      orgaos[cat.group(1)[:70]] += 1
+                      if tipo and re.search(r"edital|chamada", tipo.group(1), re.I) and len(achados) < 6:
+                          ident = re.search(r"<Identifica>(.*?)</Identifica>", x, re.S)
+                          data = re.search(r'pubDate="([^"]*)"', art)
+                          achados.append((data.group(1) if data else "", tipo.group(1),
+                                          re.sub(r"<[^>]+>|\s+", " ", html.unescape(ident.group(1) if ident else ""))[:110]))
+          print("atributos de <article>:", atributos)
+          print("tipos de ato mais comuns:", tipos.most_common(12))
+          print("atos de CNPq, CAPES e Finep por orgao:", orgaos.most_common(8))
+          for a in achados:
+              print("  exemplo:", a)
+          if nomes:
+              primeiro = next(n for n in nomes if n.lower().endswith(".xml"))
+              print("inicio de um XML:", re.sub(r"\s+", " ", z.read(primeiro).decode("utf-8", "ignore"))[:900])
+          print("RESULTADO: o GitHub alcancou a base do DOU")
+          EOF
