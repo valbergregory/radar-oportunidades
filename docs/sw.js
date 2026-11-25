@@ -1,11 +1,12 @@
 // Service worker do Radar de Oportunidades.
 // Caminhos relativos ao próprio arquivo: o site fica em /radar-oportunidades/.
-// - Página e dados (index.html, dados.json): rede primeiro, cache como reserva,
-//   pois mudam a cada coleta.
+// - Páginas, scripts e dados (index.html, privacidade.html, conta.js,
+//   dados.json): rede primeiro, cache como reserva, pois mudam com frequência.
 // - Manifest e ícones: cache primeiro, atualizado em segundo plano.
-// - prazos.ics e links externos: sempre pela rede (não interceptados).
-const VERSAO = "radar-v1";
+// - prazos.ics e outros domínios (editais, Supabase): sempre pela rede, sem cache.
+const VERSAO = "radar-v2";
 const APP = ["./", "./index.html", "./dados.json", "./manifest.webmanifest",
+             "./privacidade.html", "./conta.js",
              "./icones/icone.svg", "./icones/icone-192.png", "./icones/icone-512.png"];
 
 self.addEventListener("install", evento => {
@@ -54,7 +55,7 @@ self.addEventListener("fetch", evento => {
   if (url.pathname.endsWith(".ics")) return;
   if (pedido.mode === "navigate") {
     evento.respondWith(redePrimeiro(pedido, "./index.html"));
-  } else if (url.pathname.endsWith("/dados.json")) {
+  } else if (/\/(dados\.json|[^/]+\.(js|html))$/.test(url.pathname)) {
     evento.respondWith(redePrimeiro(pedido));
   } else {
     evento.respondWith(cachePrimeiro(pedido));

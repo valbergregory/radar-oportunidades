@@ -62,6 +62,7 @@
   .botao-instalar { display:inline-flex; align-items:center; gap:8px; min-height:44px; background:#fff; color:#0b4a8b;
                     border:0; border-radius:999px; padding:8px 16px; font-weight:700; cursor:pointer; }
   .topo :focus-visible { outline-color:#fdba74; }
+  .acoes-topo { display:flex; gap:8px; flex-wrap:wrap; }
   @media (min-width:900px) { .topo h1 { font-size:2rem; } .topo .sub { font-size:1.05rem; } .marca svg { width:60px; height:60px; } }
 
   /* Estrutura */
@@ -186,6 +187,30 @@
   .rodape p { margin:0; }
   .rodape .alerta { font-weight:700; color:var(--texto); display:flex; gap:8px; align-items:center; }
   .rodape .alerta svg { width:20px; height:20px; color:var(--marca); }
+  .rodape a { color:var(--marca); font-weight:700; }
+  /* Janela da conta */
+  .janela { width:calc(100% - 24px); max-width:540px; max-height:calc(100dvh - 24px); border:0; border-radius:18px;
+            padding:16px 18px 20px; background:var(--cartao); color:var(--texto); box-shadow:0 12px 40px rgba(0,0,0,.35); }
+  .janela::backdrop { background:rgba(8,20,40,.55); }
+  .janela-topo { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .janela h2 { margin:0; font-size:1.25rem; }
+  .janela p { margin:8px 0; }
+  .janela form, .janela .pilha { display:grid; gap:12px; margin-top:8px; }
+  .janela label.campo { display:grid; gap:4px; font-weight:600; }
+  .janela label.campo span.dica { font-weight:400; color:var(--suave); font-size:.88rem; }
+  .janela input:not([type=checkbox]), .janela select { min-height:44px; padding:8px 10px; border:1px solid var(--campo);
+            border-radius:10px; background:var(--cartao); color:var(--texto); font:inherit; width:100%; }
+  .janela .marcar { display:flex; gap:10px; align-items:flex-start; font-weight:400; }
+  .janela .marcar input { width:20px; height:20px; margin:2px 0 0; accent-color:#0b4a8b; flex:none; }
+  .janela .linha { display:grid; grid-template-columns:1fr 96px; gap:10px; }
+  .janela .suave { color:var(--suave); font-size:.9rem; }
+  .janela a { color:var(--marca); }
+  .janela dl { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; margin:8px 0; }
+  .janela dt { color:var(--suave); }
+  .janela dd { margin:0; overflow-wrap:anywhere; }
+  .botao-perigo { background:var(--cartao); color:var(--urg-texto); border-color:var(--urg-texto); }
+  .msg { padding:10px 12px; border-radius:10px; background:var(--urg-fundo); color:var(--urg-texto); }
+  .msg.ok { background:var(--nor-fundo); color:var(--nor-texto); }
   [hidden] { display:none !important; }
 </style>
 </head>
@@ -205,10 +230,16 @@
         <p class="atual" id="atualizado-topo"></p>
       </div>
     </div>
+    <div class="acoes-topo">
+    <button type="button" class="botao-instalar" id="entrar" aria-haspopup="dialog" hidden>
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+      <span id="entrar-rotulo">Entrar</span>
+    </button>
     <button type="button" class="botao-instalar" id="instalar-topo" hidden>
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
       Instalar aplicativo
     </button>
+    </div>
   </div>
 </header>
 
@@ -277,8 +308,20 @@
       Confira sempre o prazo no edital.
     </p>
     <p>Os prazos são estimados automaticamente a partir da página de origem.</p>
+    <p><a href="privacidade.html">Privacidade e termos de uso</a></p>
   </div>
 </footer>
+
+<dialog class="janela" id="janela-conta" aria-labelledby="conta-titulo">
+  <div class="janela-topo">
+    <h2 id="conta-titulo">Entrar</h2>
+    <button type="button" class="fechar" id="conta-fechar" aria-label="Fechar">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <p class="msg" id="conta-msg" role="alert" hidden></p>
+  <div id="conta-corpo"></div>
+</dialog>
 
 <div class="convite" id="convite" role="region" aria-label="Instalar aplicativo" hidden>
   <p id="convite-texto"></p>
@@ -291,6 +334,7 @@
 <script>
 "use strict";
 const DADOS_EMBUTIDOS = /*DADOS*/null;
+const CONFIG = /*CONFIG*/null;
 const TIPOS = { "fomento":"Fomento e editais", "bolsa":"Bolsas", "pos-graduacao":"Mestrado e doutorado",
                 "evento":"Congressos e eventos", "concurso-vaga":"Concursos e vagas" };
 const URGENTE_ATE = 14;  // dias: selo laranja até aqui, azul acima
@@ -351,9 +395,29 @@ function dataAtualizacao() {
   return quando ? fmtData.format(quando) : (DADOS.atualizado || "uma visita anterior");
 }
 
+const ouvintesFiltros = [];
 function salvarEstado() {
   gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], ordem:estado.ordem });
+  for (const f of ouvintesFiltros) f();
 }
+
+// Usada por conta.js para guardar os interesses na conta da pessoa.
+window.radar = {
+  config: CONFIG,
+  interesses() {
+    const areas = DADOS ? Object.keys(DADOS.areas) : [];
+    return { areas: areas.filter(a => !estado.semAreas.has(a)),
+             tipos: Object.keys(TIPOS).filter(t => !estado.semTipos.has(t)) };
+  },
+  aplicarInteresses(areas, tipos) {
+    if (!DADOS || !areas.length || !tipos.length) return;
+    estado.semAreas = new Set(Object.keys(DADOS.areas).filter(a => !areas.includes(a)));
+    estado.semTipos = new Set(Object.keys(TIPOS).filter(t => !tipos.includes(t)));
+    gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], ordem:estado.ordem });
+    montarFiltros(); desenhar();
+  },
+  aoMudarFiltros(f) { ouvintesFiltros.push(f); },
+};
 
 function caixas(destino, opcoes, desmarcadas) {
   const div = $(destino);
@@ -550,6 +614,11 @@ window.addEventListener("offline", () => { if (DADOS) avisoRede(SEM_REDE + dataA
 if (DADOS) { montarFiltros(); desenhar(); }
 if (location.protocol !== "file:") carregar();
 else if (!DADOS) avisoRede("Não foi possível carregar as oportunidades.");
+
+if (CONFIG && CONFIG.cadastro && location.protocol !== "file:") {
+  const s = document.createElement("script");
+  s.src = "conta.js"; s.defer = true; document.body.append(s);
+}
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
