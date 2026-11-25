@@ -1,0 +1,93 @@
+rules_version = '2';
+
+// Radar de Oportunidades: regras do Firestore para as contas opcionais.
+// NÃO são publicadas automaticamente: revise e publique pelo console
+// (Firestore Database > Regras). Testes: tests/firestore/regras.test.mjs.
+//
+// Modelo:
+//   perfis/{uid}                    um documento por pessoa (sem e-mail: ele fica no Authentication)
+//   perfis/{uid}/favoritos/{itemId} só { criado_em }
+//
+// Tudo o que não está liberado abaixo é negado: leitura sem login, listagem
+// da coleção perfis, documentos de outras pessoas e qualquer outra coleção.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function dono(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Campos permitidos no perfil (nada além disto).
+    function camposPerfil() {
+      return ['nome_exibicao', 'vinculo', 'curso_area', 'areas', 'tipos', 'frequencia', 'canais',
+              'quer_newsletter', 'newsletter_em', 'termos_versao', 'consentimento_em', 'atualizado_em'];
+    }
+
+    // Texto opcional: ausente, nulo ou string de até `max` caracteres.
+    function textoOpcional(d, campo, max) {
+      return !(campo in d) || d[campo] == null || (d[campo] is string && d[campo].size() <= max);
+    }
+
+    function perfilValido(d) {
+      return d.keys().hasOnly(camposPerfil())
+        && d.keys().hasAll(['areas', 'tipos', 'frequencia', 'canais', 'quer_newsletter', 'newsletter_em',
+                            'termos_versao', 'consentimento_em', 'atualizado_em'])
+        && textoOpcional(d, 'nome_exibicao', 120)
+        && textoOpcional(d, 'curso_area', 120)
+        && (!('vinculo' in d) || d.vinculo == null
+            || d.vinculo in ['estudante-graduacao', 'estudante-pos', 'estudante-medio-tecnico', 'docente',
+                             'tecnico-administrativo', 'pesquisador', 'egresso', 'comunidade', 'outro'])
+        && d.areas is list && d.areas.size() <= 20
+        && d.tipos is list && d.tipos.size() <= 20
+        && d.tipos.hasOnly(['fomento', 'bolsa', 'pos-graduacao', 'evento', 'concurso-vaga'])
+        && d.frequencia in ['diario', 'semanal', 'urgentes']
+        && d.canais is list && d.canais.size() <= 2 && d.canais.hasOnly(['email', 'calendario'])
+        && d.quer_newsletter is bool
+        && d.termos_versao is string && d.termos_versao.size() > 0 && d.termos_versao.size() <= 20
+        && d.consentimento_em is timestamp
+        && d.atualizado_em == request.time;
+    }
+
+    // Newsletter: autorizar grava a data do servidor; retirar zera a data;
+    // sem mudança, a data antiga fica como estava.
+    function newsletterNaCriacao(d) {
+      return (d.quer_newsletter == false && d.newsletter_em == null)
+          || (d.quer_newsletter == true && d.newsletter_em == request.time);
+    }
+    function newsletterNaAlteracao(d, antes) {
+      return (d.quer_newsletter == false && d.newsletter_em == null)
+          || (d.quer_newsletter == true && antes.quer_newsletter == true && d.newsletter_em == antes.newsletter_em)
+          || (d.quer_newsletter == true && antes.quer_newsletter == false && d.newsletter_em == request.time);
+    }
+
+    // Aceite dos termos: a data é a do servidor sempre que a versão muda.
+    function termosNaAlteracao(d, antes) {
+      return (d.termos_versao == antes.termos_versao && d.consentimento_em == antes.consentimento_em)
+          || (d.termos_versao != antes.termos_versao && d.consentimento_em == request.time);
+    }
+
+    match /perfis/{uid} {
+      allow get: if dono(uid);
+      allow list: if false;
+      allow create: if dono(uid)
+        && perfilValido(request.resource.data)
+        && request.resource.data.consentimento_em == request.time
+        && newsletterNaCriacao(request.resource.data);
+      allow update: if dono(uid)
+        && perfilValido(request.resource.data)
+        && termosNaAlteracao(request.resource.data, resource.data)
+        && newsletterNaAlteracao(request.resource.data, resource.data);
+      allow delete: if dono(uid);
+
+      match /favoritos/{itemId} {
+        allow read: if dono(uid);
+        allow create: if dono(uid)
+          && itemId.size() <= 64
+          && request.resource.data.keys().hasOnly(['criado_em'])
+          && request.resource.data.keys().hasAll(['criado_em'])
+          && request.resource.data.criado_em == request.time;
+        allow delete: if dono(uid);
+      }
+    }
+  }
+}

@@ -422,16 +422,17 @@ focarBusca();
 if (location.protocol !== "file:") carregar();
 else if (!DADOS) avisoRede("Não foi possível carregar as oportunidades.");
 
-// Contas opcionais: o resto só é carregado se conta-config.js estiver preenchido.
+// Contas opcionais (Firebase): o resto só é carregado se conta-config.js tiver a apiKey.
 if (location.protocol !== "file:") {
   const cfg = document.createElement("script");
   cfg.src = "conta-config.js";
   cfg.onload = () => {
-    const c = window.RADAR_CONTA;
-    if (!c || !c.url || !c.chavePublicavel || !c.controlador || !c.controlador.nome || !c.controlador.email) return;
-    for (const src of ["vendor/supabase-js-2.118.0.js", "js/comum.js", "js/conta-index.js"]) {
-      const s = document.createElement("script"); s.src = src; s.async = false; document.body.append(s);
-    }
+    const f = (window.RADAR_CONTA || {}).firebase || {};
+    if (!f.apiKey || !f.projectId || !f.appId || !f.authDomain) return;
+    const comum = document.createElement("script");
+    comum.src = "js/comum.js";
+    comum.onload = () => import("./js/conta-index.js").catch(() => {});
+    document.body.append(comum);
   };
   document.body.append(cfg);
 }

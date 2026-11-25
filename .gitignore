@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 radar-local.log
+tests/node_modules/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

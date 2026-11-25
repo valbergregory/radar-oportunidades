@@ -1,33 +1,10 @@
-// Radar de Oportunidades: funções comuns às páginas de conta, à página da
-// oportunidade e ao complemento do index (js/conta-index.js).
+// Radar de Oportunidades: funções de interface comuns às páginas de conta, à
+// página da oportunidade e ao complemento do index. O acesso ao Firebase fica
+// em js/firebase.js.
 "use strict";
 window.RC = (() => {
   const cfg = window.RADAR_CONTA || {};
   const controlador = cfg.controlador || {};
-  // Recusa chaves secretas: elas dariam acesso total ao banco a qualquer visitante.
-  function chaveSecreta(chave) {
-    if (/^sb_secret_/.test(chave)) return true;
-    try { return JSON.parse(atob(chave.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).role === "service_role"; }
-    catch (e) { return false; }
-  }
-  const secreta = !!cfg.chavePublicavel && chaveSecreta(cfg.chavePublicavel);
-  if (secreta) console.error("conta-config.js: a chave informada é SECRETA. Contas desativadas. Use a publishable key.");
-  // Configurado: os quatro campos preenchidos, URL https e chave pública.
-  const configurado = !!(cfg.url && cfg.chavePublicavel && controlador.nome && controlador.email && !secreta &&
-                         /^https:\/\//.test(cfg.url));
-  const ativo = () => configurado && !!window.supabase;
-  const VERSAO_LIB = "vendor/supabase-js-2.118.0.js";
-  // Carrega a biblioteca só quando há contas (páginas que não a incluem direto).
-  function carregarSupabase() {
-    if (!configurado) return Promise.resolve(false);
-    if (window.supabase) return Promise.resolve(true);
-    return new Promise(ok => {
-      const s = document.createElement("script");
-      s.src = VERSAO_LIB; s.onload = () => ok(true); s.onerror = () => ok(false);
-      document.head.append(s);
-    });
-  }
-
   const TIPOS = { "fomento": "Fomento e editais", "bolsa": "Bolsas", "pos-graduacao": "Mestrado e doutorado",
                   "evento": "Congressos e eventos", "concurso-vaga": "Concursos e vagas" };
   const VINCULOS = {
@@ -79,53 +56,12 @@ window.RC = (() => {
     return e;
   }
 
-  let clienteSupabase = null;
-  function cliente() {
-    if (!ativo()) return null;
-    if (!clienteSupabase) {
-      clienteSupabase = window.supabase.createClient(cfg.url, cfg.chavePublicavel, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storageKey: "radar-auth" },
-      });
-    }
-    return clienteSupabase;
-  }
-  async function sessao() {
-    const c = cliente();
-    if (!c) return null;
-    const { data } = await c.auth.getSession();
-    return data.session || null;
-  }
-
   // Só volta para páginas deste site (evita redirecionar para fora).
   function destinoSeguro(valor, padrao = "./") {
     return /^(\.\/|[a-z-]+\.html)(\?[\w=&%.-]*)?$/.test(valor || "") ? valor : padrao;
   }
   function voltarPara() { return destinoSeguro(new URLSearchParams(location.search).get("voltar")); }
-  function enderecoAbsoluto(pagina) { return new URL(pagina, location.href).href; }
   function paginaAtual() { return location.pathname.split("/").pop() + location.search; }
-
-  async function exigirSessao() {
-    const s = await sessao();
-    if (!s) location.replace("entrar.html?voltar=" + encodeURIComponent(paginaAtual() || "./"));
-    return s;
-  }
-
-  function traduzErro(erro) {
-    if (!erro) return "";
-    const cod = erro.code || "", txt = (erro.message || "").toLowerCase();
-    if (erro.status === 429 || /rate_limit/.test(cod)) return "Muitas tentativas. Aguarde alguns minutos e tente de novo.";
-    if (cod === "invalid_credentials" || txt.includes("invalid login")) return "E-mail ou senha incorretos.";
-    if (cod === "email_not_confirmed") return "Confirme seu e-mail pelo link que enviamos antes de entrar.";
-    if (cod === "user_already_exists" || txt.includes("already registered"))
-      return "Já existe uma conta com este e-mail. Entre ou use “Esqueci minha senha”.";
-    if (cod === "weak_password" || txt.includes("password should"))
-      return "Senha fraca. Use pelo menos 8 caracteres, misturando letras e números.";
-    if (cod === "same_password") return "A nova senha precisa ser diferente da atual.";
-    if (cod === "reauthentication_needed") return "Por segurança, entre de novo antes de trocar a senha.";
-    if (erro.name === "AuthRetryableFetchError" || txt.includes("failed to fetch") || txt.includes("network"))
-      return "Sem conexão. Tente de novo quando estiver on-line.";
-    return "Não foi possível concluir agora. Tente de novo em instantes.";
-  }
 
   function mensagem(onde, texto, ok = false) {
     const antigo = onde.querySelector(":scope > .msg");
@@ -147,12 +83,6 @@ window.RC = (() => {
     return r.json();
   }
 
-  async function perfil(s) {
-    const { data, error } = await cliente().from("perfis").select("*").eq("id", s.user.id).maybeSingle();
-    if (error) throw error;
-    return data;
-  }
-
   // O index aplica as preferências da conta aos filtros quando elas mudam.
   function preferenciasMudaram() { try { localStorage.removeItem("radar-perfil-aplicado"); } catch (e) { /* ok */ } }
 
@@ -166,23 +96,6 @@ window.RC = (() => {
         el("input", { type: tipo, name: nome, value: v, checked: marcadas.includes(v) }), r)));
   }
   function marcados(form, nome) { return [...form.querySelectorAll(`input[name="${nome}"]:checked`)].map(c => c.value); }
-
-  // Cabeçalho e abas: "Entrar" ou "Minha conta"; Salvos e Perfil só com contas.
-  async function montarTopo() {
-    const botao = document.getElementById("acao-conta");
-    const salvos = document.getElementById("aba-salvos"), perfilAba = document.getElementById("aba-perfil");
-    if (!ativo()) return null;
-    const s = await sessao();
-    if (botao) {
-      botao.hidden = false;
-      botao.href = s ? "conta.html" : "entrar.html?voltar=" + encodeURIComponent(paginaAtual() || "./");
-      const rot = document.getElementById("acao-conta-rotulo");
-      if (rot) rot.textContent = s ? "Minha conta" : "Entrar";
-    }
-    if (salvos) { salvos.hidden = false; salvos.href = s ? "./?favoritos=1" : "entrar.html?voltar=" + encodeURIComponent("./?favoritos=1"); }
-    if (perfilAba) { perfilAba.hidden = false; perfilAba.href = s ? "conta.html" : "entrar.html"; }
-    return s;
-  }
 
   // Página de conta aberta sem contas configuradas: explica e oferece voltar.
   function indisponivel(onde) {
@@ -198,9 +111,8 @@ window.RC = (() => {
     return a && m && d ? new Date(a, m - 1, d) : null;
   }
 
-  return { config: cfg, controlador, configurado, get ativo() { return ativo(); }, carregarSupabase, TIPOS, VINCULOS, FREQUENCIAS, CANAIS, I, el, cliente, sessao,
-           exigirSessao, voltarPara, destinoSeguro, enderecoAbsoluto, traduzErro, mensagem, ocupado, dados,
-           perfil, preferenciasMudaram, grupoPilulas, marcados, montarTopo, indisponivel, fmtData, dataLocal };
+  return { config: cfg, controlador, TIPOS, VINCULOS, FREQUENCIAS, CANAIS, I, el, voltarPara, destinoSeguro,
+           mensagem, ocupado, dados, preferenciasMudaram, grupoPilulas, marcados, indisponivel, fmtData, dataLocal };
 })();
 
 // Botões "mostrar senha" (olho) de qualquer página.

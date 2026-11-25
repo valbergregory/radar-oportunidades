@@ -2,14 +2,15 @@
 // Caminhos relativos ao próprio arquivo: o site fica em /radar-oportunidades/.
 // - Páginas públicas, scripts e dados: rede primeiro, cache como reserva.
 // - Ícones, manifest e estilos: cache primeiro, atualizados em segundo plano.
-// - Páginas e scripts de CONTA (entrar, cadastro, personalizar, conta) e a
-//   biblioteca do Supabase: sempre pela rede e NUNCA guardados no cache.
+// - Páginas e scripts de CONTA (entrar, cadastro, personalizar, conta) e o
+//   SDK do Firebase (vendor/): sempre pela rede e NUNCA guardados no cache.
 //   Sem internet, essas páginas mostram um aviso.
-// - Outros domínios (Supabase, editais) e prazos.ics: não interceptados.
-const VERSAO = "radar-v4";
+// - Chamadas ao Firebase (googleapis.com e afins), editais e prazos.ics: outros
+//   domínios ou arquivos não interceptados, logo nunca vão para o cache.
+const VERSAO = "radar-v5";
 const APP = ["./", "./index.html", "./dados.json", "./manifest.webmanifest", "./estilo.css",
              "./oportunidade.html", "./privacidade.html", "./termos.html", "./conta-config.js",
-             "./js/comum.js", "./js/oportunidade.js", "./js/legal.js",
+             "./js/comum.js", "./js/firebase.js", "./js/oportunidade.js", "./js/legal.js",
              "./icones/icone.svg", "./icones/icone-192.png", "./icones/icone-512.png"];
 const SO_REDE = /\/(entrar|cadastro|personalizar|conta)\.html$|\/js\/(entrar|cadastro|personalizar|conta|conta-index)\.js$|\/vendor\//;
 

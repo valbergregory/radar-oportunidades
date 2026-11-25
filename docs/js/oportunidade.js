@@ -1,6 +1,6 @@
 // oportunidade.html?id=<id>: detalhe, "Antes de continuar", portal original,
 // favoritar (com conta) e prazo na agenda (.ics). Funciona sem internet.
-"use strict";
+import * as FB from "./firebase.js";
 (async () => {
   const RC = window.RC, el = RC.el, area = document.getElementById("area");
   const id = new URLSearchParams(location.search).get("id") || "";
@@ -99,27 +99,27 @@
   document.getElementById("op-titulo").focus();
 
   // ---- Favoritar (só com contas configuradas)
-  if (!(await RC.carregarSupabase())) return;
-  const s = await RC.montarTopo();
-  if (!s) {
+  if (!FB.configurado) return;
+  let u;
+  try { u = await FB.montarTopo(); } catch (e) { return; }
+  if (!u) {
     favorito.append(el("a", { class: "botao botao-secundario", href: "entrar.html?voltar=" + encodeURIComponent("oportunidade.html?id=" + id),
                               html: RC.I.estrela + "Entre para salvar nos favoritos" }));
     return;
   }
-  const db = RC.cliente();
   const botao = el("button", { type: "button", class: "botao botao-secundario" });
   const desenhar = salvo => {
     botao.setAttribute("aria-pressed", String(salvo));
     botao.innerHTML = RC.I.estrela + (salvo ? "Salvo nos favoritos" : "Salvar nos favoritos");
   };
-  const { data } = await db.from("favoritos").select("item_id").eq("item_id", id);
-  let salvo = !!(data && data.length);
+  let salvo = false;
+  try { salvo = (await FB.listarFavoritos(u.uid)).some(f => f.item_id === id); } catch (e) { /* sem rede: começa desmarcado */ }
   desenhar(salvo);
   botao.addEventListener("click", () => RC.ocupado(botao, async () => {
-    const { error } = salvo ? await db.from("favoritos").delete().eq("item_id", id)
-                            : await db.from("favoritos").insert({ item_id: id });
-    if (error) return RC.mensagem(area, RC.traduzErro(error));
-    salvo = !salvo; desenhar(salvo);
+    try {
+      if (salvo) await FB.desfavoritar(u.uid, id); else await FB.favoritar(u.uid, id);
+      salvo = !salvo; desenhar(salvo);
+    } catch (e) { RC.mensagem(area, FB.traduzErro(e)); }
   }));
   favorito.append(botao);
 })();

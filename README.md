@@ -42,20 +42,21 @@ ativas, Salvos e Perfil.
 
 ## Contas (opcional)
 
-O site é aberto a todos. Quem quiser pode criar uma conta com e-mail e senha
-(Supabase Auth) para:
+O site é aberto a todos. Quem quiser pode criar uma conta (Firebase
+Authentication, com e-mail e senha ou link por e-mail) para:
 - salvar oportunidades nos favoritos (estrela nos cartões e filtro "Meus favoritos");
 - guardar áreas e tipos de interesse, que passam a ser os filtros da lista;
 - escolher a frequência e os canais de alerta. O envio de alertas ainda não
   existe: por enquanto a preferência só fica guardada.
 
-Só o e-mail é obrigatório. A newsletter tem consentimento separado, datado. A
-pessoa baixa os próprios dados (JSON) e exclui a conta sozinha, na hora.
+Só o e-mail é obrigatório, e ele não é copiado para o banco. A newsletter tem
+consentimento separado e datado. A pessoa baixa os próprios dados (JSON) e
+exclui a conta sozinha, na hora. Perfis e favoritos ficam no Cloud Firestore,
+em São Paulo, protegidos por `firestore.rules`.
 
-As contas vêm **desligadas**. Para ativar, siga `supabase/LEIAME.md`: crie o
-projeto, rode `supabase/esquema.sql` e preencha `docs/conta-config.js` (URL,
-chave **publicável** e controlador). Sem isso, nada de conta aparece. As páginas
-de conta, `docs/privacidade.html` e `docs/termos.html` são estáticas; só
+As contas vêm **desligadas** enquanto a `apiKey` de `docs/conta-config.js`
+estiver vazia. O passo a passo para ativar está em `CONTAS.md`. As páginas de
+conta, `docs/privacidade.html` e `docs/termos.html` são estáticas; só
 `index.html`, `dados.json` e `prazos.ics` são gerados pelo `radar.py`.
 
 ## Publicar e automatizar (GitHub)
@@ -82,7 +83,7 @@ gerados pelo robô:
 - `docs/estilo.css`: estilos de todas as páginas
 - `docs/sw.js`: service worker. Páginas públicas e `dados.json` vêm da rede
   primeiro, com o cache como reserva; ícones e estilos vêm do cache. Páginas de
-  conta e a biblioteca do Supabase nunca vão para o cache.
+  conta, o SDK do Firebase e as chamadas ao Firebase nunca vão para o cache.
 - `docs/icones/`: ícone em SVG e PNG (192 e 512)
 - `docs/js/`, `docs/vendor/`: scripts das páginas de conta e da oportunidade
 

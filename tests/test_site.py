@@ -8,13 +8,14 @@ DOCS = Path(__file__).resolve().parent.parent / "docs"
 
 
 class Site(unittest.TestCase):
-    def test_conta_config_nunca_tem_chave_secreta(self):
+    def test_conta_config_sem_segredo(self):
         texto = (DOCS / "conta-config.js").read_text(encoding="utf-8")
-        chave = re.search(r'chavePublicavel:\s*"([^"]*)"', texto).group(1)
-        self.assertFalse(chave.startswith("sb_secret_"), "chave SECRETA em conta-config.js")
-        self.assertNotIn("service_role", chave)
-        url = re.search(r'^\s*url:\s*"([^"]*)"', texto, re.M).group(1)
-        self.assertTrue(url == "" or url.startswith("https://"), "url precisa ser https")
+        texto = "\n".join(l.split("//")[0] if l.lstrip().startswith("//") else l for l in texto.splitlines())
+        for proibido in ("private_key", "client_email", "service_account", "BEGIN PRIVATE KEY"):
+            self.assertNotIn(proibido, texto, "conta-config.js não pode ter chave de conta de serviço")
+        chave = re.search(r'apiKey:\s*"([^"]*)"', texto).group(1)
+        self.assertTrue(chave == "" or re.fullmatch(r"AIza[0-9A-Za-z_-]{35}", chave), "apiKey em formato inesperado")
+        self.assertIn('projectId: "radar-oportunidades-88442"', texto)
 
     def test_dados_tem_id_estavel(self):
         dados = json.loads((DOCS / "dados.json").read_text(encoding="utf-8"))
@@ -25,7 +26,7 @@ class Site(unittest.TestCase):
     def test_index_gerado_sem_marcadores(self):
         pagina = (DOCS / "index.html").read_text(encoding="utf-8")
         self.assertNotIn("/*DADOS*/", pagina)
-        self.assertNotIn("vendor/supabase", pagina.split("conta-config.js")[0])  # biblioteca só depois da config
+        self.assertNotIn("vendor/", pagina)  # o SDK só é importado por js/firebase.js, se configurado
 
     def test_caminhos_relativos(self):
         for html in DOCS.glob("*.html"):
@@ -35,9 +36,17 @@ class Site(unittest.TestCase):
     def test_service_worker_nao_guarda_conta(self):
         sw = (DOCS / "sw.js").read_text(encoding="utf-8")
         app = re.search(r"const APP = \[(.*?)\];", sw, re.S).group(1)
-        for pagina in ("entrar", "cadastro", "personalizar", "conta.html", "vendor"):
+        for pagina in ("entrar", "cadastro", "personalizar", "conta.html", "vendor", "conta-index"):
             self.assertNotIn(pagina, app)
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Regras(unittest.TestCase):
+    def test_regras_existem_e_negam_listagem(self):
+        regras = (DOCS.parent / "firestore.rules").read_text(encoding="utf-8")
+        self.assertIn("allow list: if false;", regras)
+        self.assertIn("request.auth != null && request.auth.uid == uid", regras)
+        self.assertNotIn("allow read, write: if true", regras)
