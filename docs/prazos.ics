@@ -2,4 +2,12 @@ BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Radar de Oportunidades//PT-BR
 X-WR-CALNAME:Radar de Oportunidades (prazos)
+BEGIN:VEVENT
+UID:c931541578c0f7f4@radar-oportunidades
+DTSTAMP:20261125T000000Z
+DTSTART;VALUE=DATE:20270312
+DTEND;VALUE=DATE:20270313
+SUMMARY:Prazo: Chamada Pública MCTI/CNPq/CISB/SAAB AB Nº 37/2026 - Cooperação Brasil-Suécia
+URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-37-2026/chamada-publica-cnpq-N-37-2026
+END:VEVENT
 END:VCALENDAR
