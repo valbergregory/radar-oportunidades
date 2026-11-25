@@ -7,14 +7,14 @@
 #   tipo_padrao  opcional: fomento, bolsa, pos-graduacao, evento, concurso-vaga
 #   ativa        false desliga a fonte sem apagar
 #
-# Os endereços abaixo foram localizados por busca em 24/11/2026, mas o robô
-# ainda NÃO foi executado contra os sites reais. Na primeira execução, confira
-# a saída de cada fonte e ajuste "padrao_link" onde vier lixo ou vier vazio.
+# Calibrado em 25/11/2026 com a primeira execução contra os sites reais.
+# Sempre que uma fonte vier vazia ou com lixo, ajuste o "padrao_link".
 
 fontes:
   - nome: CNPq
     url: https://www.gov.br/cnpq/pt-br/chamadas/abertas-para-submissao
-    padrao_link: /chamadas/todas-as-chamadas/
+    # só a página de cada chamada (sem anexos nem botões de compartilhar)
+    padrao_link: ^https://www\.gov\.br/cnpq/pt-br/chamadas/todas-as-chamadas/.*/chamada-[^/.]*$
     tipo_padrao: fomento
 
   - nome: CAPES
@@ -22,9 +22,13 @@ fontes:
     tipo_padrao: bolsa
 
   - nome: Finep
-    url: http://www.finep.gov.br/chamadas-publicas?situacao=aberta
-    padrao_link: chamadapublica/
+    # Desativada em 25/11/2026: o site foi refeito e a lista de chamadas
+    # (https://www.finep.gov.br/oportunidades) é carregada por um serviço
+    # protegido, fora do alcance deste coletor. Tratar por alerta ou feed.
+    url: https://www.finep.gov.br/oportunidades
+    padrao_link: /e/chamada-publica/
     tipo_padrao: fomento
+    ativa: false
 
   - nome: FAPEAL
     url: https://www.fapeal.br/tag/editais/
@@ -32,6 +36,8 @@ fontes:
 
   - nome: UFAL (editais)
     url: https://editais.ufal.br/
+    # o link de cada edital diz só "Acessar"; o título vem do cartão
+    padrao_link: ^https://editais\.ufal\.br/[a-z0-9-]+/[^?]+$
     tipo_padrao: fomento
 
   # A acrescentar depois de confirmar o endereço da listagem de cada uma:
