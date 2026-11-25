@@ -34,27 +34,29 @@ O Radar se instala como aplicativo pelo navegador, sem loja:
 
 O ícone vai para a tela inicial, e o app abre em tela cheia, mesmo sem internet.
 
-Cada oportunidade tem uma página própria, com o resumo, orientações antes da
-inscrição, o botão para adicionar o prazo à agenda (arquivo `.ics` com lembrete
-3 dias antes) e o botão para salvar nos favoritos. Os favoritos ficam no
-aparelho, e o filtro "Só as que salvei" mostra apenas eles. Com conta, os
-favoritos também ficam guardados nela.
+Cada oportunidade tem uma página própria (`oportunidade.html?id=…`), com resumo,
+orientações antes da inscrição, o link para o portal original e um botão para
+adicionar o prazo à agenda (arquivo `.ics` com lembrete 3 dias antes). No
+celular, uma barra inferior leva a Início, Buscar, Calendário e, com contas
+ativas, Salvos e Perfil.
 
-## Cadastro e entrada (opcional)
+## Contas (opcional)
 
-O site funciona sem cadastro. Quem quiser pode entrar com um código enviado ao
-e-mail, sem senha, e guardar os interesses na conta, para usá-los em qualquer
-aparelho. O cadastro segue a LGPD:
+O site é aberto a todos. Quem quiser pode criar uma conta com e-mail e senha
+(Supabase Auth) para:
+- salvar oportunidades nos favoritos (estrela nos cartões e filtro "Meus favoritos");
+- guardar áreas e tipos de interesse, que passam a ser os filtros da lista;
+- escolher a frequência e os canais de alerta. O envio de alertas ainda não
+  existe: por enquanto a preferência só fica guardada.
 
-- coleta mínima e nenhum dado sensível;
-- autorização separada e opcional para uso em estudos;
-- histórico de aceites;
-- a própria pessoa vê, corrige, baixa e exclui os dados no app;
-- cada pessoa só acessa o próprio cadastro (regras no banco).
+Só o e-mail é obrigatório. A newsletter tem consentimento separado, datado. A
+pessoa baixa os próprios dados (JSON) e exclui a conta sozinha, na hora.
 
-O cadastro vem **desligado**. Para ativar, siga `supabase/LEIAME.md` e preencha
-`config/app.yaml`. A política de privacidade (`docs/privacidade.html`) é gerada
-a partir de `modelo_privacidade.html`.
+As contas vêm **desligadas**. Para ativar, siga `supabase/LEIAME.md`: crie o
+projeto, rode `supabase/esquema.sql` e preencha `docs/conta-config.js` (URL,
+chave **publicável** e controlador). Sem isso, nada de conta aparece. As páginas
+de conta, `docs/privacidade.html` e `docs/termos.html` são estáticas; só
+`index.html`, `dados.json` e `prazos.ics` são gerados pelo `radar.py`.
 
 ## Publicar e automatizar (GitHub)
 
@@ -77,9 +79,12 @@ etapa de build). Os arquivos fixos do aplicativo ficam em `docs/` e não são
 gerados pelo robô:
 
 - `docs/manifest.webmanifest`: nome, cores e ícones do aplicativo
-- `docs/sw.js`: service worker. Página e `dados.json` vêm da rede primeiro, com o
-  cache como reserva; manifest e ícones vêm do cache e são atualizados em segundo plano
+- `docs/estilo.css`: estilos de todas as páginas
+- `docs/sw.js`: service worker. Páginas públicas e `dados.json` vêm da rede
+  primeiro, com o cache como reserva; ícones e estilos vêm do cache. Páginas de
+  conta e a biblioteca do Supabase nunca vão para o cache.
 - `docs/icones/`: ícone em SVG e PNG (192 e 512)
+- `docs/js/`, `docs/vendor/`: scripts das páginas de conta e da oportunidade
 
 O aplicativo lê `dados.json`. Se não conseguir, usa a cópia dos dados embutida no
 `index.html`. Todos os caminhos são relativos, porque o site fica em

@@ -13,6 +13,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Manter o Supabase ativo (pulso)
+        # Só roda quando docs/conta-config.js tem url e chave publicável. Chama a
+        # função pulso() (liberada ao papel anon) para o projeto gratuito não ser
+        # pausado por inatividade. Uma falha aqui só gera aviso.
+        run: |
+          python3 - <<'PY' > /tmp/pulso.env
+          import re, pathlib
+          t = pathlib.Path("docs/conta-config.js").read_text(encoding="utf-8")
+          url = re.search(r'^\s*url:\s*"([^"]*)"', t, re.M)
+          chave = re.search(r'^\s*chavePublicavel:\s*"([^"]*)"', t, re.M)
+          print(f"URL={url.group(1) if url else ''}")
+          print(f"CHAVE={chave.group(1) if chave else ''}")
+          PY
+          . /tmp/pulso.env
+          if [ -z "$URL" ] || [ -z "$CHAVE" ]; then echo "Contas não configuradas: pulso ignorado."; exit 0; fi
+          case "$CHAVE" in sb_secret_*) echo "::error::conta-config.js tem uma chave SECRETA. Troque pela publishable."; exit 1;; esac
+          if curl -fsS -m 30 -X POST "$URL/rest/v1/rpc/pulso" -H "apikey: $CHAVE" -H "Content-Type: application/json" -d '{}'; then
+            echo " <- pulso ok"
+          else
+            echo "::warning::Não foi possível chamar pulso() no Supabase."
+          fi
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

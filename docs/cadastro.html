@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Criar conta · Radar de Oportunidades</title>
+<meta name="description" content="Crie uma conta opcional no Radar de Oportunidades.">
+<meta name="theme-color" content="#0b4a8b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icones/icone-192.png">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body class="com-abas">
+<a class="pular" href="#conteudo">Ir para o conteúdo</a>
+<header class="topo">
+  <div class="topo-dentro">
+    <a class="marca-link" href="./">
+      <svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round">
+        <circle cx="24" cy="24" r="20" stroke-opacity=".55"/><circle cx="24" cy="24" r="12" stroke-opacity=".8"/>
+        <path d="M24 24 L37 11"/><circle cx="24" cy="24" r="3" fill="#fff" stroke="none"/>
+      </svg>
+      <span><strong>Radar de Oportunidades</strong><span>Editais, bolsas, seleções, eventos e vagas em um só lugar</span></span>
+    </a>
+    <div class="acoes-topo">
+      <a class="botao-instalar" id="acao-conta" href="entrar.html" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+        <span id="acao-conta-rotulo">Entrar</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="conteudo" class="vista" tabindex="-1">
+<div class="pagina-estreita">
+<div class="cabeca-pagina">
+  <div class="ico-grande"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="4"/><path d="M2 21c0-4 4-6 8-6 2 0 3.5.4 4.8 1.1M19 14v6M16 17h6"/></svg></div>
+  <div><h1 id="titulo" tabindex="-1">Criar conta</h1>
+    <p>O cadastro é opcional e serve para salvar oportunidades e guardar suas preferências.</p></div>
+</div>
+<div class="conta-grade" id="area">
+  <div class="lateral">
+    <section class="painel lateral" aria-label="Por que ter uma conta">
+    <div class="beneficios">
+      <div class="beneficio"><div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg></div>
+        <div><strong>Salve oportunidades</strong><span>Marque editais, bolsas, eventos e vagas para ver depois, em qualquer aparelho.</span></div></div>
+      <div class="beneficio"><div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></div>
+        <div><strong>Personalize o Radar</strong><span>Suas áreas e tipos de interesse viram os filtros da lista.</span></div></div>
+      <div class="beneficio"><div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></div>
+        <div><strong>Acompanhe seus prazos</strong><span>Adicione prazos à sua agenda com um toque.</span></div></div>
+      <p class="caixa-info"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>A conta é opcional: o Radar funciona sem ela.</span></p>
+    </div>
+  </section>
+    <p class="alerta-laranja"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16h.01"/></svg><span>Somente e-mail e senha são obrigatórios.</span></p>
+  </div>
+  <section class="painel" id="painel" aria-labelledby="titulo">
+    <form class="form" id="form-cadastro" novalidate>
+      <label class="campo">E-mail institucional ou pessoal <span class="obrigatorio" aria-hidden="true">*</span>
+        <input type="email" name="email" autocomplete="email" required placeholder="seu@email.com"></label>
+      <div class="grade-campos">
+        <label class="campo">Senha <span class="obrigatorio" aria-hidden="true">*</span>
+          <span class="senha"><input type="password" name="senha" id="senha" autocomplete="new-password" required minlength="8" aria-describedby="dica-senha" placeholder="Crie uma senha"><button type="button" class="mostrar-senha" aria-label="Mostrar senha" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span>
+          <span class="areas" id="dica-senha">Pelo menos 8 caracteres, com letras e números.</span></label>
+        <label class="campo">Confirmar senha <span class="obrigatorio" aria-hidden="true">*</span>
+          <span class="senha"><input type="password" name="confirmar" id="confirmar" autocomplete="new-password" required minlength="8" placeholder="Repita a senha"><button type="button" class="mostrar-senha" aria-label="Mostrar senha" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
+      </div>
+      <div class="grade-campos">
+        <label class="campo"><span>Nome de exibição <span class="opcional">Opcional</span></span>
+          <input name="nome_exibicao" maxlength="80" autocomplete="nickname" placeholder="Como você quer ser chamado(a)"></label>
+        <label class="campo"><span>Vínculo <span class="opcional">Opcional</span></span>
+          <select name="vinculo" id="vinculo"><option value="">Selecione seu vínculo</option></select></label>
+        <label class="campo"><span>Curso ou área <span class="opcional">Opcional</span></span>
+          <input name="curso_area" maxlength="120" placeholder="Ex.: Sistemas de Informação"></label>
+      </div>
+      <div id="preferencias" class="form"></div>
+      <div class="caixa-info"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div class="form">
+          <label class="marcar"><input type="checkbox" name="termos" required>
+            <span>Li e aceito os <a href="termos.html" target="_blank">Termos de Uso</a> e a <a href="privacidade.html" target="_blank">Política de Privacidade</a>, e declaro ter 18 anos ou mais. <span class="obrigatorio">(obrigatório)</span></span></label>
+        </div>
+      </div>
+      <label class="marcar"><input type="checkbox" name="quer_newsletter">
+        <span>Quero receber a newsletter e alertas por e-mail. <span class="areas">Opcional; você pode cancelar quando quiser. O envio começa em breve.</span></span></label>
+      <button type="submit" class="botao botao-primario" id="botao-criar">Criar conta</button>
+      <a class="link-botao" href="entrar.html">Já tenho conta</a>
+      <p class="rodape-form"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span>Seus dados são tratados conforme a Lei Geral de Proteção de Dados (LGPD). Veja a <a href="privacidade.html">Política de Privacidade</a>.</span></p>
+    </form>
+  </section>
+</div>
+</div>
+</main>
+
+<footer class="rodape">
+  <div class="rodape-dentro">
+    <p><a href="./">Oportunidades</a> · <a href="privacidade.html">Privacidade</a> · <a href="termos.html">Termos de uso</a></p>
+    <p>O Radar só reúne e divulga oportunidades. A inscrição é feita no edital original.</p>
+  </div>
+</footer>
+
+<nav class="abas" aria-label="Navegação principal">
+  <a href="./"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>Início</a>
+  <a href="./#busca"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Buscar</a>
+  <a href="prazos.ics" type="text/calendar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>Calendário</a>
+  <a href="entrar.html" id="aba-salvos" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Salvos</a>
+  <a href="entrar.html" id="aba-perfil" hidden aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Perfil</a>
+</nav>
+<script src="conta-config.js"></script>
+<script src="js/comum.js"></script>
+<script src="js/cadastro.js"></script>
+</body>
+</html>

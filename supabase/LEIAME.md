@@ -1,106 +1,102 @@
-# Cadastro e entrada no Radar (Supabase)
+# Contas opcionais (Supabase)
 
-O cadastro é **opcional** e vem **desligado**. Enquanto `config/app.yaml` estiver
-incompleto, o site e o aplicativo não mostram o botão "Entrar" e não coletam
-nenhum dado pessoal.
+As contas vêm **desligadas**. Enquanto `docs/conta-config.js` estiver vazio, o
+site funciona como antes: não aparece "Entrar", a biblioteca do Supabase nem é
+baixada e nenhum dado pessoal é coletado.
 
-## O que já está pronto
+## O que existe
 
-- `schema.sql`: tabelas, regras de acesso (cada pessoa só lê e altera os próprios
-  dados), histórico de consentimentos gravado pelo servidor, exclusão da própria
-  conta e uma visão sem identificação para os estudos.
-- `docs/conta.js`: entrada por código enviado ao e-mail (sem senha), cadastro,
-  Minha conta (ver, editar, baixar, retirar autorização, excluir) e sincronização
-  dos filtros entre aparelhos.
-- `modelo_privacidade.html`: política de privacidade e termos de uso. Vira
-  `docs/privacidade.html`, já com o nome e o e-mail do controlador.
+| Arquivo | Para quê |
+|---|---|
+| `supabase/esquema.sql` | Tabelas `perfis`, `favoritos` e `consentimentos`; RLS; gatilhos; `excluir_minha_conta()`; `pulso()`; privilégios |
+| `docs/conta-config.js` | URL do projeto, chave publicável e controlador (você preenche) |
+| `docs/entrar.html`, `cadastro.html`, `personalizar.html`, `conta.html` | Telas de conta |
+| `docs/oportunidade.html?id=…` | Detalhe da oportunidade, favoritar e prazo na agenda |
+| `docs/privacidade.html`, `docs/termos.html` | Política e termos em linguagem simples |
+| `docs/vendor/supabase-js-2.118.0.js` | Biblioteca fixada (ver `docs/vendor/LEIAME.md`) |
+| `supabase/testes/` | Testes de segurança do banco (PostgreSQL local) |
+| `tests/e2e/contas.test.js` | Teste das telas com o Supabase simulado (Playwright) |
 
-## Passo a passo para ativar
+## Passo a passo no painel do Supabase
 
-1. **Criar o projeto.** Em <https://supabase.com>, crie uma conta e um projeto
-   novo. Em *Region*, escolha **South America (São Paulo)**: assim os dados ficam
-   no Brasil e não há transferência internacional. Guarde a senha do banco num
-   gerenciador de senhas. Ela não vai para o repositório.
+1. **Criar o projeto.** Em <https://supabase.com/dashboard>, use *New project*.
+   - Em *Region*, escolha **South America (São Paulo)**: assim os dados ficam no
+     Brasil.
+   - Guarde a senha do banco num gerenciador de senhas. Ela não vai para o
+     repositório.
 
-2. **Criar as tabelas.** No projeto, abra *SQL Editor*, cole todo o conteúdo de
-   `supabase/schema.sql` e clique em *Run*. Pode rodar de novo depois de
-   atualizações: o script não apaga dados. **Rode de novo sempre que o arquivo
-   mudar** (ex.: a coluna `favoritos` foi acrescentada depois).
+2. **Criar as tabelas.** Abra *SQL Editor → New query*, cole todo o
+   `supabase/esquema.sql` e clique em *Run*. Rode de novo sempre que esse
+   arquivo mudar: o script não apaga dados.
 
-3. **Entrada por código.**
-   - Em *Authentication → Sign In / Providers → Email*, deixe *Email* habilitado.
-   - Em *Authentication → Emails → Templates*, edite **Magic Link** e
-     **Confirm signup** para mostrar o código. Exemplo:
+3. **Autenticação por e-mail.** Abra *Authentication → Sign In / Providers →
+   Email*.
+   - Deixe **Email** ligado e **Confirm email** ligado (recomendado).
+   - Em *Minimum password length*, use **8** ou mais. Em *Password
+     requirements*, escolha **letras e números**.
+   - Se quiser exigir a senha atual para trocar de senha, ligue *Secure password
+     change*.
 
-     ```html
-     <h2>Seu código de acesso ao Radar de Oportunidades</h2>
-     <p>Digite este código no aplicativo: <strong>{{ .Token }}</strong></p>
-     <p>Ele vale por poucos minutos. Se você não pediu, ignore este e-mail.</p>
-     ```
+4. **Endereços permitidos.** Abra *Authentication → URL Configuration*.
+   - *Site URL*: `https://valbergregory.github.io/radar-oportunidades/`
+   - *Redirect URLs*: acrescente
+     `https://valbergregory.github.io/radar-oportunidades/**`. É para onde
+     voltam a confirmação de e-mail (personalizar.html), o link mágico e a
+     recuperação de senha (conta.html).
 
-   - Em *Authentication → URL Configuration*, ponha em *Site URL* o endereço do
-     site: `https://valbergregory.github.io/radar-oportunidades/`.
+5. **E-mail de envio (obrigatório para uso real).** O envio padrão do Supabase
+   só entrega para a equipe do projeto e tem limite baixo. Configure um provedor
+   (Brevo, Resend, Amazon SES ou outro) em *Authentication → Emails → SMTP
+   Settings*, com um remetente seu. Em *Emails → Templates*, traduza para o
+   português os modelos *Confirm signup*, *Magic Link* e *Reset Password*.
 
-4. **E-mail de envio (obrigatório para uso real).** O envio padrão do Supabase só
-   entrega para os e-mails da equipe do projeto e tem limite baixo por hora.
-   Configure um provedor em *Authentication → Emails → SMTP Settings* (por exemplo
-   Brevo, Resend ou Amazon SES). Use um remetente seu, como
-   `radar@seudominio.com.br`.
+6. **Proteção contra abuso.** Em *Authentication → Rate Limits*, mantenha
+   limites baixos de envio. Se houver abuso, ligue o CAPTCHA em *Attack
+   Protection*.
 
-5. **Proteção contra abuso (recomendado).** Em *Authentication → Rate Limits*,
-   mantenha limites baixos para envio de e-mail. Se houver abuso, ative o CAPTCHA
-   em *Attack Protection*.
+7. **Copiar a chave pública.** Em *Project Settings → API Keys*, copie a
+   **Publishable key** (`sb_publishable_…`). Em *Project Settings → Data API*,
+   copie a **Project URL**. Cole as duas em `docs/conta-config.js` e preencha o
+   `controlador` (seu nome e um e-mail de contato).
+   - **Nunca** use a *Secret key* (`sb_secret_…`) nem a antiga `service_role`.
+     O site recusa essas chaves, o fluxo do GitHub falha se encontrar uma e o
+     teste `tests/test_site.py` também.
+   - Faça commit de `docs/conta-config.js`. A chave publicável é pública por
+     natureza: quem protege os dados são as regras do `esquema.sql`.
 
-6. **Ligar no Radar.** Em *Project Settings → API*, copie a *Project URL* e a
-   *anon public key* para `config/app.yaml`, e preencha o `controlador` (seu nome
-   e um e-mail de contato para pedidos sobre dados). Depois:
+8. **Projeto ativo.** Com `conta-config.js` preenchido, o fluxo diário do
+   GitHub chama `pulso()`, e o projeto gratuito não é pausado por inatividade.
 
-   ```bash
-   python radar.py gerar --perfil valber
-   ```
+9. **Revisar a política.** Leia `docs/privacidade.html` e `docs/termos.html`. O
+   texto é um modelo: revise com quem entende de LGPD antes de divulgar. Se
+   houver pesquisa acadêmica com os dados, verifique a necessidade de aprovação
+   por um Comitê de Ética em Pesquisa (CEP).
+   - Ao mudar esses textos, aumente `versaoTermos` em `conta-config.js`: quem
+     já tem conta terá de aceitar a nova versão.
 
-   Faça commit de `config/app.yaml` e `docs/`. A chave *anon* é pública por
-   natureza: quem protege os dados são as regras do `schema.sql`. **Nunca**
-   coloque a chave *service_role* no repositório nem no site.
+## Rotina recomendada
 
-7. **Revisar a política.** Leia `docs/privacidade.html` gerado. O texto é um
-   modelo: revise com quem entende de LGPD antes de divulgar. Se os dados forem
-   usados em **pesquisa acadêmica com seres humanos**, verifique também se o
-   estudo precisa ser aprovado por um Comitê de Ética em Pesquisa (CEP).
+- **Contas não confirmadas.** O perfil é criado no cadastro. Se alguém nunca
+  confirmar o e-mail, apague a conta depois de alguns dias. No SQL Editor:
+  ```sql
+  delete from auth.users where email_confirmed_at is null and created_at < now() - interval '7 days';
+  ```
+- **Pedidos por e-mail.** Quase tudo o titular faz sozinho em *Minha conta*. Se
+  alguém pedir por e-mail, confirme que o pedido vem do mesmo endereço e use
+  *Authentication → Users → Delete user*: perfil, favoritos e histórico são
+  apagados junto. Responda em até 15 dias.
+- **Estudos.** Use `select * from pesquisa.perfis_sem_identificacao;` (só quem
+  autorizou, sem identificação). Publique apenas números agregados, em grupos
+  de 5 pessoas ou mais.
 
-8. **Mudou a política?** Altere o texto em `modelo_privacidade.html`, aumente
-   `privacidade.versao` em `config/app.yaml` e gere de novo. Quem já tem conta
-   precisará aceitar a nova versão na próxima entrada.
-
-## Para os estudos
-
-Só entram as pessoas que autorizaram, sem nome, e-mail nem identificador. No
-*SQL Editor*:
-
-```sql
-select * from pesquisa.perfis_sem_identificacao;
--- exemplo de agregado, mostrando só grupos de 5 pessoas ou mais
-select vinculo, uf, count(*) from pesquisa.perfis_sem_identificacao
-group by vinculo, uf having count(*) >= 5 order by count(*) desc;
-```
-
-Use *Export → CSV* para levar a uma planilha. Ao publicar resultados, mostre só
-agregados: curso, instituição e município juntos podem identificar alguém num
-grupo pequeno.
-
-## Pedidos de titulares por e-mail
-
-Quase tudo a pessoa faz sozinha em *Minha conta*. Se alguém pedir por e-mail,
-confirme que o pedido vem do mesmo endereço cadastrado. Para excluir pelo painel,
-use *Authentication → Users → Delete user*: perfil e histórico são apagados
-junto. Responda em até 15 dias.
-
-## Testes do banco (opcional, num PostgreSQL local)
+## Testes
 
 ```bash
+# Banco (num PostgreSQL local vazio, nunca no Supabase):
 cd supabase/testes
-psql -v ON_ERROR_STOP=1 -d banco_de_teste -f imitacao_supabase.sql -f ../schema.sql -f seguranca.sql
-```
+psql -v ON_ERROR_STOP=1 -d banco_vazio -f imitacao_supabase.sql -f ../esquema.sql -f seguranca.sql
 
-Use um banco vazio, **nunca o do Supabase**. Deve terminar com
-`TODOS OS TESTES DE SEGURANCA PASSARAM`.
+# Telas, com o Supabase simulado (precisa de Node e do Playwright com o Chromium):
+python radar.py gerar --perfil valber
+node tests/e2e/contas.test.js
+```

@@ -12,285 +12,9 @@
 <link rel="apple-touch-icon" href="icones/icone-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Radar">
-<style>
-  :root {
-    color-scheme: light;
-    --fundo:#f4f6fa; --cartao:#fff; --texto:#14213d; --suave:#4a5568; --borda:#d9e0ea;
-    --marca:#0b4a8b; --realce:#e8f0fb; --foco:#c2410c; --campo:#7b8799;
-    --etq-fundo:#dbe8f8; --etq-texto:#0b4a8b;
-    --urg-fundo:#ffedd5; --urg-texto:#9a3412;
-    --nor-fundo:#dbe8f8; --nor-texto:#0b4a8b;
-    --sem-fundo:#e9ecf1; --sem-texto:#3f4754;
-    --sombra:0 1px 2px rgba(20,33,61,.06), 0 2px 8px rgba(20,33,61,.06);
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      color-scheme: dark;
-      --fundo:#0f1620; --cartao:#18212d; --texto:#e7edf5; --suave:#a9b4c2; --borda:#2c3746;
-      --marca:#8cc4ff; --realce:#1c2a3b; --foco:#fdba74; --campo:#6b7789;
-      --etq-fundo:#16324f; --etq-texto:#b9d9ff;
-      --urg-fundo:#4a2410; --urg-texto:#fdba74;
-      --nor-fundo:#16324f; --nor-texto:#b9d9ff;
-      --sem-fundo:#2a323d; --sem-texto:#c4ccd6;
-      --sombra:none;
-    }
-  }
-  * { box-sizing:border-box; }
-  html { -webkit-text-size-adjust:100%; }
-  body { margin:0; font:16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-         background:var(--fundo); color:var(--texto); }
-  svg { flex:none; }
-  button, input, select { font:inherit; color:inherit; }
-  :focus-visible { outline:3px solid var(--foco); outline-offset:2px; }
-  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);
-             white-space:nowrap; margin:-1px; padding:0; border:0; }
-  .pular { position:absolute; left:8px; top:-60px; z-index:50; background:#fff; color:#0b4a8b;
-           padding:8px 12px; border-radius:8px; font-weight:600; }
-  .pular:focus { top:8px; }
-
-  /* Cabeçalho */
-  .topo { background:linear-gradient(135deg, #0b4a8b 0%, #083a6e 100%); color:#fff;
-          padding:calc(16px + env(safe-area-inset-top)) 16px 20px;
-          border-bottom-right-radius:28px; }
-  .topo-dentro { max-width:1280px; margin:0 auto; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
-  .marca { display:flex; gap:12px; align-items:center; flex:1 1 260px; min-width:0; }
-  .marca svg { width:48px; height:48px; }
-  .topo h1 { margin:0; font-size:1.55rem; line-height:1.1; letter-spacing:-.01em; }
-  .topo .sub { margin:4px 0 0; font-size:.95rem; color:#e3ecf8; }
-  .topo .atual { margin:6px 0 0; font-size:.85rem; color:#d2e0f2; }
-  .topo .atual:empty { display:none; }
-  .botao-instalar { display:inline-flex; align-items:center; gap:8px; min-height:44px; background:#fff; color:#0b4a8b;
-                    border:0; border-radius:999px; padding:8px 16px; font-weight:700; cursor:pointer; }
-  .topo :focus-visible { outline-color:#fdba74; }
-  .acoes-topo { display:flex; gap:8px; flex-wrap:wrap; }
-  @media (min-width:900px) { .topo h1 { font-size:2rem; } .topo .sub { font-size:1.05rem; } .marca svg { width:60px; height:60px; } }
-
-  /* Estrutura */
-  .corpo { max-width:1280px; margin:0 auto; padding:16px 16px 32px; }
-  @media (min-width:900px) {
-    .corpo { display:grid; grid-template-columns:280px 1fr; gap:28px; align-items:start; padding-top:24px; }
-  }
-
-  /* Barra de busca e ações */
-  .barra { display:flex; gap:10px; flex-wrap:wrap; }
-  .busca { position:relative; flex:1 1 280px; }
-  .busca svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:20px; height:20px; color:var(--suave); pointer-events:none; }
-  .busca input { width:100%; min-height:48px; padding:10px 12px 10px 42px; border:1px solid var(--campo);
-                 border-radius:12px; background:var(--cartao); }
-  .busca input::placeholder { color:var(--suave); opacity:1; }
-  .botao { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px;
-           padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; text-decoration:none;
-           border:2px solid var(--marca); }
-  .botao svg { width:20px; height:20px; }
-  .botao-primario { background:#0b4a8b; border-color:#0b4a8b; color:#fff; }
-  .botao-secundario { background:var(--cartao); color:var(--marca); }
-  .botao-claro { background:var(--realce); color:var(--marca); border-color:transparent; width:100%; }
-  .barra .botao-secundario { flex:1 1 auto; }
-  @media (min-width:600px) { .barra .botao-secundario { flex:0 0 auto; } }
-
-  .resumo { display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap; margin:16px 0 12px; }
-  .conta { margin:0; font-size:1.05rem; font-weight:700; flex:1 1 auto; }
-  .conta strong { color:var(--marca); font-size:1.6rem; margin-right:2px; vertical-align:-2px; }
-  .ordem { display:flex; align-items:center; gap:8px; color:var(--suave); font-size:.95rem; }
-  .ordem select { min-height:44px; padding:6px 10px; border:1px solid var(--campo); border-radius:10px; background:var(--cartao); color:var(--texto); }
-  @media (max-width:899px) {
-    .ordem { order:3; width:100%; } .ordem select { flex:1; }
-    .conta { font-size:1rem; } .conta strong { font-size:1.4rem; }
-    #abrir-filtros { padding:8px 14px; }
-  }
-  @media (max-width:479px) {
-    .cartao { grid-template-columns:44px 1fr auto; gap:10px; padding:12px; }
-    .ico { width:44px; height:44px; border-radius:12px; } .ico svg { width:24px; height:24px; }
-    .prazo { min-width:84px; }
-  }
-  @media (min-width:900px) { #abrir-filtros { display:none; } .conta { font-size:1.25rem; } }
-
-  .aviso { margin:0 0 12px; padding:10px 14px; border-radius:10px; background:var(--sem-fundo); color:var(--sem-texto); font-size:.92rem; }
-
-  /* Filtros: folha inferior no celular, coluna fixa no computador */
-  .filtros { background:var(--cartao); }
-  .filtros fieldset { border:0; margin:0 0 14px; padding:12px 14px; border-radius:14px; background:var(--realce); min-width:0; }
-  .filtros legend { float:left; width:100%; padding:0 0 6px; font-weight:700; font-size:1.05rem; color:var(--marca); }
-  .filtros label { display:flex; align-items:center; gap:10px; min-height:40px; cursor:pointer; clear:left; }
-  .filtros input[type=checkbox] { width:20px; height:20px; accent-color:#0b4a8b; margin:0; flex:none; }
-  .folha-topo { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
-  .folha-topo h2 { margin:0; font-size:1.2rem; }
-  .fechar { background:none; border:0; width:44px; height:44px; border-radius:50%; cursor:pointer; color:var(--texto); display:inline-flex; align-items:center; justify-content:center; }
-  .fechar svg { width:24px; height:24px; }
-  .acoes-filtro { display:grid; gap:10px; }
-  @media (max-width:899px) {
-    .filtros { position:fixed; inset:auto 0 0 0; z-index:30; max-height:85vh; max-height:85dvh; overflow:auto;
-               padding:16px 16px calc(16px + env(safe-area-inset-bottom)); border-radius:20px 20px 0 0;
-               box-shadow:0 -8px 30px rgba(0,0,0,.25); }
-    .filtros:not(.aberto) { display:none; }
-    .fundo-folha { position:fixed; inset:0; z-index:29; background:rgba(8,20,40,.5); }
-  }
-  @media (min-width:900px) {
-    .filtros { background:none; position:sticky; top:16px; }
-    .folha-topo, #ver-resultados, .fundo-folha { display:none !important; }
-  }
-
-  /* Cartões */
-  .lista { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
-  .lista:focus { outline:none; }
-  .cartao { position:relative; display:grid; grid-template-columns:56px 1fr auto; gap:12px;
-            align-items:start; background:var(--cartao); border:1px solid var(--borda);
-            border-radius:16px; padding:14px; box-shadow:var(--sombra); }
-  .cartao:hover { border-color:var(--marca); }
-  .cartao:focus-within { outline:3px solid var(--foco); outline-offset:2px; }
-  .ico { width:56px; height:56px; border-radius:14px; background:var(--etq-fundo); color:var(--etq-texto);
-         display:flex; align-items:center; justify-content:center; }
-  .ico svg { width:30px; height:30px; }
-  .info { min-width:0; }
-  .cartao h3 { margin:0 0 2px; font-size:1.02rem; line-height:1.3; }
-  .cartao h3 a { color:var(--texto); text-decoration:none; overflow-wrap:anywhere; }
-  .cartao h3 a:focus-visible { outline:none; }
-  .cartao h3 a::after { content:""; position:absolute; inset:0; border-radius:16px; }
-  .cartao:hover h3 a { color:var(--marca); text-decoration:underline; }
-  .orgao, .areas { margin:2px 0; color:var(--suave); font-size:.9rem; }
-  .areas { font-size:.85rem; }
-  .etq { display:inline-block; margin:4px 0; padding:2px 10px; border-radius:999px; font-size:.8rem; font-weight:700;
-         background:var(--etq-fundo); color:var(--etq-texto); }
-  .prazo { display:flex; flex-direction:column; align-items:flex-start; padding:8px 10px; border-radius:12px;
-           font-size:.82rem; line-height:1.2; min-width:92px; }
-  .prazo svg { width:18px; height:18px; margin-bottom:4px; }
-  .prazo strong { font-size:1.05rem; }
-  .prazo small { display:none; margin-top:4px; font-size:.8rem; }
-  .prazo-urgente { background:var(--urg-fundo); color:var(--urg-texto); }
-  .prazo-normal { background:var(--nor-fundo); color:var(--nor-texto); }
-  .prazo-sem { background:var(--sem-fundo); color:var(--sem-texto); }
-  .seta { display:none; width:22px; height:22px; color:var(--marca); align-self:center; }
-  @media (min-width:900px) {
-    .cartao { grid-template-columns:64px 1fr 200px 22px; gap:16px; padding:16px 18px; align-items:center; }
-    .ico { width:64px; height:64px; }
-    .cartao h3 { font-size:1.12rem; }
-    .prazo small { display:block; }
-    .seta { display:block; }
-  }
-  .vazio { text-align:center; padding:32px 16px; background:var(--cartao); border:1px dashed var(--borda); border-radius:16px; }
-  .vazio p { margin:0 0 12px; }
-
-  /* Convite de instalação */
-  .convite { position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); z-index:20;
-             max-width:520px; margin:0 auto; display:flex; gap:12px; align-items:center; flex-wrap:wrap;
-             padding:14px 16px; border-radius:16px; background:#083a6e; color:#fff; box-shadow:0 8px 30px rgba(0,0,0,.3); }
-  .convite p { margin:0; flex:1 1 220px; font-size:.95rem; }
-  .convite .botoes { display:flex; gap:8px; }
-  .convite button { min-height:44px; border-radius:10px; padding:6px 14px; font-weight:700; cursor:pointer; }
-  .convite .sim { background:#fff; color:#083a6e; border:0; }
-  .convite .nao { background:transparent; color:#fff; border:2px solid #fff; }
-  .convite :focus-visible { outline-color:#fdba74; }
-
-  /* Rodapé */
-  .rodape { max-width:1280px; margin:0 auto; padding:0 16px calc(96px + env(safe-area-inset-bottom)); color:var(--suave); font-size:.9rem; }
-  .rodape-dentro { display:flex; flex-wrap:wrap; gap:8px 20px; justify-content:space-between; align-items:center; padding:16px; border-radius:14px; background:var(--realce); }
-  .rodape p { margin:0; }
-  .rodape .alerta { font-weight:700; color:var(--texto); display:flex; gap:8px; align-items:center; }
-  .rodape .alerta svg { width:20px; height:20px; color:var(--marca); }
-  .rodape a { color:var(--marca); font-weight:700; }
-  /* Páginas (oportunidade, entrar, conta) */
-  .vista { max-width:1280px; margin:0 auto; padding:16px 16px 32px; }
-  .cabeca-pagina { display:flex; gap:14px; align-items:flex-start; margin:4px 0 18px; }
-  .ico-grande { width:56px; height:56px; border-radius:16px; background:var(--etq-fundo); color:var(--etq-texto);
-                display:flex; align-items:center; justify-content:center; flex:none; }
-  .ico-grande svg { width:30px; height:30px; }
-  .cabeca-pagina h1 { margin:0; font-size:1.6rem; line-height:1.15; color:var(--texto); }
-  .cabeca-pagina h1:focus { outline:none; }
-  .cabeca-pagina p { margin:4px 0 0; color:var(--suave); }
-  .painel { background:var(--cartao); border:1px solid var(--borda); border-radius:18px; padding:18px;
-            box-shadow:var(--sombra); margin-bottom:16px; }
-  .painel h2 { margin:0 0 8px; font-size:1.25rem; color:var(--texto); }
-  .painel h3 { margin:0 0 8px; font-size:1.05rem; color:var(--marca); }
-  .painel p { margin:6px 0; }
-  .detalhe-grade, .conta-grade { display:grid; gap:16px; align-items:start; }
-  .destaque { display:grid; grid-template-columns:auto 1fr; gap:14px; }
-  .destaque .ico { width:64px; height:64px; }
-  .destaque h2 { font-size:1.3rem; overflow-wrap:anywhere; }
-  .linha-icone { display:flex; gap:8px; align-items:center; color:var(--suave); margin:6px 0; flex-wrap:wrap; }
-  .linha-icone svg { width:20px; height:20px; }
-  .linha-icone strong { color:var(--texto); }
-  .chips { display:flex; flex-wrap:wrap; gap:8px; }
-  .chip { display:inline-block; padding:3px 12px; border-radius:999px; background:var(--etq-fundo); color:var(--etq-texto);
-          font-size:.88rem; font-weight:600; }
-  .selo-texto { display:inline-block; padding:4px 12px; border-radius:999px; font-weight:700; }
-  .dupla { display:grid; gap:16px; }
-  .checklist { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
-  .checklist li { display:flex; gap:10px; align-items:flex-start; }
-  .checklist svg { width:22px; height:22px; color:var(--marca); flex:none; }
-  .ferramentas { display:grid; gap:10px; align-content:start; }
-  .botao[aria-pressed="true"] { background:var(--etq-fundo); }
-  .botao:disabled { opacity:.55; cursor:not-allowed; }
-  .alerta-laranja { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:14px;
-                    background:var(--urg-fundo); color:var(--urg-texto); margin:0 0 16px; }
-  .alerta-laranja svg { width:22px; height:22px; flex:none; }
-  .acoes { display:flex; gap:12px; flex-wrap:wrap; }
-  .acoes .botao { flex:1 1 220px; }
-  .resumo-rapido dl { margin:0; display:grid; gap:0; }
-  .resumo-rapido .item { display:grid; grid-template-columns:28px 1fr; gap:10px; padding:10px 0; border-top:1px solid var(--borda); }
-  .resumo-rapido .item:first-child { border-top:0; }
-  .resumo-rapido svg { width:24px; height:24px; color:var(--marca); }
-  .resumo-rapido dt { font-weight:700; color:var(--texto); }
-  .resumo-rapido dd { margin:0; color:var(--suave); overflow-wrap:anywhere; }
-  .salvo { display:inline-flex; gap:4px; align-items:center; margin-left:6px; font-size:.8rem; font-weight:700; color:var(--marca); }
-  .salvo svg { width:14px; height:14px; }
-  @media (min-width:900px) {
-    .detalhe-grade { grid-template-columns:1fr 340px; }
-    .dupla { grid-template-columns:1fr 1fr; }
-    .cabeca-pagina h1 { font-size:2rem; }
-  }
-  /* Formulários da conta */
-  .conta-grade .beneficios { display:grid; gap:14px; }
-  .beneficio { display:grid; grid-template-columns:48px 1fr; gap:12px; align-items:start; }
-  .beneficio .ico { width:48px; height:48px; }
-  .beneficio strong { display:block; color:var(--texto); }
-  .beneficio span { color:var(--suave); font-size:.92rem; }
-  .form { display:grid; gap:14px; }
-  .form .grade-campos { display:grid; gap:12px; }
-  .campo { display:grid; gap:4px; font-weight:600; }
-  .campo .dica, .opcional { font-weight:600; font-size:.75rem; color:var(--etq-texto); background:var(--etq-fundo);
-                            border-radius:999px; padding:1px 8px; justify-self:start; }
-  .form input:not([type=checkbox]), .form select { min-height:46px; padding:8px 12px; border:1px solid var(--campo);
-            border-radius:12px; background:var(--cartao); color:var(--texto); font:inherit; width:100%; }
-  .form input::placeholder { color:var(--suave); opacity:1; }
-  .marcar { display:flex; gap:10px; align-items:flex-start; font-weight:400; }
-  .marcar input { width:20px; height:20px; margin:2px 0 0; accent-color:#0b4a8b; flex:none; }
-  .chips-escolha { display:flex; flex-wrap:wrap; gap:8px; border:0; padding:0; margin:0; }
-  .chips-escolha legend { font-weight:700; color:var(--marca); padding:0; margin-bottom:6px; font-size:1.05rem; }
-  .chip-check { display:inline-flex; gap:8px; align-items:center; min-height:42px; padding:6px 12px; border:1px solid var(--campo);
-                border-radius:12px; cursor:pointer; background:var(--cartao); }
-  .chip-check:has(input:checked) { background:var(--etq-fundo); border-color:var(--marca); font-weight:700; }
-  .chip-check input { width:18px; height:18px; margin:0; accent-color:#0b4a8b; }
-  .preferencias { display:flex; gap:18px; flex-wrap:wrap; align-items:center; padding:12px 14px; border-radius:14px;
-                  background:var(--urg-fundo); color:var(--urg-texto); }
-  .preferencias strong { font-size:1.4rem; }
-  .caixa-info { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:14px; background:var(--realce); }
-  .caixa-info svg { width:22px; height:22px; color:var(--marca); flex:none; }
-  .rodape-form { display:flex; gap:8px; align-items:center; color:var(--suave); font-size:.88rem; border-top:1px solid var(--borda); padding-top:12px; }
-  .rodape-form svg { width:18px; height:18px; flex:none; }
-  .nav-conta { display:grid; gap:4px; }
-  .nav-conta button { display:grid; grid-template-columns:28px 1fr; gap:10px; text-align:left; padding:10px 12px; border:0;
-                      border-left:4px solid transparent; border-radius:10px; background:none; cursor:pointer; color:var(--texto); }
-  .nav-conta button svg { width:24px; height:24px; color:var(--marca); }
-  .nav-conta button span { display:block; color:var(--suave); font-size:.85rem; }
-  .nav-conta button[aria-current="true"] { background:var(--realce); border-left-color:var(--marca); font-weight:700; }
-  .lista-acoes { display:grid; gap:10px; }
-  .lista-acoes button { display:grid; grid-template-columns:28px 1fr 20px; gap:10px; align-items:center; text-align:left; padding:12px 14px;
-                        border:1px solid var(--borda); border-radius:12px; background:var(--cartao); cursor:pointer; color:var(--texto); }
-  .lista-acoes button svg { width:22px; height:22px; color:var(--marca); }
-  .lista-acoes button span { display:block; color:var(--suave); font-size:.88rem; }
-  .lista-acoes button.perigo svg:first-child { color:var(--urg-texto); }
-  .botao-perigo { background:var(--cartao); color:var(--urg-texto); border-color:var(--urg-texto); }
-  .msg { padding:10px 12px; border-radius:10px; background:var(--urg-fundo); color:var(--urg-texto); margin:0 0 12px; }
-  .msg.ok { background:var(--nor-fundo); color:var(--nor-texto); }
-  @media (min-width:900px) {
-    .conta-grade { grid-template-columns:340px 1fr; }
-    .form .grade-campos { grid-template-columns:1fr 1fr; }
-    .conta-grade .lateral { position:sticky; top:16px; }
-  }
-  [hidden] { display:none !important; }
-</style>
+<link rel="stylesheet" href="estilo.css">
 </head>
-<body>
+<body class="com-abas">
 <a class="pular" href="#lista">Ir para a lista de oportunidades</a>
 
 <header class="topo">
@@ -307,14 +31,14 @@
       </div>
     </div>
     <div class="acoes-topo">
-    <button type="button" class="botao-instalar" id="entrar" aria-haspopup="dialog" hidden>
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-      <span id="entrar-rotulo">Entrar</span>
-    </button>
-    <button type="button" class="botao-instalar" id="instalar-topo" hidden>
-      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
-      Instalar aplicativo
-    </button>
+      <a class="botao-instalar" id="acao-conta" href="entrar.html" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+        <span id="acao-conta-rotulo">Entrar</span>
+      </a>
+      <button type="button" class="botao-instalar" id="instalar-topo" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        Instalar aplicativo
+      </button>
     </div>
   </div>
 </header>
@@ -328,11 +52,11 @@
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
+    <fieldset id="campo-favoritos" hidden><legend>Meus favoritos</legend>
+      <label><input type="checkbox" id="so-favoritos"> <span id="so-favoritos-rotulo">Só os meus favoritos</span></label>
+    </fieldset>
     <fieldset><legend>Minhas áreas</legend><div id="areas"></div></fieldset>
     <fieldset><legend>Tipo</legend><div id="tipos"></div></fieldset>
-    <fieldset><legend>Salvas</legend>
-      <label><input type="checkbox" id="so-salvos"> <span id="so-salvos-rotulo">Só as que salvei</span></label>
-    </fieldset>
     <div class="acoes-filtro">
       <button type="button" class="botao botao-primario" id="ver-resultados">Ver resultados</button>
       <button type="button" class="botao botao-claro" id="limpar">
@@ -343,6 +67,7 @@
   </aside>
 
   <main id="conteudo">
+    <p class="msg ok" id="aviso-conta" role="status" hidden></p>
     <div class="barra">
       <div class="busca">
         <label for="busca" class="sr-only">Buscar oportunidade por palavra-chave</label>
@@ -379,9 +104,6 @@
   </main>
 </div>
 
-<!-- Páginas da oportunidade, de entrar e da conta (rotas #oportunidade/…, #entrar, #conta) -->
-<div class="vista" id="vista" hidden></div>
-
 <footer class="rodape">
   <div class="rodape-dentro">
     <p id="atualizado-rodape"></p>
@@ -390,9 +112,17 @@
       Confira sempre o prazo no edital.
     </p>
     <p>Os prazos são estimados automaticamente a partir da página de origem.</p>
-    <p><a href="privacidade.html">Privacidade e termos de uso</a></p>
+    <p><a href="privacidade.html">Privacidade</a> · <a href="termos.html">Termos de uso</a></p>
   </div>
 </footer>
+
+<nav class="abas" aria-label="Navegação principal">
+  <a href="./" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>Início</a>
+  <a href="./#busca"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Buscar</a>
+  <a href="prazos.ics" type="text/calendar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>Calendário</a>
+  <a href="entrar.html" id="aba-salvos" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Salvos</a>
+  <a href="entrar.html" id="aba-perfil" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Perfil</a>
+</nav>
 
 <div class="convite" id="convite" role="region" aria-label="Instalar aplicativo" hidden>
   <p id="convite-texto"></p>
@@ -405,11 +135,11 @@
 <script>
 "use strict";
 const DADOS_EMBUTIDOS = /*DADOS*/null;
-const CONFIG = /*CONFIG*/null;
+// Os mesmos rótulos estão em js/comum.js (páginas de conta e da oportunidade).
 const TIPOS = { "fomento":"Fomento e editais", "bolsa":"Bolsas", "pos-graduacao":"Mestrado e doutorado",
                 "evento":"Congressos e eventos", "concurso-vaga":"Concursos e vagas" };
 const URGENTE_ATE = 14;  // dias: selo laranja até aqui, azul acima
-const CHAVE = "radar-filtros", CHAVE_CONVITE = "radar-convite-dispensado", CHAVE_FAV = "radar-favoritos";
+const CHAVE = "radar-filtros", CHAVE_CONVITE = "radar-convite-dispensado";
 const SEM_REDE = "Você está sem conexão. Mostrando os dados salvos de ";
 
 // Ícones por tipo (traço, 24x24)
@@ -424,21 +154,6 @@ const ICONES = {
 };
 const CALENDARIO = `<svg ${P}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>`;
 const SETA = `<svg class="seta" ${P}><path d="M9 6l6 6-6 6"/></svg>`;
-const SALVO = `<svg ${P} fill="currentColor"><path d="M6 3h12v18l-6-4-6 4z"/></svg>`;
-const ICO = {
-  salvar: `<svg ${P}><path d="M6 3h12v18l-6-4-6 4z"/></svg>`,
-  check: `<svg ${P}><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 12l3 3 5-6"/></svg>`,
-  predio: `<svg ${P}><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6M9 10h.01M15 10h.01"/></svg>`,
-  camadas: `<svg ${P}><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>`,
-  etiqueta: `<svg ${P}><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>`,
-  globo: `<svg ${P}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>`,
-  info: `<svg ${P}><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>`,
-  alerta: `<svg ${P}><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16h.01"/></svg>`,
-  externo: `<svg ${P}><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`,
-  voltar: `<svg ${P}><path d="M19 12H5M11 6l-6 6 6 6"/></svg>`,
-  lista: `<svg ${P}><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v2h6V3M9 10h6M9 14h6M9 18h3"/></svg>`,
-  relogio: `<svg ${P}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
-};
 
 const $ = id => document.getElementById(id);
 const semAcento = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -458,15 +173,7 @@ const estado = {
   semAreas: new Set(Array.isArray(salvo.semAreas) ? salvo.semAreas : []),
   semTipos: new Set(Array.isArray(salvo.semTipos) ? salvo.semTipos : []),
   ordem: salvo.ordem === "recente" ? "recente" : "prazo",
-  soSalvos: salvo.soSalvos === true,
 };
-// Favoritos: guardados no aparelho; com conta, também na conta (conta.js).
-const favoritos = new Set(Array.isArray(lerArmazenado(CHAVE_FAV)) ? lerArmazenado(CHAVE_FAV) : []);
-const ouvintesFav = [];
-function gravarFavoritos(avisar = true) {
-  gravar(CHAVE_FAV, [...favoritos]);
-  if (avisar) for (const f of ouvintesFav) f();
-}
 const valido = d => !!(d && typeof d === "object" && Array.isArray(d.itens) && d.areas);
 let DADOS = valido(DADOS_EMBUTIDOS) ? DADOS_EMBUTIDOS : null;
 
@@ -489,39 +196,22 @@ function dataAtualizacao() {
   return quando ? fmtData.format(quando) : (DADOS.atualizado || "uma visita anterior");
 }
 
-const ouvintesFiltros = [];
 function salvarEstado() {
-  gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], ordem:estado.ordem,
-                  soSalvos:estado.soSalvos });
-  for (const f of ouvintesFiltros) f();
+  gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], ordem:estado.ordem });
 }
 
-// Usada por conta.js para guardar os interesses na conta da pessoa.
+// Pontos de extensão usados por js/conta-index.js (só quando há contas):
+// estrela nos cartões, filtro "Meus favoritos" e preferências da conta.
 window.radar = {
-  config: CONFIG,
-  interesses() {
-    const areas = DADOS ? Object.keys(DADOS.areas) : [];
-    return { areas: areas.filter(a => !estado.semAreas.has(a)),
-             tipos: Object.keys(TIPOS).filter(t => !estado.semTipos.has(t)) };
-  },
+  ganchos: { cartao: [], filtro: [] },
+  redesenhar() { if (DADOS) desenhar(); },
   aplicarInteresses(areas, tipos) {
-    if (!DADOS || !areas.length || !tipos.length) return;
-    estado.semAreas = new Set(Object.keys(DADOS.areas).filter(a => !areas.includes(a)));
-    estado.semTipos = new Set(Object.keys(TIPOS).filter(t => !tipos.includes(t)));
-    gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], ordem:estado.ordem });
-    montarFiltros(); desenhar();
+    if (!DADOS) return false;
+    if (areas.length) estado.semAreas = new Set(Object.keys(DADOS.areas).filter(a => !areas.includes(a)));
+    if (tipos.length) estado.semTipos = new Set(Object.keys(TIPOS).filter(t => !tipos.includes(t)));
+    salvarEstado(); montarFiltros(); desenhar();
+    return true;
   },
-  aoMudarFiltros(f) { ouvintesFiltros.push(f); },
-  opcoes() { return { areas: DADOS ? DADOS.areas : {}, tipos: TIPOS }; },
-  favoritos() { return [...favoritos]; },
-  definirFavoritos(lista) {
-    favoritos.clear(); for (const id of lista) favoritos.add(id);
-    gravarFavoritos(false); desenhar();
-  },
-  aoMudarFavoritos(f) { ouvintesFav.push(f); },
-  el, rota: () => rota(),
-  icones: Object.assign({ calendario: CALENDARIO, salvo: SALVO }, ICO),
-  conta: null,  // preenchido por conta.js: { mostrar(rota, destino) }
 };
 
 function caixas(destino, opcoes, desmarcadas) {
@@ -542,8 +232,6 @@ function montarFiltros() {
   caixas("areas", DADOS.areas, estado.semAreas);
   caixas("tipos", TIPOS, estado.semTipos);
   $("ordem").value = estado.ordem;
-  $("so-salvos").checked = estado.soSalvos;
-  $("so-salvos-rotulo").textContent = "Só as que salvei (" + favoritos.size + ")";
   $("atualizado-topo").textContent = "Última atualização: " + dataAtualizacao();
   $("atualizado-rodape").textContent = "Dados atualizados em " + dataAtualizacao() + ".";
 }
@@ -552,30 +240,17 @@ function nomeArea(slug) {
   return DADOS.areas[slug] || (slug === "geral" ? "Geral (todas as áreas)" : slug);
 }
 
-// Cria elemento: el("a", {href: "#", texto: "oi"}, filho1, ...)
-function el(tag, atributos = {}, ...filhos) {
-  const e = document.createElement(tag);
-  for (const [k, v] of Object.entries(atributos)) {
-    if (v === false || v == null) continue;
-    if (k === "texto") e.textContent = v;
-    else if (k === "html") e.innerHTML = v;  // só para ícones SVG fixos deste arquivo
-    else if (k in e && typeof v !== "string") e[k] = v;
-    else e.setAttribute(k, v === true ? "" : v);
-  }
-  e.append(...filhos.filter(f => f != null));
-  return e;
-}
-
 function filtrar() {
   const termo = semAcento($("busca").value.trim());
   const palavras = termo ? termo.split(/\s+/) : [];
+  const extras = window.radar.ganchos.filtro;
   const itens = DADOS.itens.filter(i => {
     const dias = diasAte(i.prazo);
     if (dias !== null && dias < 0) return false;  // dados guardados offline podem ter vencido
     if (estado.semTipos.has(i.tipo)) return false;
-    if (estado.soSalvos && !favoritos.has(i.id)) return false;
     const areas = i.areas || [];
     if (!areas.includes("geral") && !areas.some(a => !estado.semAreas.has(a))) return false;
+    if (!extras.every(f => f(i))) return false;
     if (!palavras.length) return true;
     const texto = semAcento([i.titulo, i.fonte, TIPOS[i.tipo], ...areas.map(nomeArea)].join(" "));
     return palavras.every(p => texto.includes(p));
@@ -613,19 +288,19 @@ function seloPrazo(i) {
 function cartao(i) {
   const li = document.createElement("li");
   li.className = "cartao";
+  li.dataset.id = i.id || "";
   const ico = document.createElement("div");
   ico.className = "ico"; ico.innerHTML = ICONES[i.tipo] || ICONES.outro;
 
   const info = document.createElement("div"); info.className = "info";
-  li.dataset.id = i.id || "";
   const h = document.createElement("h3"), a = document.createElement("a");
   a.textContent = i.titulo;
-  if (i.id) a.href = "#oportunidade/" + i.id;
+  if (i.id) a.href = "oportunidade.html?id=" + encodeURIComponent(i.id);
   else {  // dados antigos, sem id: vai direto ao edital
     a.href = i.link; a.target = "_blank"; a.rel = "noopener noreferrer";
-    a.append(el("span", { class: "sr-only", texto: " (abre o edital em nova aba)" }));
+    const nova = document.createElement("span"); nova.className = "sr-only";
+    nova.textContent = " (abre o edital em nova aba)"; a.append(nova);
   }
-  if (favoritos.has(i.id)) a.append(el("span", { class: "salvo", html: SALVO + "Salva" }));
   h.append(a);
   const orgao = document.createElement("p"); orgao.className = "orgao";
   orgao.textContent = "Órgão: " + i.fonte;
@@ -637,6 +312,7 @@ function cartao(i) {
 
   li.append(ico, info, seloPrazo(i));
   li.insertAdjacentHTML("beforeend", SETA);
+  for (const f of window.radar.ganchos.cartao) f(li, i);
   return li;
 }
 
@@ -647,181 +323,25 @@ function desenhar() {
   $("vazio").hidden = itens.length > 0;
   const n = document.createElement("strong"); n.textContent = itens.length;
   $("conta").replaceChildren(n, itens.length === 1 ? " oportunidade aberta" : " oportunidades abertas");
-  $("so-salvos-rotulo").textContent = "Só as que salvei (" + favoritos.size + ")";
-  const ativos = estado.semAreas.size + estado.semTipos.size > 0 || estado.soSalvos;
+  const ativos = estado.semAreas.size + estado.semTipos.size > 0 || $("so-favoritos").checked;
   $("filtros-ativos").textContent = ativos ? " (com filtros)" : "";
   $("ver-resultados").textContent = "Ver " + itens.length + (itens.length === 1 ? " resultado" : " resultados");
 }
 
 function limparFiltros() {
-  estado.semAreas.clear(); estado.semTipos.clear(); estado.ordem = "prazo"; estado.soSalvos = false;
+  estado.semAreas.clear(); estado.semTipos.clear(); estado.ordem = "prazo";
   $("busca").value = "";
+  if ($("so-favoritos").checked) { $("so-favoritos").checked = false; $("so-favoritos").dispatchEvent(new Event("change")); }
   salvarEstado(); montarFiltros(); desenhar();
 }
 
-// ---- Página da oportunidade (#oportunidade/<id>)
-function textoIcs(s) {
-  return s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
-}
-function dobrar(linha) {  // linhas do .ics com no máximo ~75 bytes
-  const partes = [];
-  for (let i = 0; i < linha.length; i += 60) partes.push((i ? " " : "") + linha.slice(i, i + 60));
-  return partes.join("\r\n");
-}
-function baixarIcs(i) {
-  const dia = i.prazo.replace(/-/g, "");
-  const fim = dataLocal(i.prazo); fim.setDate(fim.getDate() + 1);
-  const ymd = d => d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
-  const agora = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
-  const linhas = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Radar de Oportunidades//PT-BR",
-    "BEGIN:VEVENT", "UID:" + i.id + "@radar-oportunidades", "DTSTAMP:" + agora,
-    "DTSTART;VALUE=DATE:" + dia, "DTEND;VALUE=DATE:" + ymd(fim),
-    "SUMMARY:" + textoIcs("Prazo: " + i.titulo),
-    "DESCRIPTION:" + textoIcs("Prazo estimado pelo Radar de Oportunidades. Confira no edital: " + i.link),
-    "URL:" + i.link,
-    "BEGIN:VALARM", "TRIGGER:-P3D", "ACTION:DISPLAY", "DESCRIPTION:" + textoIcs("Faltam 3 dias: " + i.titulo), "END:VALARM",
-    "END:VEVENT", "END:VCALENDAR"];
-  const url = URL.createObjectURL(new Blob([linhas.map(dobrar).join("\r\n") + "\r\n"], { type: "text/calendar" }));
-  const a = el("a", { href: url, download: "prazo-" + i.id + ".ics" });
-  document.body.append(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-}
-
-function textoPrazo(i) {
-  const dias = diasAte(i.prazo);
-  if (dias === null) return { texto: "não informado: confira no edital", classe: "prazo-sem" };
-  const quando = dias === 0 ? "hoje" : dias === 1 ? "amanhã" : "em " + dias + " dias";
-  return { texto: "até " + fmtData.format(dataLocal(i.prazo)) + " (" + quando + ")",
-           classe: dias <= URGENTE_ATE ? "prazo-urgente" : "prazo-normal" };
-}
-
-function cabecaPagina(icone, titulo, subtitulo) {
-  return el("div", { class: "cabeca-pagina" },
-    el("div", { class: "ico-grande", html: icone }),
-    el("div", {}, el("h1", { id: "vista-titulo", tabindex: "-1", texto: titulo }),
-       subtitulo ? el("p", { texto: subtitulo }) : null));
-}
-
-function paginaOportunidade(id) {
-  const i = DADOS && DADOS.itens.find(x => x.id === id);
-  if (!i) {
-    return [cabecaPagina(ICO.lista, "Oportunidade não encontrada",
-              "Ela pode ter encerrado ou saído da lista na última atualização."),
-            el("a", { class: "botao botao-primario", href: "#inicio", html: ICO.voltar + "Voltar para oportunidades" })];
-  }
-  document.title = i.titulo + " · Radar de Oportunidades";
-  const prazo = textoPrazo(i);
-  const areas = (i.areas || []).map(nomeArea);
-  const destaque = el("section", { class: "painel destaque", "aria-labelledby": "op-titulo" },
-    el("div", { class: "ico", html: ICONES[i.tipo] || ICONES.outro }),
-    el("div", {},
-      el("h2", { id: "op-titulo", texto: i.titulo }),
-      el("p", { class: "linha-icone", html: ICO.predio }, i.fonte),
-      el("span", { class: "etq", texto: TIPOS[i.tipo] || i.tipo }),
-      el("div", { class: "linha-icone", html: ICO.camadas }, el("strong", { texto: "Áreas:" }),
-         el("span", { class: "chips" }, ...areas.map(a => el("span", { class: "chip", texto: a })))),
-      el("p", { class: "linha-icone", html: CALENDARIO }, el("strong", { texto: "Prazo de inscrição:" }),
-         el("span", { class: "selo-texto " + prazo.classe, texto: prazo.texto }))));
-
-  const salvar = el("button", { type: "button", class: "botao botao-secundario", "aria-pressed": String(favoritos.has(i.id)) });
-  const rotuloSalvar = () => {
-    const sim = favoritos.has(i.id);
-    salvar.setAttribute("aria-pressed", String(sim));
-    salvar.innerHTML = (sim ? SALVO : ICO.salvar) + (sim ? "Salva nos favoritos" : "Salvar nos favoritos");
-  };
-  rotuloSalvar();
-  salvar.addEventListener("click", () => {
-    if (favoritos.has(i.id)) favoritos.delete(i.id); else favoritos.add(i.id);
-    gravarFavoritos(); rotuloSalvar(); desenhar();
-  });
-  const agenda = el("button", { type: "button", class: "botao botao-secundario", disabled: !i.prazo,
-                                html: CALENDARIO + "Adicionar prazo à minha agenda" });
-  agenda.addEventListener("click", () => baixarIcs(i));
-  const ferramentas = el("div", { class: "ferramentas" }, el("h3", { texto: "Ferramentas" }), agenda,
-    i.prazo ? el("p", { class: "areas", texto: "Cria um lembrete 3 dias antes do prazo." })
-            : el("p", { class: "areas", texto: "Sem prazo identificado, não há o que pôr na agenda." }),
-    salvar);
-
-  const marca = t => el("li", { html: ICO.check }, el("span", { texto: t }));
-  const antes = el("section", { class: "painel", "aria-labelledby": "antes-titulo" },
-    el("h2", { id: "antes-titulo", texto: "Antes de continuar" }),
-    el("p", {}, "O Radar ", el("strong", { texto: "apenas reúne e divulga" }),
-       " oportunidades publicadas por outros órgãos. A inscrição é feita ",
-       el("strong", { texto: "no edital ou no portal original" }), "."),
-    el("div", { class: "dupla" },
-      el("ul", { class: "checklist" }, marca("Leia o edital completo"), marca("Verifique os documentos exigidos"),
-         marca("Confirme o prazo final: o daqui é estimado"), marca("Confira os critérios de elegibilidade")),
-      ferramentas));
-
-  const aviso = el("p", { class: "alerta-laranja", html: ICO.alerta },
-    el("span", {}, el("strong", { texto: "Ao prosseguir, você vai para o site de " + i.fonte + "." }),
-       " Nenhum dado seu é enviado a ele."));
-  const acoes = el("div", { class: "acoes" },
-    el("a", { class: "botao botao-primario", href: i.link, target: "_blank", rel: "noopener noreferrer",
-              html: ICO.externo + "Acessar edital original" },
-       el("span", { class: "sr-only", texto: " (abre em nova aba)" })),
-    el("a", { class: "botao botao-secundario", href: "#inicio", html: ICO.voltar + "Voltar para oportunidades" }));
-
-  const item = (icone, termo, valor) => el("div", { class: "item" },
-    el("span", { html: icone }), el("div", {}, el("dt", { texto: termo }), el("dd", { texto: valor })));
-  const resumo = el("aside", { class: "painel resumo-rapido", "aria-labelledby": "resumo-titulo" },
-    el("h2", { id: "resumo-titulo", texto: "Resumo rápido" }),
-    el("dl", {},
-      item(ICONES["pos-graduacao"], "Oportunidade", i.titulo),
-      item(ICO.predio, "Organização responsável", i.fonte),
-      item(ICO.etiqueta, "Tipo", TIPOS[i.tipo] || i.tipo),
-      item(ICO.camadas, "Áreas", areas.join(", ")),
-      item(CALENDARIO, "Prazo de inscrição", prazo.texto),
-      i.coletado_em ? item(ICO.relogio, "Encontrada pelo Radar em", fmtData.format(dataLocal(i.coletado_em))) : null,
-      item(ICO.globo, "Inscrição", "No site de " + i.fonte)));
-
-  return [cabecaPagina(ICO.lista, "Detalhes da oportunidade",
-            "Revise as informações e siga para o edital original, onde a inscrição é feita."),
-          el("div", { class: "detalhe-grade" }, el("div", {}, destaque, antes, aviso, acoes), resumo)];
-}
-
-// ---- Rotas: lista (padrão), #oportunidade/<id>, #entrar, #conta
-let rolagemLista = 0, ultimoAberto = null, naLista = true;
-function rota() {
-  const hash = decodeURIComponent(location.hash.slice(1));
-  const vista = $("vista");
-  let conteudo = null;
-  if (hash.startsWith("oportunidade/")) {
-    ultimoAberto = hash.slice(13);
-    conteudo = paginaOportunidade(ultimoAberto);
-  } else if ((hash === "entrar" || hash.startsWith("conta")) && window.radar.conta) {
-    conteudo = "conta";
-  }
-  if (!conteudo) {
-    document.title = "Radar de Oportunidades";
-    if (!naLista) {
-      vista.hidden = true; vista.replaceChildren(); document.querySelector(".corpo").hidden = false;
-      naLista = true;
-      window.scrollTo(0, rolagemLista);
-      const link = ultimoAberto && document.querySelector('.cartao[data-id="' + CSS.escape(ultimoAberto) + '"] h3 a');
-      if (link) link.focus({ preventScroll: true });
-    }
-    return;
-  }
-  if (naLista) rolagemLista = window.scrollY;
-  naLista = false;
-  fecharFiltros(false);
-  document.querySelector(".corpo").hidden = true;
-  vista.hidden = false;
-  if (conteudo === "conta") window.radar.conta.mostrar(hash, vista);
-  else vista.replaceChildren(...conteudo);
-  window.scrollTo(0, 0);
-  const titulo = $("vista-titulo");  // a página pode já ter focado um campo (ex.: e-mail)
-  if (titulo && !vista.contains(document.activeElement)) titulo.focus({ preventScroll: true });
-}
-
 // ---- Painel de filtros no celular: folha inferior, com o resto da página inerte
-const FORA_DA_FOLHA = ".topo, main, .rodape, .convite, .pular";
+const FORA_DA_FOLHA = ".topo, main, .rodape, .convite, .pular, .abas";
 function abrirFiltros() {
   $("filtros").classList.add("aberto");
   $("fundo-folha").hidden = false;
   $("abrir-filtros").setAttribute("aria-expanded", "true");
-  for (const el of document.querySelectorAll(FORA_DA_FOLHA)) el.inert = true;
+  for (const e of document.querySelectorAll(FORA_DA_FOLHA)) e.inert = true;
   $("titulo-filtros").focus();
 }
 function fecharFiltros(devolverFoco) {
@@ -829,7 +349,7 @@ function fecharFiltros(devolverFoco) {
   $("filtros").classList.remove("aberto");
   $("fundo-folha").hidden = true;
   $("abrir-filtros").setAttribute("aria-expanded", "false");
-  for (const el of document.querySelectorAll(FORA_DA_FOLHA)) el.inert = false;
+  for (const e of document.querySelectorAll(FORA_DA_FOLHA)) e.inert = false;
   if (devolverFoco) $("abrir-filtros").focus();
 }
 
@@ -843,7 +363,6 @@ function carregar() {
     .then(d => {
       if (!valido(d)) throw new Error("formato inesperado");
       DADOS = d; montarFiltros(); desenhar();
-      if (!naLista || location.hash.length > 1) rota();
       avisoRede(navigator.onLine ? "" : SEM_REDE + dataAtualizacao() + ".");
     })
     .catch(() => {
@@ -880,8 +399,6 @@ if (!emApp && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
 
 // ---- Eventos
 $("busca").addEventListener("input", desenhar);
-$("so-salvos").addEventListener("change", e => { estado.soSalvos = e.target.checked; salvarEstado(); desenhar(); });
-window.addEventListener("hashchange", rota);
 $("ordem").addEventListener("change", e => { estado.ordem = e.target.value; salvarEstado(); desenhar(); });
 $("limpar").addEventListener("click", limparFiltros);
 $("limpar-vazio").addEventListener("click", limparFiltros);
@@ -896,14 +413,27 @@ $("instalar-topo").addEventListener("click", instalar);
 $("dispensar").addEventListener("click", () => { $("convite").hidden = true; gravar(CHAVE_CONVITE, true); });
 window.addEventListener("online", carregar);
 window.addEventListener("offline", () => { if (DADOS) avisoRede(SEM_REDE + dataAtualizacao() + "."); });
+// Aba "Buscar": leva o foco ao campo de busca.
+function focarBusca() { if (location.hash === "#busca") $("busca").focus(); }
+window.addEventListener("hashchange", focarBusca);
 
-if (DADOS) { montarFiltros(); desenhar(); rota(); }
+if (DADOS) { montarFiltros(); desenhar(); }
+focarBusca();
 if (location.protocol !== "file:") carregar();
 else if (!DADOS) avisoRede("Não foi possível carregar as oportunidades.");
 
-if (CONFIG && CONFIG.cadastro && location.protocol !== "file:") {
-  const s = document.createElement("script");
-  s.src = "conta.js"; s.defer = true; document.body.append(s);
+// Contas opcionais: o resto só é carregado se conta-config.js estiver preenchido.
+if (location.protocol !== "file:") {
+  const cfg = document.createElement("script");
+  cfg.src = "conta-config.js";
+  cfg.onload = () => {
+    const c = window.RADAR_CONTA;
+    if (!c || !c.url || !c.chavePublicavel || !c.controlador || !c.controlador.nome || !c.controlador.email) return;
+    for (const src of ["vendor/supabase-js-2.118.0.js", "js/comum.js", "js/conta-index.js"]) {
+      const s = document.createElement("script"); s.src = src; s.async = false; document.body.append(s);
+    }
+  };
+  document.body.append(cfg);
 }
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
