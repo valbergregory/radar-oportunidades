@@ -31,28 +31,12 @@ Nenhum prazo próximo identificado.
   https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2844920.pdf/@@display-file/file
 - **Estudo de Ingressantes das Licenciaturas - Edital CAPES/INEP nº 26/2026** (CAPES, prazo não identificado)  
   https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2904194_sei_2903303_edital_conjunto_26_2026.pdf/@@display-file/file
-- **Estudo de Ingressantes das Licenciaturas - Edital CAPES/INEP nº 26/2026 - Alteração** (CAPES, prazo não identificado)  
-  https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2906989_sei_2906818_edital_conjunto_n__26_2026___alteracao.pdf/@@display-file/file
-- **Estudo de Ingressantes das Licenciaturas - Edital CAPES/INEP nº 26/2026 - Alteração** (CAPES, prazo não identificado)  
-  https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2914199_sei_2913074_edital_conjunto_capes_inep_n__26_2026___alteracao.pdf/@@display-file/file
-- **Chamada Pública para Envio de Proposta de Curso Novo - Edital nº 20/2026 - Alteração** (CAPES, prazo não identificado)  
-  https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2931284_sei_2930362_edital_20_2026___alteracao-1.pdf/@@display-file/file
 - **Edital Progep nº 49/2026** (UFAL (editais), prazo não identificado)  
   https://editais.ufal.br/tec-administrativos/remocao/edital-progep-no-49-2026
-- **Seleção de Instrutores do Centro de Inclusão Digital da Ufal (CID) -2026 Edital 08/2026 Proest** (UFAL (editais), prazo não identificado)  
-  https://editais.ufal.br/assistencia-estudantil/selecao-de-instrutores-do-centro-de-inclusao-digital-da-ufal-cid-2026-edital-08-2026-proest
-- **Seleção de Monitores para o Programa Esporte na Ufal** (UFAL (editais), prazo não identificado)  
-  https://editais.ufal.br/assistencia-estudantil/selecao-de-monitores-para-o-programa-esporte-na-ufal-1
 - **EDITAL Nº 01/2026 CIE/PROPEP - Incubação de Empresas In Lab (Incubal)** (UFAL (editais), prazo não identificado)  
   https://editais.ufal.br/outros/edital-no-01-2026-cie-propep-incubacao-de-empresas-in-lab-incubal
-- **Seleção Bolsistas NTI 1 - 2026** (UFAL (editais), prazo não identificado)  
-  https://editais.ufal.br/outros/selecao-bolsistas-nti-1-2026
-- **Processo Seletivo de Tutor(a), cotutor(a) e orientador(a) de serviço para atuação no Programa Nacional de Apoio à permanência, diversidade e visibilidade para discentes na àrea da saúde - AfirmaSUS, no âmbito da UFAL** (UFAL (editais), prazo não identificado)  
-  https://editais.ufal.br/extensao/processo-seletivo-de-tutor-a-cotutor-a-e-orientador-a-de-servico-para-atuacao-no-programa-nacional-de-apoio-a-permanencia-diversidade-e-visibilidade-para-discentes-na-area-da-saude-afirmasus-no-ambito-da-ufal
 - **Seleção de mentores(as) científicos(as) voluntários(as) para o LabMent/Sinpete** (UFAL (editais), prazo não identificado)  
   https://editais.ufal.br/outros/selecao-de-mentores-as-cientificos-as-voluntarios-as-para-o-labment-sinpete
-- **Edital nº 30 - Comunicação Oral e Pôster** (UFAL (editais), prazo não identificado)  
-  https://editais.ufal.br/outros/chamada-publica-no-30-2026-sinpete-ufal
 - **Chamada Pública nº 27 - Prêmio InovaEDU** (UFAL (editais), prazo não identificado)  
   https://editais.ufal.br/outros/sinpete-2026-premio-inovaedu
 
@@ -62,8 +46,14 @@ Nenhum prazo próximo identificado.
   https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-33-2026/chamada-publica-cnpq-N-33-2026
 - **Programa Bolsas para Pesquisa CAPES/Humboldt** (CAPES, prazo não identificado)  
   https://www.gov.br/capes/pt-br/acesso-a-informacao/acoes-e-programas/bolsas/bolsas-e-auxilios-internacionais/encontre-aqui/paises/alemanha/programa-bolsas-para-pesquisa-capeshumboldt
+- **Seleção de Instrutores do Centro de Inclusão Digital da Ufal (CID) -2026 Edital 08/2026 Proest** (UFAL (editais), prazo não identificado)  
+  https://editais.ufal.br/assistencia-estudantil/selecao-de-instrutores-do-centro-de-inclusao-digital-da-ufal-cid-2026-edital-08-2026-proest
+- **Seleção de Monitores para o Programa Esporte na Ufal** (UFAL (editais), prazo não identificado)  
+  https://editais.ufal.br/assistencia-estudantil/selecao-de-monitores-para-o-programa-esporte-na-ufal-1
 - **Inscrição de estudantes indígenas e quilombolas para a Bolsa Permanência do MEC** (UFAL (editais), prazo não identificado)  
   https://editais.ufal.br/assistencia-estudantil/inscricao-de-estudantes-indigenas-e-quilombolas-para-a-bolsa-permanencia-do-mec-3
+- **Processo Seletivo de Tutor(a), cotutor(a) e orientador(a) de serviço para atuação no Programa Nacional de Apoio à permanência, diversidade e visibilidade para discentes na àrea da saúde - AfirmaSUS, no âmbito da UFAL** (UFAL (editais), prazo não identificado)  
+  https://editais.ufal.br/extensao/processo-seletivo-de-tutor-a-cotutor-a-e-orientador-a-de-servico-para-atuacao-no-programa-nacional-de-apoio-a-permanencia-diversidade-e-visibilidade-para-discentes-na-area-da-saude-afirmasus-no-ambito-da-ufal
 
 ## Mestrado e doutorado (novidades)
 
@@ -71,3 +61,8 @@ Nenhum prazo próximo identificado.
   https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-30-2026/chamada-publica-cnpq-N-30-2026
 - **Programa de Doutorado-sanduíche no Exterior (PDSE)** (CAPES, prazo não identificado)  
   https://www.gov.br/capes/pt-br/acesso-a-informacao/acoes-e-programas/bolsas/bolsas-e-auxilios-internacionais/encontre-aqui/paises/multinacional/programa-de-doutorado-sanduiche-no-exterior-pdse
+
+## Congressos e eventos (novidades)
+
+- **Edital nº 30 - Comunicação Oral e Pôster** (UFAL (editais), prazo não identificado)  
+  https://editais.ufal.br/outros/chamada-publica-no-30-2026-sinpete-ufal
