@@ -24,7 +24,8 @@ nenhum dado pessoal.
 
 2. **Criar as tabelas.** No projeto, abra *SQL Editor*, cole todo o conteúdo de
    `supabase/schema.sql` e clique em *Run*. Pode rodar de novo depois de
-   atualizações: o script não apaga dados.
+   atualizações: o script não apaga dados. **Rode de novo sempre que o arquivo
+   mudar** (ex.: a coluna `favoritos` foi acrescentada depois).
 
 3. **Entrada por código.**
    - Em *Authentication → Sign In / Providers → Email*, deixe *Email* habilitado.

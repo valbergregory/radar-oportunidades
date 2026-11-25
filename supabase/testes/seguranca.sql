@@ -53,6 +53,15 @@ end $$;
 insert into public.perfis (id, vinculo, maior_de_idade, termos_versao)
   values (:b, 'estudante-graduacao', true, 'v1');
 
+-- B salva favoritos no próprio perfil; o limite de 500 vale.
+update public.perfis set favoritos = array['abc123'] where id = :b;
+do $$ begin
+  update public.perfis set favoritos = array_fill('x'::text, array[501])
+    where id = '22222222-2222-2222-2222-222222222222';
+  raise exception 'FALHOU: aceitou mais de 500 favoritos';
+exception when check_violation then null;
+end $$;
+
 -- B só enxerga a si mesmo, e não altera A.
 do $$ begin
   if (select count(*) from public.perfis) <> 1 then raise exception 'FALHOU: B vê outros perfis'; end if;

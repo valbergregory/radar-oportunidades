@@ -34,6 +34,12 @@ O Radar se instala como aplicativo pelo navegador, sem loja:
 
 O ícone vai para a tela inicial, e o app abre em tela cheia, mesmo sem internet.
 
+Cada oportunidade tem uma página própria, com o resumo, orientações antes da
+inscrição, o botão para adicionar o prazo à agenda (arquivo `.ics` com lembrete
+3 dias antes) e o botão para salvar nos favoritos. Os favoritos ficam no
+aparelho, e o filtro "Só as que salvei" mostra apenas eles. Com conta, os
+favoritos também ficam guardados nela.
+
 ## Cadastro e entrada (opcional)
 
 O site funciona sem cadastro. Quem quiser pode entrar com um código enviado ao

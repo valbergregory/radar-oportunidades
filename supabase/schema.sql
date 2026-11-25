@@ -33,6 +33,11 @@ create table if not exists public.perfis (
   atualizado_em        timestamptz not null default now()
 );
 
+-- Oportunidades salvas (ids do Radar). Coluna acrescentada depois: o "add column
+-- if not exists" atualiza bancos criados com a versão anterior deste arquivo.
+alter table public.perfis add column if not exists favoritos text[] not null default '{}'
+  check (cardinality(favoritos) <= 500);
+
 -- Histórico de consentimentos: só o servidor escreve (pelo gatilho abaixo).
 create table if not exists public.consentimentos (
   id            bigint generated always as identity primary key,

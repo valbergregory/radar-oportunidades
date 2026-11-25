@@ -188,29 +188,105 @@
   .rodape .alerta { font-weight:700; color:var(--texto); display:flex; gap:8px; align-items:center; }
   .rodape .alerta svg { width:20px; height:20px; color:var(--marca); }
   .rodape a { color:var(--marca); font-weight:700; }
-  /* Janela da conta */
-  .janela { width:calc(100% - 24px); max-width:540px; max-height:calc(100dvh - 24px); border:0; border-radius:18px;
-            padding:16px 18px 20px; background:var(--cartao); color:var(--texto); box-shadow:0 12px 40px rgba(0,0,0,.35); }
-  .janela::backdrop { background:rgba(8,20,40,.55); }
-  .janela-topo { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .janela h2 { margin:0; font-size:1.25rem; }
-  .janela p { margin:8px 0; }
-  .janela form, .janela .pilha { display:grid; gap:12px; margin-top:8px; }
-  .janela label.campo { display:grid; gap:4px; font-weight:600; }
-  .janela label.campo span.dica { font-weight:400; color:var(--suave); font-size:.88rem; }
-  .janela input:not([type=checkbox]), .janela select { min-height:44px; padding:8px 10px; border:1px solid var(--campo);
-            border-radius:10px; background:var(--cartao); color:var(--texto); font:inherit; width:100%; }
-  .janela .marcar { display:flex; gap:10px; align-items:flex-start; font-weight:400; }
-  .janela .marcar input { width:20px; height:20px; margin:2px 0 0; accent-color:#0b4a8b; flex:none; }
-  .janela .linha { display:grid; grid-template-columns:1fr 96px; gap:10px; }
-  .janela .suave { color:var(--suave); font-size:.9rem; }
-  .janela a { color:var(--marca); }
-  .janela dl { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; margin:8px 0; }
-  .janela dt { color:var(--suave); }
-  .janela dd { margin:0; overflow-wrap:anywhere; }
+  /* Páginas (oportunidade, entrar, conta) */
+  .vista { max-width:1280px; margin:0 auto; padding:16px 16px 32px; }
+  .cabeca-pagina { display:flex; gap:14px; align-items:flex-start; margin:4px 0 18px; }
+  .ico-grande { width:56px; height:56px; border-radius:16px; background:var(--etq-fundo); color:var(--etq-texto);
+                display:flex; align-items:center; justify-content:center; flex:none; }
+  .ico-grande svg { width:30px; height:30px; }
+  .cabeca-pagina h1 { margin:0; font-size:1.6rem; line-height:1.15; color:var(--texto); }
+  .cabeca-pagina h1:focus { outline:none; }
+  .cabeca-pagina p { margin:4px 0 0; color:var(--suave); }
+  .painel { background:var(--cartao); border:1px solid var(--borda); border-radius:18px; padding:18px;
+            box-shadow:var(--sombra); margin-bottom:16px; }
+  .painel h2 { margin:0 0 8px; font-size:1.25rem; color:var(--texto); }
+  .painel h3 { margin:0 0 8px; font-size:1.05rem; color:var(--marca); }
+  .painel p { margin:6px 0; }
+  .detalhe-grade, .conta-grade { display:grid; gap:16px; align-items:start; }
+  .destaque { display:grid; grid-template-columns:auto 1fr; gap:14px; }
+  .destaque .ico { width:64px; height:64px; }
+  .destaque h2 { font-size:1.3rem; overflow-wrap:anywhere; }
+  .linha-icone { display:flex; gap:8px; align-items:center; color:var(--suave); margin:6px 0; flex-wrap:wrap; }
+  .linha-icone svg { width:20px; height:20px; }
+  .linha-icone strong { color:var(--texto); }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip { display:inline-block; padding:3px 12px; border-radius:999px; background:var(--etq-fundo); color:var(--etq-texto);
+          font-size:.88rem; font-weight:600; }
+  .selo-texto { display:inline-block; padding:4px 12px; border-radius:999px; font-weight:700; }
+  .dupla { display:grid; gap:16px; }
+  .checklist { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+  .checklist li { display:flex; gap:10px; align-items:flex-start; }
+  .checklist svg { width:22px; height:22px; color:var(--marca); flex:none; }
+  .ferramentas { display:grid; gap:10px; align-content:start; }
+  .botao[aria-pressed="true"] { background:var(--etq-fundo); }
+  .botao:disabled { opacity:.55; cursor:not-allowed; }
+  .alerta-laranja { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:14px;
+                    background:var(--urg-fundo); color:var(--urg-texto); margin:0 0 16px; }
+  .alerta-laranja svg { width:22px; height:22px; flex:none; }
+  .acoes { display:flex; gap:12px; flex-wrap:wrap; }
+  .acoes .botao { flex:1 1 220px; }
+  .resumo-rapido dl { margin:0; display:grid; gap:0; }
+  .resumo-rapido .item { display:grid; grid-template-columns:28px 1fr; gap:10px; padding:10px 0; border-top:1px solid var(--borda); }
+  .resumo-rapido .item:first-child { border-top:0; }
+  .resumo-rapido svg { width:24px; height:24px; color:var(--marca); }
+  .resumo-rapido dt { font-weight:700; color:var(--texto); }
+  .resumo-rapido dd { margin:0; color:var(--suave); overflow-wrap:anywhere; }
+  .salvo { display:inline-flex; gap:4px; align-items:center; margin-left:6px; font-size:.8rem; font-weight:700; color:var(--marca); }
+  .salvo svg { width:14px; height:14px; }
+  @media (min-width:900px) {
+    .detalhe-grade { grid-template-columns:1fr 340px; }
+    .dupla { grid-template-columns:1fr 1fr; }
+    .cabeca-pagina h1 { font-size:2rem; }
+  }
+  /* Formulários da conta */
+  .conta-grade .beneficios { display:grid; gap:14px; }
+  .beneficio { display:grid; grid-template-columns:48px 1fr; gap:12px; align-items:start; }
+  .beneficio .ico { width:48px; height:48px; }
+  .beneficio strong { display:block; color:var(--texto); }
+  .beneficio span { color:var(--suave); font-size:.92rem; }
+  .form { display:grid; gap:14px; }
+  .form .grade-campos { display:grid; gap:12px; }
+  .campo { display:grid; gap:4px; font-weight:600; }
+  .campo .dica, .opcional { font-weight:600; font-size:.75rem; color:var(--etq-texto); background:var(--etq-fundo);
+                            border-radius:999px; padding:1px 8px; justify-self:start; }
+  .form input:not([type=checkbox]), .form select { min-height:46px; padding:8px 12px; border:1px solid var(--campo);
+            border-radius:12px; background:var(--cartao); color:var(--texto); font:inherit; width:100%; }
+  .form input::placeholder { color:var(--suave); opacity:1; }
+  .marcar { display:flex; gap:10px; align-items:flex-start; font-weight:400; }
+  .marcar input { width:20px; height:20px; margin:2px 0 0; accent-color:#0b4a8b; flex:none; }
+  .chips-escolha { display:flex; flex-wrap:wrap; gap:8px; border:0; padding:0; margin:0; }
+  .chips-escolha legend { font-weight:700; color:var(--marca); padding:0; margin-bottom:6px; font-size:1.05rem; }
+  .chip-check { display:inline-flex; gap:8px; align-items:center; min-height:42px; padding:6px 12px; border:1px solid var(--campo);
+                border-radius:12px; cursor:pointer; background:var(--cartao); }
+  .chip-check:has(input:checked) { background:var(--etq-fundo); border-color:var(--marca); font-weight:700; }
+  .chip-check input { width:18px; height:18px; margin:0; accent-color:#0b4a8b; }
+  .preferencias { display:flex; gap:18px; flex-wrap:wrap; align-items:center; padding:12px 14px; border-radius:14px;
+                  background:var(--urg-fundo); color:var(--urg-texto); }
+  .preferencias strong { font-size:1.4rem; }
+  .caixa-info { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:14px; background:var(--realce); }
+  .caixa-info svg { width:22px; height:22px; color:var(--marca); flex:none; }
+  .rodape-form { display:flex; gap:8px; align-items:center; color:var(--suave); font-size:.88rem; border-top:1px solid var(--borda); padding-top:12px; }
+  .rodape-form svg { width:18px; height:18px; flex:none; }
+  .nav-conta { display:grid; gap:4px; }
+  .nav-conta button { display:grid; grid-template-columns:28px 1fr; gap:10px; text-align:left; padding:10px 12px; border:0;
+                      border-left:4px solid transparent; border-radius:10px; background:none; cursor:pointer; color:var(--texto); }
+  .nav-conta button svg { width:24px; height:24px; color:var(--marca); }
+  .nav-conta button span { display:block; color:var(--suave); font-size:.85rem; }
+  .nav-conta button[aria-current="true"] { background:var(--realce); border-left-color:var(--marca); font-weight:700; }
+  .lista-acoes { display:grid; gap:10px; }
+  .lista-acoes button { display:grid; grid-template-columns:28px 1fr 20px; gap:10px; align-items:center; text-align:left; padding:12px 14px;
+                        border:1px solid var(--borda); border-radius:12px; background:var(--cartao); cursor:pointer; color:var(--texto); }
+  .lista-acoes button svg { width:22px; height:22px; color:var(--marca); }
+  .lista-acoes button span { display:block; color:var(--suave); font-size:.88rem; }
+  .lista-acoes button.perigo svg:first-child { color:var(--urg-texto); }
   .botao-perigo { background:var(--cartao); color:var(--urg-texto); border-color:var(--urg-texto); }
-  .msg { padding:10px 12px; border-radius:10px; background:var(--urg-fundo); color:var(--urg-texto); }
+  .msg { padding:10px 12px; border-radius:10px; background:var(--urg-fundo); color:var(--urg-texto); margin:0 0 12px; }
   .msg.ok { background:var(--nor-fundo); color:var(--nor-texto); }
+  @media (min-width:900px) {
+    .conta-grade { grid-template-columns:340px 1fr; }
+    .form .grade-campos { grid-template-columns:1fr 1fr; }
+    .conta-grade .lateral { position:sticky; top:16px; }
+  }
   [hidden] { display:none !important; }
 </style>
 </head>
@@ -254,6 +330,9 @@
     </div>
     <fieldset><legend>Minhas áreas</legend><div id="areas"></div></fieldset>
     <fieldset><legend>Tipo</legend><div id="tipos"></div></fieldset>
+    <fieldset><legend>Salvas</legend>
+      <label><input type="checkbox" id="so-salvos"> <span id="so-salvos-rotulo">Só as que salvei</span></label>
+    </fieldset>
     <div class="acoes-filtro">
       <button type="button" class="botao botao-primario" id="ver-resultados">Ver resultados</button>
       <button type="button" class="botao botao-claro" id="limpar">
@@ -300,6 +379,9 @@
   </main>
 </div>
 
+<!-- Páginas da oportunidade, de entrar e da conta (rotas #oportunidade/…, #entrar, #conta) -->
+<div class="vista" id="vista" hidden></div>
+
 <footer class="rodape">
   <div class="rodape-dentro">
     <p id="atualizado-rodape"></p>
@@ -312,17 +394,6 @@
   </div>
 </footer>
 
-<dialog class="janela" id="janela-conta" aria-labelledby="conta-titulo">
-  <div class="janela-topo">
-    <h2 id="conta-titulo">Entrar</h2>
-    <button type="button" class="fechar" id="conta-fechar" aria-label="Fechar">
-      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-    </button>
-  </div>
-  <p class="msg" id="conta-msg" role="alert" hidden></p>
-  <div id="conta-corpo"></div>
-</dialog>
-
 <div class="convite" id="convite" role="region" aria-label="Instalar aplicativo" hidden>
   <p id="convite-texto"></p>
   <div class="botoes">
@@ -333,12 +404,12 @@
 
 <script>
 "use strict";
-const DADOS_EMBUTIDOS = {"atualizado": "25/11/2026", "areas": {"administracao-publica": "Administração pública", "economia": "Economia", "direito": "Direito", "sistemas-de-informacao": "Sistemas de informação", "turismo": "Turismo", "engenharia-de-pesca": "Engenharia de pesca"}, "itens": [{"titulo": "Processo Seletivo de Estudantes para atuação no Programa Nacional de Apoio à permanência, diversidade e visibilidade para discentes na área da Saúde - AfirmaSUS, no âmbito da UFAL", "link": "https://editais.ufal.br/extensao/processo-seletivo-de-estudantes-para-atuacao-no-programa-nacional-de-apoio-a-permanencia-diversidade-e-visibilidade-para-discentes-na-area-da-saude-afirmasus-no-ambito-da-ufal", "fonte": "UFAL (editais)", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-11-28", "coletado_em": "2026-11-25"}, {"titulo": "Seleção de Monitores para o Programa Esporte na Ufal", "link": "https://editais.ufal.br/assistencia-estudantil/selecao-de-monitores-para-o-programa-esporte-na-ufal-1", "fonte": "UFAL (editais)", "tipo": "bolsa", "areas": ["geral"], "prazo": "2026-11-29", "coletado_em": "2026-11-25"}, {"titulo": "Seleção de mentores(as) científicos(as) voluntários(as) para o LabMent/Sinpete", "link": "https://editais.ufal.br/outros/selecao-de-mentores-as-cientificos-as-voluntarios-as-para-o-labment-sinpete", "fonte": "UFAL (editais)", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-11-30", "coletado_em": "2026-11-25"}, {"titulo": "Edital Nº 06/2026 – PNAGEI Centelha 3 Alagoas – Fapeal/Secti-AL/Sebrae-AL", "link": "https://www.fapeal.br/2026/11/edital-centelha-3-al/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-04", "coletado_em": "2026-11-25"}, {"titulo": "Chamada CNPq Nº 34/2026 - Auxílio à Promoção de Eventos Científicos, Tecnológicos e/ou de Inovação - ARC", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-34-2026/chamada-publica-cnpq-N-34-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-04", "coletado_em": "2026-11-25"}, {"titulo": "Chamada Pública CNPq/Petrobras N° 31/2026 - Projeto InspirAÇÃO", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-31-2026/chamada-publica-cnpq-N-31-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-08", "coletado_em": "2026-11-25"}, {"titulo": "Chamada Pública CNPq/CAPES Nº 30/2026 – Programa de Mestrado e Doutorado Acadêmico para Inovação – MAI/DAI", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-30-2026/chamada-publica-cnpq-N-30-2026", "fonte": "CNPq", "tipo": "pos-graduacao", "areas": ["geral"], "prazo": "2026-12-11", "coletado_em": "2026-11-25"}, {"titulo": "Chamada Pública para Envio de Proposta de Curso Novo - Edital nº 20/2026", "link": "https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2844920.pdf/@@display-file/file", "fonte": "CAPES", "tipo": "fomento", "areas": ["direito"], "prazo": "2026-12-18", "coletado_em": "2026-11-25"}, {"titulo": "Chamada CNPq nº 33/2026 - Bolsas de Produtividade do CNPq", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-33-2026/chamada-publica-cnpq-N-33-2026", "fonte": "CNPq", "tipo": "bolsa", "areas": ["geral"], "prazo": "2027-01-07", "coletado_em": "2026-11-25"}, {"titulo": "Chamada Pública CNPq/MCTI N° 36/2026 - Apoio a cursos de curta duração em biodiversidade, no âmbito do Centro Franco-Brasileiro de Biodiversidade Amazônica (CFBBA)", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-36-2026/chamada-publica-cnpq-N-36-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-02-12", "coletado_em": "2026-11-25"}, {"titulo": "Chamada CNPq/MIR Nº 23/2026 - Programa Lélia Gonzalez de fomento a pesquisas sobre desigualdades étnico-raciais na ciência, na educação e na sociedade brasileiras", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-23-2026/chamada-publica-cnpq-N-23-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-01", "coletado_em": "2026-11-25"}, {"titulo": "Chamada Pública MCTI/CNPq/CISB/SAAB AB Nº 37/2026 - Cooperação Brasil-Suécia", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-37-2026/chamada-publica-cnpq-N-37-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-12", "coletado_em": "2026-11-25"}, {"titulo": "Chamada Pública MCTI/CNPq/ANR N° 32/2026", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-32-2026/chamada-publica-cnpq-N-32-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-31", "coletado_em": "2026-11-25"}, {"titulo": "Estudo de Ingressantes das Licenciaturas - Edital CAPES/INEP nº 26/2026", "link": "https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2904194_sei_2903303_edital_conjunto_26_2026.pdf/@@display-file/file", "fonte": "CAPES", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-07-15", "coletado_em": "2026-11-25"}, {"titulo": "Chamada Transnacional Conjunta Biodiversa+ (BiodivConnect) 2025-2026", "link": "https://www.fapeal.br/2026/10/chamada-transnacional-conjunta-biodiversa-biodivconnect-2025-2026/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25"}, {"titulo": "Chamada transnacional conjunta Gestão Sustentável dos Recursos Hídricos", "link": "https://www.fapeal.br/2026/09/chamada-transnacional-conjunta-gestao-sustentavel-dos-recursos-hidricos/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["engenharia-de-pesca"], "prazo": null, "coletado_em": "2026-11-25"}, {"titulo": "Bolsas para doutorandos na Alemanha DAAD/Confap", "link": "https://www.fapeal.br/2026/06/bolsas-doutorado-alemanha/", "fonte": "FAPEAL", "tipo": "bolsa", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25"}, {"titulo": "Edital Fapeal Nº5/2024 – Credenciamento de Avaliadores Ad hoc", "link": "https://www.fapeal.br/2026/01/edital-consultores-adhoc/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25"}]};
+const DADOS_EMBUTIDOS = {"atualizado": "25/11/2026", "areas": {"administracao-publica": "Administração pública", "economia": "Economia", "direito": "Direito", "sistemas-de-informacao": "Sistemas de informação", "turismo": "Turismo", "engenharia-de-pesca": "Engenharia de pesca"}, "itens": [{"id": "7ced3082bdb9dc72", "titulo": "Processo Seletivo de Estudantes para atuação no Programa Nacional de Apoio à permanência, diversidade e visibilidade para discentes na área da Saúde - AfirmaSUS, no âmbito da UFAL", "link": "https://editais.ufal.br/extensao/processo-seletivo-de-estudantes-para-atuacao-no-programa-nacional-de-apoio-a-permanencia-diversidade-e-visibilidade-para-discentes-na-area-da-saude-afirmasus-no-ambito-da-ufal", "fonte": "UFAL (editais)", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-11-28", "coletado_em": "2026-11-25"}, {"id": "93655335db0eb0e5", "titulo": "Seleção de Monitores para o Programa Esporte na Ufal", "link": "https://editais.ufal.br/assistencia-estudantil/selecao-de-monitores-para-o-programa-esporte-na-ufal-1", "fonte": "UFAL (editais)", "tipo": "bolsa", "areas": ["geral"], "prazo": "2026-11-29", "coletado_em": "2026-11-25"}, {"id": "846220215d9be0e2", "titulo": "Seleção de mentores(as) científicos(as) voluntários(as) para o LabMent/Sinpete", "link": "https://editais.ufal.br/outros/selecao-de-mentores-as-cientificos-as-voluntarios-as-para-o-labment-sinpete", "fonte": "UFAL (editais)", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-11-30", "coletado_em": "2026-11-25"}, {"id": "8d07e5bc97196c67", "titulo": "Edital Nº 06/2026 – PNAGEI Centelha 3 Alagoas – Fapeal/Secti-AL/Sebrae-AL", "link": "https://www.fapeal.br/2026/11/edital-centelha-3-al/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-04", "coletado_em": "2026-11-25"}, {"id": "e70547b72e81b3de", "titulo": "Chamada CNPq Nº 34/2026 - Auxílio à Promoção de Eventos Científicos, Tecnológicos e/ou de Inovação - ARC", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-34-2026/chamada-publica-cnpq-N-34-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-04", "coletado_em": "2026-11-25"}, {"id": "95de50d98c1ab8f9", "titulo": "Chamada Pública CNPq/Petrobras N° 31/2026 - Projeto InspirAÇÃO", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-31-2026/chamada-publica-cnpq-N-31-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-08", "coletado_em": "2026-11-25"}, {"id": "24e2accdfe608744", "titulo": "Chamada Pública CNPq/CAPES Nº 30/2026 – Programa de Mestrado e Doutorado Acadêmico para Inovação – MAI/DAI", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-30-2026/chamada-publica-cnpq-N-30-2026", "fonte": "CNPq", "tipo": "pos-graduacao", "areas": ["geral"], "prazo": "2026-12-11", "coletado_em": "2026-11-25"}, {"id": "96edb845023c1e95", "titulo": "Chamada Pública para Envio de Proposta de Curso Novo - Edital nº 20/2026", "link": "https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2844920.pdf/@@display-file/file", "fonte": "CAPES", "tipo": "fomento", "areas": ["direito"], "prazo": "2026-12-18", "coletado_em": "2026-11-25"}, {"id": "73b044dd548b072e", "titulo": "Chamada CNPq nº 33/2026 - Bolsas de Produtividade do CNPq", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-33-2026/chamada-publica-cnpq-N-33-2026", "fonte": "CNPq", "tipo": "bolsa", "areas": ["geral"], "prazo": "2027-01-07", "coletado_em": "2026-11-25"}, {"id": "20a236aa695fb18a", "titulo": "Chamada Pública CNPq/MCTI N° 36/2026 - Apoio a cursos de curta duração em biodiversidade, no âmbito do Centro Franco-Brasileiro de Biodiversidade Amazônica (CFBBA)", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-36-2026/chamada-publica-cnpq-N-36-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-02-12", "coletado_em": "2026-11-25"}, {"id": "4543466c0a28c815", "titulo": "Chamada CNPq/MIR Nº 23/2026 - Programa Lélia Gonzalez de fomento a pesquisas sobre desigualdades étnico-raciais na ciência, na educação e na sociedade brasileiras", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-23-2026/chamada-publica-cnpq-N-23-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-01", "coletado_em": "2026-11-25"}, {"id": "c931541578c0f7f4", "titulo": "Chamada Pública MCTI/CNPq/CISB/SAAB AB Nº 37/2026 - Cooperação Brasil-Suécia", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-37-2026/chamada-publica-cnpq-N-37-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-12", "coletado_em": "2026-11-25"}, {"id": "363e01ec6c92de7a", "titulo": "Chamada Pública MCTI/CNPq/ANR N° 32/2026", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-32-2026/chamada-publica-cnpq-N-32-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-31", "coletado_em": "2026-11-25"}, {"id": "f79e34127c28027f", "titulo": "Estudo de Ingressantes das Licenciaturas - Edital CAPES/INEP nº 26/2026", "link": "https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2904194_sei_2903303_edital_conjunto_26_2026.pdf/@@display-file/file", "fonte": "CAPES", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-07-15", "coletado_em": "2026-11-25"}, {"id": "c9703f0ae805ceb8", "titulo": "Chamada Transnacional Conjunta Biodiversa+ (BiodivConnect) 2025-2026", "link": "https://www.fapeal.br/2026/10/chamada-transnacional-conjunta-biodiversa-biodivconnect-2025-2026/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25"}, {"id": "71dc8bdd565d06b6", "titulo": "Chamada transnacional conjunta Gestão Sustentável dos Recursos Hídricos", "link": "https://www.fapeal.br/2026/09/chamada-transnacional-conjunta-gestao-sustentavel-dos-recursos-hidricos/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["engenharia-de-pesca"], "prazo": null, "coletado_em": "2026-11-25"}, {"id": "13a5a1f6cd4f618a", "titulo": "Bolsas para doutorandos na Alemanha DAAD/Confap", "link": "https://www.fapeal.br/2026/06/bolsas-doutorado-alemanha/", "fonte": "FAPEAL", "tipo": "bolsa", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25"}, {"id": "21155eb155b17631", "titulo": "Edital Fapeal Nº5/2024 – Credenciamento de Avaliadores Ad hoc", "link": "https://www.fapeal.br/2026/01/edital-consultores-adhoc/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25"}]};
 const CONFIG = {"cadastro": false, "versao": "2026-11-25", "supabase": null};
 const TIPOS = { "fomento":"Fomento e editais", "bolsa":"Bolsas", "pos-graduacao":"Mestrado e doutorado",
                 "evento":"Congressos e eventos", "concurso-vaga":"Concursos e vagas" };
 const URGENTE_ATE = 14;  // dias: selo laranja até aqui, azul acima
-const CHAVE = "radar-filtros", CHAVE_CONVITE = "radar-convite-dispensado";
+const CHAVE = "radar-filtros", CHAVE_CONVITE = "radar-convite-dispensado", CHAVE_FAV = "radar-favoritos";
 const SEM_REDE = "Você está sem conexão. Mostrando os dados salvos de ";
 
 // Ícones por tipo (traço, 24x24)
@@ -353,6 +424,21 @@ const ICONES = {
 };
 const CALENDARIO = `<svg ${P}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>`;
 const SETA = `<svg class="seta" ${P}><path d="M9 6l6 6-6 6"/></svg>`;
+const SALVO = `<svg ${P} fill="currentColor"><path d="M6 3h12v18l-6-4-6 4z"/></svg>`;
+const ICO = {
+  salvar: `<svg ${P}><path d="M6 3h12v18l-6-4-6 4z"/></svg>`,
+  check: `<svg ${P}><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 12l3 3 5-6"/></svg>`,
+  predio: `<svg ${P}><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6M9 10h.01M15 10h.01"/></svg>`,
+  camadas: `<svg ${P}><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>`,
+  etiqueta: `<svg ${P}><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>`,
+  globo: `<svg ${P}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>`,
+  info: `<svg ${P}><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>`,
+  alerta: `<svg ${P}><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16h.01"/></svg>`,
+  externo: `<svg ${P}><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>`,
+  voltar: `<svg ${P}><path d="M19 12H5M11 6l-6 6 6 6"/></svg>`,
+  lista: `<svg ${P}><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v2h6V3M9 10h6M9 14h6M9 18h3"/></svg>`,
+  relogio: `<svg ${P}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+};
 
 const $ = id => document.getElementById(id);
 const semAcento = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -372,7 +458,15 @@ const estado = {
   semAreas: new Set(Array.isArray(salvo.semAreas) ? salvo.semAreas : []),
   semTipos: new Set(Array.isArray(salvo.semTipos) ? salvo.semTipos : []),
   ordem: salvo.ordem === "recente" ? "recente" : "prazo",
+  soSalvos: salvo.soSalvos === true,
 };
+// Favoritos: guardados no aparelho; com conta, também na conta (conta.js).
+const favoritos = new Set(Array.isArray(lerArmazenado(CHAVE_FAV)) ? lerArmazenado(CHAVE_FAV) : []);
+const ouvintesFav = [];
+function gravarFavoritos(avisar = true) {
+  gravar(CHAVE_FAV, [...favoritos]);
+  if (avisar) for (const f of ouvintesFav) f();
+}
 const valido = d => !!(d && typeof d === "object" && Array.isArray(d.itens) && d.areas);
 let DADOS = valido(DADOS_EMBUTIDOS) ? DADOS_EMBUTIDOS : null;
 
@@ -397,7 +491,8 @@ function dataAtualizacao() {
 
 const ouvintesFiltros = [];
 function salvarEstado() {
-  gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], ordem:estado.ordem });
+  gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], ordem:estado.ordem,
+                  soSalvos:estado.soSalvos });
   for (const f of ouvintesFiltros) f();
 }
 
@@ -417,6 +512,16 @@ window.radar = {
     montarFiltros(); desenhar();
   },
   aoMudarFiltros(f) { ouvintesFiltros.push(f); },
+  opcoes() { return { areas: DADOS ? DADOS.areas : {}, tipos: TIPOS }; },
+  favoritos() { return [...favoritos]; },
+  definirFavoritos(lista) {
+    favoritos.clear(); for (const id of lista) favoritos.add(id);
+    gravarFavoritos(false); desenhar();
+  },
+  aoMudarFavoritos(f) { ouvintesFav.push(f); },
+  el, rota: () => rota(),
+  icones: Object.assign({ calendario: CALENDARIO, salvo: SALVO }, ICO),
+  conta: null,  // preenchido por conta.js: { mostrar(rota, destino) }
 };
 
 function caixas(destino, opcoes, desmarcadas) {
@@ -437,12 +542,28 @@ function montarFiltros() {
   caixas("areas", DADOS.areas, estado.semAreas);
   caixas("tipos", TIPOS, estado.semTipos);
   $("ordem").value = estado.ordem;
+  $("so-salvos").checked = estado.soSalvos;
+  $("so-salvos-rotulo").textContent = "Só as que salvei (" + favoritos.size + ")";
   $("atualizado-topo").textContent = "Última atualização: " + dataAtualizacao();
   $("atualizado-rodape").textContent = "Dados atualizados em " + dataAtualizacao() + ".";
 }
 
 function nomeArea(slug) {
   return DADOS.areas[slug] || (slug === "geral" ? "Geral (todas as áreas)" : slug);
+}
+
+// Cria elemento: el("a", {href: "#", texto: "oi"}, filho1, ...)
+function el(tag, atributos = {}, ...filhos) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(atributos)) {
+    if (v === false || v == null) continue;
+    if (k === "texto") e.textContent = v;
+    else if (k === "html") e.innerHTML = v;  // só para ícones SVG fixos deste arquivo
+    else if (k in e && typeof v !== "string") e[k] = v;
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  e.append(...filhos.filter(f => f != null));
+  return e;
 }
 
 function filtrar() {
@@ -452,6 +573,7 @@ function filtrar() {
     const dias = diasAte(i.prazo);
     if (dias !== null && dias < 0) return false;  // dados guardados offline podem ter vencido
     if (estado.semTipos.has(i.tipo)) return false;
+    if (estado.soSalvos && !favoritos.has(i.id)) return false;
     const areas = i.areas || [];
     if (!areas.includes("geral") && !areas.some(a => !estado.semAreas.has(a))) return false;
     if (!palavras.length) return true;
@@ -495,12 +617,16 @@ function cartao(i) {
   ico.className = "ico"; ico.innerHTML = ICONES[i.tipo] || ICONES.outro;
 
   const info = document.createElement("div"); info.className = "info";
+  li.dataset.id = i.id || "";
   const h = document.createElement("h3"), a = document.createElement("a");
-  a.href = i.link; a.target = "_blank"; a.rel = "noopener noreferrer";
   a.textContent = i.titulo;
-  const nova = document.createElement("span"); nova.className = "sr-only";
-  nova.textContent = " (abre o edital em nova aba)";
-  a.append(nova); h.append(a);
+  if (i.id) a.href = "#oportunidade/" + i.id;
+  else {  // dados antigos, sem id: vai direto ao edital
+    a.href = i.link; a.target = "_blank"; a.rel = "noopener noreferrer";
+    a.append(el("span", { class: "sr-only", texto: " (abre o edital em nova aba)" }));
+  }
+  if (favoritos.has(i.id)) a.append(el("span", { class: "salvo", html: SALVO + "Salva" }));
+  h.append(a);
   const orgao = document.createElement("p"); orgao.className = "orgao";
   orgao.textContent = "Órgão: " + i.fonte;
   const etq = document.createElement("span"); etq.className = "etq";
@@ -521,15 +647,172 @@ function desenhar() {
   $("vazio").hidden = itens.length > 0;
   const n = document.createElement("strong"); n.textContent = itens.length;
   $("conta").replaceChildren(n, itens.length === 1 ? " oportunidade aberta" : " oportunidades abertas");
-  const ativos = estado.semAreas.size + estado.semTipos.size > 0;
+  $("so-salvos-rotulo").textContent = "Só as que salvei (" + favoritos.size + ")";
+  const ativos = estado.semAreas.size + estado.semTipos.size > 0 || estado.soSalvos;
   $("filtros-ativos").textContent = ativos ? " (com filtros)" : "";
   $("ver-resultados").textContent = "Ver " + itens.length + (itens.length === 1 ? " resultado" : " resultados");
 }
 
 function limparFiltros() {
-  estado.semAreas.clear(); estado.semTipos.clear(); estado.ordem = "prazo";
+  estado.semAreas.clear(); estado.semTipos.clear(); estado.ordem = "prazo"; estado.soSalvos = false;
   $("busca").value = "";
   salvarEstado(); montarFiltros(); desenhar();
+}
+
+// ---- Página da oportunidade (#oportunidade/<id>)
+function textoIcs(s) {
+  return s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+}
+function dobrar(linha) {  // linhas do .ics com no máximo ~75 bytes
+  const partes = [];
+  for (let i = 0; i < linha.length; i += 60) partes.push((i ? " " : "") + linha.slice(i, i + 60));
+  return partes.join("\r\n");
+}
+function baixarIcs(i) {
+  const dia = i.prazo.replace(/-/g, "");
+  const fim = dataLocal(i.prazo); fim.setDate(fim.getDate() + 1);
+  const ymd = d => d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
+  const agora = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
+  const linhas = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Radar de Oportunidades//PT-BR",
+    "BEGIN:VEVENT", "UID:" + i.id + "@radar-oportunidades", "DTSTAMP:" + agora,
+    "DTSTART;VALUE=DATE:" + dia, "DTEND;VALUE=DATE:" + ymd(fim),
+    "SUMMARY:" + textoIcs("Prazo: " + i.titulo),
+    "DESCRIPTION:" + textoIcs("Prazo estimado pelo Radar de Oportunidades. Confira no edital: " + i.link),
+    "URL:" + i.link,
+    "BEGIN:VALARM", "TRIGGER:-P3D", "ACTION:DISPLAY", "DESCRIPTION:" + textoIcs("Faltam 3 dias: " + i.titulo), "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR"];
+  const url = URL.createObjectURL(new Blob([linhas.map(dobrar).join("\r\n") + "\r\n"], { type: "text/calendar" }));
+  const a = el("a", { href: url, download: "prazo-" + i.id + ".ics" });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function textoPrazo(i) {
+  const dias = diasAte(i.prazo);
+  if (dias === null) return { texto: "não informado: confira no edital", classe: "prazo-sem" };
+  const quando = dias === 0 ? "hoje" : dias === 1 ? "amanhã" : "em " + dias + " dias";
+  return { texto: "até " + fmtData.format(dataLocal(i.prazo)) + " (" + quando + ")",
+           classe: dias <= URGENTE_ATE ? "prazo-urgente" : "prazo-normal" };
+}
+
+function cabecaPagina(icone, titulo, subtitulo) {
+  return el("div", { class: "cabeca-pagina" },
+    el("div", { class: "ico-grande", html: icone }),
+    el("div", {}, el("h1", { id: "vista-titulo", tabindex: "-1", texto: titulo }),
+       subtitulo ? el("p", { texto: subtitulo }) : null));
+}
+
+function paginaOportunidade(id) {
+  const i = DADOS && DADOS.itens.find(x => x.id === id);
+  if (!i) {
+    return [cabecaPagina(ICO.lista, "Oportunidade não encontrada",
+              "Ela pode ter encerrado ou saído da lista na última atualização."),
+            el("a", { class: "botao botao-primario", href: "#inicio", html: ICO.voltar + "Voltar para oportunidades" })];
+  }
+  document.title = i.titulo + " · Radar de Oportunidades";
+  const prazo = textoPrazo(i);
+  const areas = (i.areas || []).map(nomeArea);
+  const destaque = el("section", { class: "painel destaque", "aria-labelledby": "op-titulo" },
+    el("div", { class: "ico", html: ICONES[i.tipo] || ICONES.outro }),
+    el("div", {},
+      el("h2", { id: "op-titulo", texto: i.titulo }),
+      el("p", { class: "linha-icone", html: ICO.predio }, i.fonte),
+      el("span", { class: "etq", texto: TIPOS[i.tipo] || i.tipo }),
+      el("div", { class: "linha-icone", html: ICO.camadas }, el("strong", { texto: "Áreas:" }),
+         el("span", { class: "chips" }, ...areas.map(a => el("span", { class: "chip", texto: a })))),
+      el("p", { class: "linha-icone", html: CALENDARIO }, el("strong", { texto: "Prazo de inscrição:" }),
+         el("span", { class: "selo-texto " + prazo.classe, texto: prazo.texto }))));
+
+  const salvar = el("button", { type: "button", class: "botao botao-secundario", "aria-pressed": String(favoritos.has(i.id)) });
+  const rotuloSalvar = () => {
+    const sim = favoritos.has(i.id);
+    salvar.setAttribute("aria-pressed", String(sim));
+    salvar.innerHTML = (sim ? SALVO : ICO.salvar) + (sim ? "Salva nos favoritos" : "Salvar nos favoritos");
+  };
+  rotuloSalvar();
+  salvar.addEventListener("click", () => {
+    if (favoritos.has(i.id)) favoritos.delete(i.id); else favoritos.add(i.id);
+    gravarFavoritos(); rotuloSalvar(); desenhar();
+  });
+  const agenda = el("button", { type: "button", class: "botao botao-secundario", disabled: !i.prazo,
+                                html: CALENDARIO + "Adicionar prazo à minha agenda" });
+  agenda.addEventListener("click", () => baixarIcs(i));
+  const ferramentas = el("div", { class: "ferramentas" }, el("h3", { texto: "Ferramentas" }), agenda,
+    i.prazo ? el("p", { class: "areas", texto: "Cria um lembrete 3 dias antes do prazo." })
+            : el("p", { class: "areas", texto: "Sem prazo identificado, não há o que pôr na agenda." }),
+    salvar);
+
+  const marca = t => el("li", { html: ICO.check }, el("span", { texto: t }));
+  const antes = el("section", { class: "painel", "aria-labelledby": "antes-titulo" },
+    el("h2", { id: "antes-titulo", texto: "Antes de continuar" }),
+    el("p", {}, "O Radar ", el("strong", { texto: "apenas reúne e divulga" }),
+       " oportunidades publicadas por outros órgãos. A inscrição é feita ",
+       el("strong", { texto: "no edital ou no portal original" }), "."),
+    el("div", { class: "dupla" },
+      el("ul", { class: "checklist" }, marca("Leia o edital completo"), marca("Verifique os documentos exigidos"),
+         marca("Confirme o prazo final: o daqui é estimado"), marca("Confira os critérios de elegibilidade")),
+      ferramentas));
+
+  const aviso = el("p", { class: "alerta-laranja", html: ICO.alerta },
+    el("span", {}, el("strong", { texto: "Ao prosseguir, você vai para o site de " + i.fonte + "." }),
+       " Nenhum dado seu é enviado a ele."));
+  const acoes = el("div", { class: "acoes" },
+    el("a", { class: "botao botao-primario", href: i.link, target: "_blank", rel: "noopener noreferrer",
+              html: ICO.externo + "Acessar edital original" },
+       el("span", { class: "sr-only", texto: " (abre em nova aba)" })),
+    el("a", { class: "botao botao-secundario", href: "#inicio", html: ICO.voltar + "Voltar para oportunidades" }));
+
+  const item = (icone, termo, valor) => el("div", { class: "item" },
+    el("span", { html: icone }), el("div", {}, el("dt", { texto: termo }), el("dd", { texto: valor })));
+  const resumo = el("aside", { class: "painel resumo-rapido", "aria-labelledby": "resumo-titulo" },
+    el("h2", { id: "resumo-titulo", texto: "Resumo rápido" }),
+    el("dl", {},
+      item(ICONES["pos-graduacao"], "Oportunidade", i.titulo),
+      item(ICO.predio, "Organização responsável", i.fonte),
+      item(ICO.etiqueta, "Tipo", TIPOS[i.tipo] || i.tipo),
+      item(ICO.camadas, "Áreas", areas.join(", ")),
+      item(CALENDARIO, "Prazo de inscrição", prazo.texto),
+      i.coletado_em ? item(ICO.relogio, "Encontrada pelo Radar em", fmtData.format(dataLocal(i.coletado_em))) : null,
+      item(ICO.globo, "Inscrição", "No site de " + i.fonte)));
+
+  return [cabecaPagina(ICO.lista, "Detalhes da oportunidade",
+            "Revise as informações e siga para o edital original, onde a inscrição é feita."),
+          el("div", { class: "detalhe-grade" }, el("div", {}, destaque, antes, aviso, acoes), resumo)];
+}
+
+// ---- Rotas: lista (padrão), #oportunidade/<id>, #entrar, #conta
+let rolagemLista = 0, ultimoAberto = null, naLista = true;
+function rota() {
+  const hash = decodeURIComponent(location.hash.slice(1));
+  const vista = $("vista");
+  let conteudo = null;
+  if (hash.startsWith("oportunidade/")) {
+    ultimoAberto = hash.slice(13);
+    conteudo = paginaOportunidade(ultimoAberto);
+  } else if ((hash === "entrar" || hash.startsWith("conta")) && window.radar.conta) {
+    conteudo = "conta";
+  }
+  if (!conteudo) {
+    document.title = "Radar de Oportunidades";
+    if (!naLista) {
+      vista.hidden = true; vista.replaceChildren(); document.querySelector(".corpo").hidden = false;
+      naLista = true;
+      window.scrollTo(0, rolagemLista);
+      const link = ultimoAberto && document.querySelector('.cartao[data-id="' + CSS.escape(ultimoAberto) + '"] h3 a');
+      if (link) link.focus({ preventScroll: true });
+    }
+    return;
+  }
+  if (naLista) rolagemLista = window.scrollY;
+  naLista = false;
+  fecharFiltros(false);
+  document.querySelector(".corpo").hidden = true;
+  vista.hidden = false;
+  if (conteudo === "conta") window.radar.conta.mostrar(hash, vista);
+  else vista.replaceChildren(...conteudo);
+  window.scrollTo(0, 0);
+  const titulo = $("vista-titulo");  // a página pode já ter focado um campo (ex.: e-mail)
+  if (titulo && !vista.contains(document.activeElement)) titulo.focus({ preventScroll: true });
 }
 
 // ---- Painel de filtros no celular: folha inferior, com o resto da página inerte
@@ -560,6 +843,7 @@ function carregar() {
     .then(d => {
       if (!valido(d)) throw new Error("formato inesperado");
       DADOS = d; montarFiltros(); desenhar();
+      if (!naLista || location.hash.length > 1) rota();
       avisoRede(navigator.onLine ? "" : SEM_REDE + dataAtualizacao() + ".");
     })
     .catch(() => {
@@ -596,6 +880,8 @@ if (!emApp && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
 
 // ---- Eventos
 $("busca").addEventListener("input", desenhar);
+$("so-salvos").addEventListener("change", e => { estado.soSalvos = e.target.checked; salvarEstado(); desenhar(); });
+window.addEventListener("hashchange", rota);
 $("ordem").addEventListener("change", e => { estado.ordem = e.target.value; salvarEstado(); desenhar(); });
 $("limpar").addEventListener("click", limparFiltros);
 $("limpar-vazio").addEventListener("click", limparFiltros);
@@ -611,7 +897,7 @@ $("dispensar").addEventListener("click", () => { $("convite").hidden = true; gra
 window.addEventListener("online", carregar);
 window.addEventListener("offline", () => { if (DADOS) avisoRede(SEM_REDE + dataAtualizacao() + "."); });
 
-if (DADOS) { montarFiltros(); desenhar(); }
+if (DADOS) { montarFiltros(); desenhar(); rota(); }
 if (location.protocol !== "file:") carregar();
 else if (!DADOS) avisoRede("Não foi possível carregar as oportunidades.");
 

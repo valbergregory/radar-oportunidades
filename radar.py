@@ -600,7 +600,7 @@ def gerar_privacidade(app):
 def gerar_site(itens, areas):
     DOCS.mkdir(exist_ok=True)
     app = config_app()
-    campos = ("titulo", "link", "fonte", "tipo", "areas", "prazo", "coletado_em")
+    campos = ("id", "titulo", "link", "fonte", "tipo", "areas", "prazo", "coletado_em")
     dados = json.dumps({
         "atualizado": HOJE.strftime("%d/%m/%Y"),
         "areas": {s: a["nome"] for s, a in areas.items()},

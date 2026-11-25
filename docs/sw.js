@@ -4,7 +4,7 @@
 //   dados.json): rede primeiro, cache como reserva, pois mudam com frequência.
 // - Manifest e ícones: cache primeiro, atualizado em segundo plano.
 // - prazos.ics e outros domínios (editais, Supabase): sempre pela rede, sem cache.
-const VERSAO = "radar-v2";
+const VERSAO = "radar-v3";
 const APP = ["./", "./index.html", "./dados.json", "./manifest.webmanifest",
              "./privacidade.html", "./conta.js",
              "./icones/icone.svg", "./icones/icone-192.png", "./icones/icone-512.png"];
