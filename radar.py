@@ -17,6 +17,7 @@ import os
 import re
 import sqlite3
 import sys
+import time
 import unicodedata
 from pathlib import Path
 from urllib.parse import urljoin
@@ -36,13 +37,17 @@ UA = {  # alguns portais (gov.br) recusam clientes que não se parecem com naveg
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "pt-BR,pt;q=0.9",
 }
-DATA = re.compile(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b")
+MESES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto",
+         "setembro", "outubro", "novembro", "dezembro"]
+DATA = re.compile(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b|"
+                  r"\b(\d{1,2})o? de (" + "|".join(MESES) + r") de (\d{4})\b")
 HOJE = dt.date.today()
 # Uma data só vale como prazo se vier logo depois de um destes termos. Datas de
 # "publicado em" ou "atualizado em" não são prazo.
-TERMO_PRAZO = re.compile(
-    r"inscric|submiss|prazo|\bate\b|encerra|data[- ]limite|termino|"
-    r"recebimento d|envio d|vigencia|periodo")
+PRAZO_FORTE = re.compile(r"inscric|submiss|envio d|recebimento d|data[- ]limite")
+PRAZO_FRACO = re.compile(r"prazo|\bate\b|encerra|termino")
+OUTRA_ETAPA = re.compile(r"resultad|recurso|homolog|divulg|julgament|contrat|vigenc|execu")
+SUFIXO = re.compile(r"\s*[-–]\s*(alterac|retificac|errata|prorrogac|republicac)\w*.*$")
 NAO_PRAZO = re.compile(r"(publicad|atualizad|divulgad|postad)\w*( em)?[^0-9]{0,25}$")
 ANO = re.compile(r"\b(20\d{2})\b")
 
@@ -55,10 +60,12 @@ GERAL = re.compile(
 
 TIPOS = [  # a ordem importa, vale o primeiro que casar
     ("evento", r"congresso|simposio|seminario|workshop|call for papers|"
-               r"submissao de (trabalhos|artigos)|jornada|\bencontro\b"),
-    ("concurso-vaga", r"concurso|professor substituto|\bvagas?\b|estagio|trainee"),
+               r"submissao de (trabalhos|artigos)|jornada|\bencontro\b|"
+               r"comunicacao oral|poster"),
+    ("concurso-vaga", r"concurso|professor substituto|\bvagas?\b|estagio|trainee|"
+                      r"remocao|redistribuicao|processo seletivo interno"),
     ("pos-graduacao", r"mestrado|doutorado|pos-graduacao|aluno (regular|especial)"),
-    ("bolsa", r"\bbolsas?\b"),
+    ("bolsa", r"\bbolsas?\b|bolsista|\bmonitor(es|a|as|ia)?\b|\binstrutor|\btutor"),
     ("fomento", r"edital|chamada|fomento|auxilio|subvencao|premio"),
 ]
 
@@ -143,19 +150,51 @@ def coletar_rss(fonte):
     return [i for i in itens if i["titulo"] and i["link"]]
 
 
+def detalhar(link):
+    """Texto principal da página do edital. Vazio se for arquivo ou se falhar."""
+    if re.search(r"\.(pdf|docx?|xlsx?|odt|zip)$", link.split("?")[0], re.I):
+        return ""
+    try:
+        bruto = baixar(link)
+    except Exception:
+        return ""
+    if bruto[:5] == b"%PDF-":
+        return ""
+    sopa = BeautifulSoup(bruto, "html.parser")
+    for lixo in sopa(["script", "style", "nav", "header", "footer", "aside", "form"]):
+        lixo.decompose()
+    for seletor in ("main article", "article", "#content", "main"):
+        no = sopa.select_one(seletor)
+        if no and len(no.get_text(" ", strip=True)) > 200:
+            return limpar(no.get_text(" "))[:6000]
+    return ""
+
+
+def termo_vale(regex, antes):
+    """O termo aparece antes da data, sem outra etapa (resultado, recurso) no meio."""
+    achados = list(regex.finditer(antes))
+    return bool(achados) and not OUTRA_ETAPA.search(antes[achados[-1].end():])
+
+
 def extrair_prazo(contexto):
-    """Maior data que venha depois de um termo de prazo ("inscrições até",
-    "submissão", "prazo"...). É uma estimativa: confira no edital."""
-    texto, datas = norm(contexto), []
+    """Maior data ligada a inscrição ou submissão; na falta, a "prazo" ou "até".
+    Datas de publicação não contam. É uma estimativa: confira no edital."""
+    texto, fortes, fracas = norm(contexto), [], []
     for achado in DATA.finditer(texto):
         antes = texto[max(0, achado.start() - 90):achado.start()]
-        if NAO_PRAZO.search(antes) or not TERMO_PRAZO.search(antes):
+        if NAO_PRAZO.search(antes):
             continue
-        d, m, a = achado.groups()
+        d, m, a, d2, mes, a2 = achado.groups()
         try:
-            datas.append(dt.date(int(a), int(m), int(d)))
+            data = (dt.date(int(a), int(m), int(d)) if d else
+                    dt.date(int(a2), MESES.index(mes) + 1, int(d2)))
         except ValueError:
-            pass
+            continue
+        if termo_vale(PRAZO_FORTE, antes):
+            fortes.append(data)
+        elif termo_vale(PRAZO_FRACO, antes):
+            fracas.append(data)
+    datas = fortes or fracas
     return max(datas).isoformat() if datas else None
 
 
@@ -187,7 +226,25 @@ def abrir_db():
     con.execute("""CREATE TABLE IF NOT EXISTS oportunidades (
         id TEXT PRIMARY KEY, fonte TEXT, titulo TEXT, link TEXT, contexto TEXT,
         tipo TEXT, areas TEXT, prazo TEXT, coletado_em TEXT)""")
+    if "detalhe" not in [c[1] for c in con.execute("PRAGMA table_info(oportunidades)")]:
+        con.execute("ALTER TABLE oportunidades ADD COLUMN detalhe INTEGER")
     return con
+
+
+def enriquecer(con, areas, limite=60):
+    """Abre a página de cada edital ainda não visitado para achar prazo e área."""
+    linhas = con.execute("SELECT * FROM oportunidades WHERE detalhe IS NULL LIMIT ?",
+                         (limite,)).fetchall()
+    for l in linhas:
+        texto = detalhar(l["link"])
+        resumo = norm(l["titulo"] + " " + l["contexto"] + " " + texto[:800])
+        con.execute(
+            "UPDATE oportunidades SET prazo=?, areas=?, tipo=?, detalhe=? WHERE id=?",
+            (l["prazo"] or extrair_prazo(texto), json.dumps(classificar_areas(resumo, areas)),
+             classificar_tipo(norm(l["titulo"]), l["tipo"]), 1 if texto else 0, l["id"]))
+        time.sleep(0.5)
+    con.commit()
+    print(f"detalhes: {len(linhas)} páginas visitadas")
 
 
 def coletar(cfg_fontes, areas):
@@ -216,12 +273,14 @@ def coletar(cfg_fontes, areas):
             if antigo(reg["titulo"], reg["prazo"]):
                 continue
             cur = con.execute(
-                "INSERT OR IGNORE INTO oportunidades VALUES "
+                "INSERT OR IGNORE INTO oportunidades "
+                "(id,fonte,titulo,link,contexto,tipo,areas,prazo,coletado_em) VALUES "
                 "(:id,:fonte,:titulo,:link,:contexto,:tipo,:areas,:prazo,:coletado_em)", reg)
             if cur.rowcount:
                 novos.append(reg)
         print(f"ok   {fonte['nome']}: {len(itens)} itens")
     con.commit()
+    enriquecer(con, areas)
     for f in falhas:
         print(f"FALHA {f}", file=sys.stderr)
     SAIDA.mkdir(exist_ok=True)
@@ -235,8 +294,14 @@ def abertas(con):
     linhas = con.execute(
         "SELECT * FROM oportunidades WHERE prazo IS NULL OR prazo >= ? "
         "ORDER BY prazo IS NULL, prazo, coletado_em DESC", (HOJE.isoformat(),))
-    return [dict(l, areas=json.loads(l["areas"])) for l in linhas
-            if not antigo(l["titulo"], l["prazo"])]
+    unicos = {}  # retificações ("... - Alteração") contam como o mesmo edital
+    for l in linhas:
+        if antigo(l["titulo"], l["prazo"]):
+            continue
+        chave = (l["fonte"], SUFIXO.sub("", norm(l["titulo"])).strip())
+        if chave not in unicos or len(l["titulo"]) < len(unicos[chave]["titulo"]):
+            unicos[chave] = l
+    return [dict(l, areas=json.loads(l["areas"])) for l in unicos.values()]
 
 
 # ----------------------------------------------------------------- saídas
