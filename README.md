@@ -19,6 +19,8 @@ navegador. Na newsletter, por um perfil de `config/areas.yaml` ou pela opção `
 pip install -r requirements.txt
 python radar.py tudo --perfil valber
 python radar.py gerar --areas turismo,economia   # outra combinação de áreas
+python radar.py detalhar --limite 200             # só relê as páginas dos editais
+python -m unittest discover -s tests              # testes (não acessam a internet)
 ```
 
 ## Publicar e automatizar (GitHub)
@@ -71,8 +73,18 @@ dias, azul acima disso e cinza quando o prazo não foi identificado.
 
 - Os coletores ainda não foram executados contra os sites reais. A primeira
   execução serve para calibrar `padrao_link` de cada fonte.
-- O prazo é a maior data encontrada perto do título. É uma estimativa e deve ser
-  conferida no edital antes de divulgar.
+- O prazo é estimado e deve ser conferido no edital antes de divulgar. O robô abre
+  a página de cada edital e, se ela não trouxer o prazo, lê os PDFs de edital,
+  retificação ou prorrogação anexos (na UFAL, pela API do site). Vale a maior
+  data ligada a inscrição ou submissão. Em cronogramas, cada data é julgada só
+  pelo texto que a antecede: "resultado da análise das inscrições: 19/11" não é
+  prazo. Na falta disso, vale uma data após "prazo" ou "até".
+- Quando a página não traz prazo, mas já lista um resultado, homologação ou
+  comunicado de encerramento, o item é marcado como encerrado e sai do site.
+- Itens sem prazo são relidos a cada 7 dias. Ao melhorar a leitura, aumente
+  `VERSAO_LEITURA` em `radar.py`: tudo que está aberto será relido.
+- Prazos que ficam em sites externos (ex.: chamadas internacionais divulgadas
+  pela FAPEAL) não são encontrados e aparecem como "não informado".
 - A classificação por área usa palavras-chave e erra em títulos genéricos.
 - Páginas que dependem de JavaScript (como o SIGAA) não são lidas por este coletor.
 - O LinkedIn não é fonte do robô, pois os termos de uso proíbem coleta
