@@ -39,6 +39,18 @@ Nenhum prazo próximo identificado.
   https://editais.ufal.br/outros/selecao-de-mentores-as-cientificos-as-voluntarios-as-para-o-labment-sinpete
 - **Chamada Pública nº 27 - Prêmio InovaEDU** (UFAL (editais), prazo não identificado)  
   https://editais.ufal.br/outros/sinpete-2026-premio-inovaedu
+- **Edital 01/2026 Edufal/Fapeal – Edital para Publicação de Teses e Dissertações** (FAPEAL, prazo não identificado)  
+  https://www.fapeal.br/2026/06/edital-publicar-teses-dissertacoes/
+- **Mobility Confap Italy 2026** (FAPEAL, prazo não identificado)  
+  https://www.fapeal.br/2026/11/mobility-confap-italy-2026/
+- **Mobilidade de pesquisadores, para a Europa** (FAPEAL, prazo não identificado)  
+  https://www.fapeal.br/2026/11/erc-2026/
+- **Edital Fapeal Nº 03/2026 – Auxílio À Organização de Eventos Científicos – AORC 2026** (FAPEAL, prazo não identificado)  
+  https://www.fapeal.br/2026/04/aorc-2026/
+- **Edital Fapeal Nº5/2024 – Credenciamento de Avaliadores Ad hoc** (FAPEAL, prazo não identificado)  
+  https://www.fapeal.br/2026/01/edital-consultores-adhoc/
+- **Edital de seleção de orientador(a) de serviço para atuação no programa nacional de apoio à permanência, diversidade e visibilidade para discentes na área da saúde - AFIRMASUS.** (UFAL (editais), prazo não identificado)  
+  https://editais.ufal.br/outros/edital-de-selecao-de-orientador-a-de-servico-para-atuacao-no-programa-nacional-de-apoio-a-permanencia-diversidade-e-visibilidade-para-discentes-na-area-da-saude-afirmasus-1
 
 ## Bolsas (novidades)
 
@@ -54,6 +66,14 @@ Nenhum prazo próximo identificado.
   https://editais.ufal.br/assistencia-estudantil/inscricao-de-estudantes-indigenas-e-quilombolas-para-a-bolsa-permanencia-do-mec-3
 - **Processo Seletivo de Tutor(a), cotutor(a) e orientador(a) de serviço para atuação no Programa Nacional de Apoio à permanência, diversidade e visibilidade para discentes na àrea da saúde - AfirmaSUS, no âmbito da UFAL** (UFAL (editais), prazo não identificado)  
   https://editais.ufal.br/extensao/processo-seletivo-de-tutor-a-cotutor-a-e-orientador-a-de-servico-para-atuacao-no-programa-nacional-de-apoio-a-permanencia-diversidade-e-visibilidade-para-discentes-na-area-da-saude-afirmasus-no-ambito-da-ufal
+- **Bolsas para doutorandos na Alemanha DAAD/Confap** (FAPEAL, prazo não identificado)  
+  https://www.fapeal.br/2026/06/bolsas-doutorado-alemanha/
+- **Seleção de Projetos de Monitoria** (UFAL (editais), prazo não identificado)  
+  https://editais.ufal.br/graduacao/selecao-de-projetos-de-monitoria-3
+- **Seleção de estudantes para atuarem como monitores/as voluntários/as no Circuito Penedo de Cinema** (UFAL (editais), prazo não identificado)  
+  https://editais.ufal.br/politica-cultural/selecao-de-estudantes-para-atuarem-como-monitores-as-voluntarios-as-no-circuito-penedo-de-cinema
+- **Processo Seletivo de Estudantes para atuarem como bolsistas no Programa de Apoio a Agendas Temáticas de Atividades de Extensão (PRO-AGENDAS)** (UFAL (editais), prazo não identificado)  
+  https://editais.ufal.br/extensao/processo-seletivo-de-estudantes-para-atuarem-como-bolsistas-no-programa-de-apoio-a-agendas-tematicas-de-atividades-de-extensao-pro-agendas-1
 
 ## Mestrado e doutorado (novidades)
 
