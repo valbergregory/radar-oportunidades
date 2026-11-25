@@ -30,9 +30,21 @@ RAIZ = Path(__file__).resolve().parent
 DB = RAIZ / "dados" / "radar.db"
 DOCS = RAIZ / "docs"
 SAIDA = RAIZ / "saida"
-UA = {"User-Agent": "RadarOportunidades/0.1 (projeto academico; contato no README)"}
+UA = {  # alguns portais (gov.br) recusam clientes que não se parecem com navegador
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/131.0 Safari/537.36 RadarOportunidades/0.2",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "pt-BR,pt;q=0.9",
+}
 DATA = re.compile(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b")
 HOJE = dt.date.today()
+# Uma data só vale como prazo se vier logo depois de um destes termos. Datas de
+# "publicado em" ou "atualizado em" não são prazo.
+TERMO_PRAZO = re.compile(
+    r"inscric|submiss|prazo|\bate\b|encerra|data[- ]limite|termino|"
+    r"recebimento d|envio d|vigencia|periodo")
+NAO_PRAZO = re.compile(r"(publicad|atualizad|divulgad|postad)\w*( em)?[^0-9]{0,25}$")
+ANO = re.compile(r"\b(20\d{2})\b")
 
 # Usado quando a fonte não define "padrao_link": o texto do link precisa
 # parecer uma oportunidade.
@@ -70,6 +82,20 @@ def baixar(url):
     return r.content
 
 
+def titulo_do_cartao(a):
+    """Para links do tipo "Acessar": usa o título (h1 a h5) do cartão em volta."""
+    no = a.parent
+    for _ in range(6):
+        if no is None:
+            break
+        for h in no.find_all(["h1", "h2", "h3", "h4", "h5"]):
+            texto = limpar(h.get_text(" "))
+            if len(texto) >= 20:
+                return texto
+        no = no.parent
+    return ""
+
+
 def coletar_html(fonte):
     sopa = BeautifulSoup(baixar(fonte["url"]), "html.parser")
     padrao = fonte.get("padrao_link")
@@ -77,6 +103,8 @@ def coletar_html(fonte):
     for a in sopa.find_all("a", href=True):
         titulo = limpar(a.get_text(" "))
         link = urljoin(fonte["url"], a["href"]).split("#")[0]
+        if padrao and len(titulo) < 20 and re.search(padrao, link):
+            titulo = titulo_do_cartao(a)
         if len(titulo) < 20 or link in candidatos:
             continue
         if padrao:
@@ -116,14 +144,25 @@ def coletar_rss(fonte):
 
 
 def extrair_prazo(contexto):
-    """Maior data encontrada no contexto. É uma estimativa: confira no edital."""
-    datas = []
-    for d, m, a in DATA.findall(contexto):
+    """Maior data que venha depois de um termo de prazo ("inscrições até",
+    "submissão", "prazo"...). É uma estimativa: confira no edital."""
+    texto, datas = norm(contexto), []
+    for achado in DATA.finditer(texto):
+        antes = texto[max(0, achado.start() - 90):achado.start()]
+        if NAO_PRAZO.search(antes) or not TERMO_PRAZO.search(antes):
+            continue
+        d, m, a = achado.groups()
         try:
             datas.append(dt.date(int(a), int(m), int(d)))
         except ValueError:
             pass
     return max(datas).isoformat() if datas else None
+
+
+def antigo(titulo, prazo):
+    """Sem prazo conhecido e com ano anterior no título (ex.: "Edital 02/2023")."""
+    anos = [int(x) for x in ANO.findall(titulo or "")]
+    return not prazo and bool(anos) and max(anos) < HOJE.year
 
 
 def classificar_tipo(texto, padrao_fonte=None):
@@ -174,6 +213,8 @@ def coletar(cfg_fontes, areas):
                 "prazo": extrair_prazo(item["contexto"]),
                 "coletado_em": HOJE.isoformat(),
             }
+            if antigo(reg["titulo"], reg["prazo"]):
+                continue
             cur = con.execute(
                 "INSERT OR IGNORE INTO oportunidades VALUES "
                 "(:id,:fonte,:titulo,:link,:contexto,:tipo,:areas,:prazo,:coletado_em)", reg)
@@ -194,7 +235,8 @@ def abertas(con):
     linhas = con.execute(
         "SELECT * FROM oportunidades WHERE prazo IS NULL OR prazo >= ? "
         "ORDER BY prazo IS NULL, prazo, coletado_em DESC", (HOJE.isoformat(),))
-    return [dict(l, areas=json.loads(l["areas"])) for l in linhas]
+    return [dict(l, areas=json.loads(l["areas"])) for l in linhas
+            if not antigo(l["titulo"], l["prazo"])]
 
 
 # ----------------------------------------------------------------- saídas
