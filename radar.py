@@ -420,14 +420,18 @@ def gerar_ics(itens):
 
 def gerar_site(itens, areas):
     DOCS.mkdir(exist_ok=True)
+    campos = ("titulo", "link", "fonte", "tipo", "areas", "prazo", "coletado_em")
     dados = json.dumps({
         "atualizado": HOJE.strftime("%d/%m/%Y"),
         "areas": {s: a["nome"] for s, a in areas.items()},
-        "itens": [{k: i[k] for k in ("titulo", "link", "fonte", "tipo", "areas", "prazo")}
-                  for i in itens],
-    }, ensure_ascii=False).replace("</", "<\\/")
+        "itens": [{k: i[k] for k in campos} for i in itens],
+    }, ensure_ascii=False)
+    # O aplicativo lê dados.json (atualizável pelo service worker); a cópia
+    # embutida no HTML é a reserva quando o arquivo não pode ser lido.
+    (DOCS / "dados.json").write_text(dados, encoding="utf-8")
     modelo = (RAIZ / "modelo_site.html").read_text(encoding="utf-8")
-    (DOCS / "index.html").write_text(modelo.replace("/*DADOS*/null", dados), encoding="utf-8")
+    embutido = dados.replace("</", "<\\/")
+    (DOCS / "index.html").write_text(modelo.replace("/*DADOS*/null", embutido), encoding="utf-8")
     gerar_ics(itens)
     print(f"site: {DOCS / 'index.html'} ({len(itens)} oportunidades abertas)")
 

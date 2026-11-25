@@ -3,7 +3,9 @@
 Robô que visita diariamente portais públicos (CNPq, CAPES, Finep, FAPEAL, UFAL),
 guarda editais, bolsas, seleções, eventos e vagas em um banco SQLite e gera
 
-- um **site com filtros** por área e tipo (`docs/index.html`, publicado no GitHub Pages)
+- um **site com filtros** por área e tipo (`docs/index.html`, publicado no GitHub Pages),
+  que também é um **aplicativo instalável no celular** (PWA) e abre sem internet
+- os **dados do site** em `docs/dados.json`
 - um **rascunho de newsletter** em Markdown (`saida/newsletter-<perfil>.md`)
 - um **calendário de prazos** assinável (`docs/prazos.ics`)
 - um **aviso no Telegram** com as novidades (opcional)
@@ -32,6 +34,32 @@ python radar.py gerar --areas turismo,economia   # outra combinação de áreas
 
 Quando uma fonte falha, o fluxo termina com erro e o GitHub avisa por e-mail.
 O que foi coletado das outras fontes é salvo normalmente.
+
+## Aplicativo (PWA)
+
+O site é gerado a partir de `modelo_site.html` (HTML, CSS e JavaScript puros, sem
+etapa de build). Os arquivos fixos do aplicativo ficam em `docs/` e não são
+gerados pelo robô:
+
+- `docs/manifest.webmanifest`: nome, cores e ícones do aplicativo
+- `docs/sw.js`: service worker. Página e `dados.json` vêm da rede primeiro, com o
+  cache como reserva; manifest e ícones vêm do cache e são atualizados em segundo plano
+- `docs/icones/`: ícone em SVG e PNG (192 e 512)
+
+O aplicativo lê `dados.json`. Se não conseguir, usa a cópia dos dados embutida no
+`index.html`. Todos os caminhos são relativos, porque o site fica em
+`/radar-oportunidades/` no GitHub Pages.
+
+Para testar no computador:
+
+```bash
+python radar.py gerar --perfil valber
+cd docs && python -m http.server 8000
+```
+
+Abra `http://localhost:8000/` e confira, nas ferramentas do navegador (aba
+Application), o manifest e o service worker. O selo de prazo fica laranja até 14
+dias, azul acima disso e cinza quando o prazo não foi identificado.
 
 ## Ajustar
 
