@@ -12,7 +12,9 @@ Uso:
 import argparse
 import datetime as dt
 import hashlib
+import io
 import json
+import logging
 import os
 import re
 import sqlite3
@@ -27,6 +29,12 @@ import requests
 import yaml
 from bs4 import BeautifulSoup
 
+try:  # opcional: sem ele, os PDFs dos editais não são lidos
+    from pypdf import PdfReader
+    logging.getLogger("pypdf").setLevel(logging.ERROR)
+except ImportError:
+    PdfReader = None
+
 RAIZ = Path(__file__).resolve().parent
 DB = RAIZ / "dados" / "radar.db"
 DOCS = RAIZ / "docs"
@@ -37,19 +45,33 @@ UA = {  # alguns portais (gov.br) recusam clientes que não se parecem com naveg
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "pt-BR,pt;q=0.9",
 }
-MESES = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julho", "agosto",
-         "setembro", "outubro", "novembro", "dezembro"]
-DATA = re.compile(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b|"
-                  r"\b(\d{1,2})o? de (" + "|".join(MESES) + r") de (\d{4})\b")
+MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
+# 20/11/2026, 20/11/26, 20.11.2026, 20 de novembro de 2026, 20 de nov. de 2026, 27 de abril 2026
+DATA = re.compile(r"\b(\d{1,2})/(\d{1,2})/(\d{4}|\d{2})\b|"
+                  r"\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b|"
+                  r"\b(\d{1,2})o? de (" + "|".join(MESES) + r")[a-z]*\.?,?(?: de)? (\d{4})\b")
 HOJE = dt.date.today()
-# Uma data só vale como prazo se vier logo depois de um destes termos. Datas de
-# "publicado em" ou "atualizado em" não são prazo.
+# Uma data só vale como prazo se o trecho entre ela e a data anterior tiver um
+# destes termos. Datas de "publicado em" ou "atualizado em" não são prazo.
 PRAZO_FORTE = re.compile(r"inscric|submiss|envio d|recebimento d|data[- ]limite")
 PRAZO_FRACO = re.compile(r"prazo|\bate\b|encerra|termino")
-OUTRA_ETAPA = re.compile(r"resultad|recurso|homolog|divulg|julgament|contrat|vigenc|execu")
+OUTRA_ETAPA = re.compile(r"resultad|recurso|homolog|divulg|julgament|contrat|vigenc|execu|"
+                         r"analise|avaliac|entrevist|matricul|pagament")
+# O que liga as duas pontas de um período: "10/11/2026 a 20/11/2026",
+# "24 de agosto de 2026 até as 18h do dia 17 de fevereiro de 2027" e, em
+# cronogramas em tabela, só o espaço entre as colunas: "13/11/2026 04/12/2026".
+CONTINUA = re.compile(r"\s*(?:,?\s*(?:a|ate|e|ao|-)\s+(?:(?:as\s+)?\d{1,2}h\d{0,2}(?:min)?\s+"
+                      r"(?:de|do dia)\s+|o dia\s+|do dia\s+)?)?")
 SUFIXO = re.compile(r"\s*[-–]\s*(alterac|retificac|errata|prorrogac|republicac)\w*.*$")
 NAO_PRAZO = re.compile(r"(publicad|atualizad|divulgad|postad)\w*( em)?[^0-9]{0,25}$")
 ANO = re.compile(r"\b(20\d{2})\b")
+# Documentos anexos ao edital: os que podem trazer o prazo e os que indicam que
+# as inscrições já acabaram (comparados sem acento, em minúsculas).
+DOC_EDITAL = re.compile(r"edital|chamada|retifica|prorroga|errata|cronograma|alterac")
+DOC_ENCERRADO = re.compile(r"resultado|homologac|encerrament|classificac|convocac|"
+                           r"recursos esgotados")
+VERSAO_LEITURA = 2  # suba quando a leitura dos editais melhorar: tudo é relido
+RELER_APOS_DIAS = 7  # itens sem prazo são relidos (pode surgir prorrogação ou resultado)
 
 # Usado quando a fonte não define "padrao_link": o texto do link precisa
 # parecer uma oportunidade.
@@ -175,51 +197,135 @@ def coletar_plone(fonte):
     return [i for i in itens if len(i["titulo"]) >= 10 and i["link"]]
 
 
-def detalhar(link):
-    """Texto principal da página do edital. Vazio se for arquivo; None se falhar."""
-    if re.search(r"\.(pdf|docx?|xlsx?|odt|zip)$", link.split("?")[0], re.I):
+_aviso_pdf = []
+
+
+def texto_pdf(bruto, paginas=30):
+    """Texto das primeiras páginas de um PDF; vazio se não der para ler."""
+    if PdfReader is None:
+        if not _aviso_pdf:
+            print("aviso: pypdf não instalado, PDFs dos editais não serão lidos "
+                  "(pip install -r requirements.txt)", file=sys.stderr)
+            _aviso_pdf.append(1)
         return ""
+    try:
+        leitor = PdfReader(io.BytesIO(bruto))
+        return limpar(" ".join(p.extract_text() or "" for p in leitor.pages[:paginas]))
+    except Exception:  # PDF corrompido, protegido ou só com imagem
+        return ""
+
+
+def detalhar(link, plone=False):
+    """Lê a página do edital. Devolve {"texto", "documentos": [(título, endereço)]},
+    em que documentos são os arquivos anexos; None se a página não abrir."""
+    if plone:
+        return detalhar_plone(link)
+    vazio = {"texto": "", "documentos": []}
+    if re.search(r"\.(docx?|xlsx?|odt|zip)$", link.split("?")[0], re.I):
+        return vazio
     try:
         bruto = baixar(link, tentativas=1)
     except Exception:
         return None
     if bruto[:5] == b"%PDF-":
-        return ""
+        return {"texto": texto_pdf(bruto), "documentos": []}
     sopa = BeautifulSoup(bruto, "html.parser")
     for lixo in sopa(["script", "style", "nav", "header", "footer", "aside", "form"]):
         lixo.decompose()
-    for seletor in ("main article", "article", "#content", "main"):
-        no = sopa.select_one(seletor)
-        if no and len(no.get_text(" ", strip=True)) > 200:
-            return limpar(no.get_text(" "))[:6000]
-    return ""
+    no = next((n for n in map(sopa.select_one, ("main article", "article", "#content", "main"))
+               if n and len(n.get_text(" ", strip=True)) > 200), None)
+    if no is None:
+        no = sopa.select_one("main") or sopa.select_one("article") or sopa
+        texto = ""
+    else:
+        texto = limpar(no.get_text(" "))[:20000]
+    documentos = [(limpar(a.get_text(" ")), urljoin(link, a["href"]))
+                  for a in no.find_all("a", href=True)
+                  if re.search(r"\.pdf\b|display-file|@@download", a["href"], re.I)]
+    return {"texto": texto, "documentos": documentos}
 
 
-def termo_vale(regex, antes):
-    """O termo aparece antes da data, sem outra etapa (resultado, recurso) no meio."""
-    achados = list(regex.finditer(antes))
-    return bool(achados) and not OUTRA_ETAPA.search(antes[achados[-1].end():])
+def detalhar_plone(link):
+    """Editais em sites Plone (ex.: editais.ufal.br) pela API: a página é montada
+    por JavaScript, mas a API traz descrição e a lista de arquivos (edital,
+    retificações, resultados), cada um com título e descrição."""
+    api = re.sub(r"^(https?://[^/]+)/", r"\1/++api++/", link)
+    try:
+        dados = json.loads(baixar(api, tentativas=1, aceita="application/json"))
+    except Exception:
+        return None
+    partes, documentos = [dados.get("title"), dados.get("description")], []
+    for item in dados.get("items", []):
+        partes += [item.get("title"), item.get("description")]
+        documentos.append((limpar(item.get("title")), item["@id"] + "/@@download/file"))
+    # ". " separa as partes: a data de um arquivo não se mistura com o título do próximo
+    return {"texto": ". ".join(limpar(p) for p in partes if p), "documentos": documentos}
+
+
+def ler_documentos(documentos, maximo=3):
+    """Texto dos PDFs de edital, retificação ou prorrogação anexos à página. Se
+    nenhum título parece edital (na UFAL o arquivo costuma ter o nome da seleção),
+    lê o primeiro anexo que não seja resultado."""
+    escolhidos = [d for d in documentos if DOC_EDITAL.search(norm(d[0]))][:maximo]
+    if not escolhidos:
+        escolhidos = [d for d in documentos if not DOC_ENCERRADO.search(norm(d[0]))][:1]
+    textos = []
+    for titulo, url in escolhidos:
+        try:
+            bruto = baixar(url, tentativas=1)
+        except Exception:
+            continue
+        if bruto[:5] == b"%PDF-":
+            textos.append(texto_pdf(bruto))
+    return ". ".join(t for t in textos if t)
+
+
+def montar_data(grupos):
+    d, m, a, d2, m2, a2, d3, mes, a3 = grupos
+    try:
+        if d:
+            return dt.date(int(a) + (2000 if len(a) == 2 else 0), int(m), int(d))
+        if d2:
+            return dt.date(int(a2), int(m2), int(d2))
+        return dt.date(int(a3), MESES.index(mes) + 1, int(d3))
+    except ValueError:
+        return None
+
+
+def rotulo_do_trecho(trecho):
+    """"forte", "fraco" ou None para o texto que antecede uma data. Olha só a
+    última oração: em "resultado da análise de currículo e inscrição. 19/11" a
+    data é de resultado, não de inscrição."""
+    if NAO_PRAZO.search(trecho):
+        return None
+    oracao = re.split(r"[.;]\s", trecho.rstrip(" .:;-"))[-1]
+    if OUTRA_ETAPA.search(oracao):
+        return None
+    if PRAZO_FORTE.search(oracao):
+        return "forte"
+    if PRAZO_FRACO.search(oracao):
+        return "fraco"
+    return None
 
 
 def extrair_prazo(contexto):
     """Maior data ligada a inscrição ou submissão; na falta, a "prazo" ou "até".
     Datas de publicação não contam. É uma estimativa: confira no edital."""
-    texto, fortes, fracas = norm(contexto), [], []
+    texto, achadas = norm(contexto), {"forte": [], "fraco": []}
+    fim_anterior, rotulo_anterior = None, None
     for achado in DATA.finditer(texto):
-        antes = texto[max(0, achado.start() - 90):achado.start()]
-        if NAO_PRAZO.search(antes):
-            continue
-        d, m, a, d2, mes, a2 = achado.groups()
-        try:
-            data = (dt.date(int(a), int(m), int(d)) if d else
-                    dt.date(int(a2), MESES.index(mes) + 1, int(d2)))
-        except ValueError:
-            continue
-        if termo_vale(PRAZO_FORTE, antes):
-            fortes.append(data)
-        elif termo_vale(PRAZO_FRACO, antes):
-            fracas.append(data)
-    datas = fortes or fracas
+        data = montar_data(achado.groups())
+        if fim_anterior is not None and CONTINUA.fullmatch(texto[fim_anterior:achado.start()]):
+            rotulo = rotulo_anterior  # segunda ponta de um período
+        else:
+            inicio = achado.start() - 90
+            if fim_anterior is not None:
+                inicio = max(inicio, fim_anterior)
+            rotulo = rotulo_do_trecho(texto[max(0, inicio):achado.start()])
+        if data and rotulo:
+            achadas[rotulo].append(data)
+        fim_anterior, rotulo_anterior = achado.end(), rotulo
+    datas = achadas["forte"] or achadas["fraco"]
     return max(datas).isoformat() if datas else None
 
 
@@ -253,8 +359,13 @@ def abrir_db():
     con.execute("""CREATE TABLE IF NOT EXISTS oportunidades (
         id TEXT PRIMARY KEY, fonte TEXT, titulo TEXT, link TEXT, contexto TEXT,
         tipo TEXT, areas TEXT, prazo TEXT, coletado_em TEXT)""")
-    if "detalhe" not in [c[1] for c in con.execute("PRAGMA table_info(oportunidades)")]:
-        con.execute("ALTER TABLE oportunidades ADD COLUMN detalhe INTEGER")
+    colunas = [c[1] for c in con.execute("PRAGMA table_info(oportunidades)")]
+    # detalhe: versão da leitura da página do edital (ver enriquecer);
+    # encerrado: 1 quando a página já traz resultado ou encerramento e não há prazo;
+    # lido_em: data da última leitura da página.
+    for nome, tipo in [("detalhe", "INTEGER"), ("encerrado", "INTEGER"), ("lido_em", "TEXT")]:
+        if nome not in colunas:
+            con.execute(f"ALTER TABLE oportunidades ADD COLUMN {nome} {tipo}")
     con.execute("CREATE TABLE IF NOT EXISTS fontes (nome TEXT PRIMARY KEY, falhas INTEGER)")
     return con
 
@@ -267,31 +378,54 @@ def registrar(con, nome, deu_certo):
     return falhas
 
 
-def enriquecer(con, areas, limite=60):
-    """Abre a página de cada edital ainda não visitado para achar prazo e área.
-    Coluna detalhe: 1 = lida; 0 a -4 = falhou, tenta de novo na próxima execução."""
-    linhas = con.execute("SELECT * FROM oportunidades WHERE detalhe IS NULL "
-                         "OR detalhe BETWEEN -4 AND 0 LIMIT ?", (limite,)).fetchall()
-    lidas, fora = 0, {}  # fora: falhas seguidas por site nesta execução
+def enriquecer(con, areas, hosts_plone=(), limite=60):
+    """Abre a página de cada edital para achar prazo, área e se já encerrou. Se a
+    página não traz o prazo, lê os PDFs de edital e retificação anexos.
+    Coluna detalhe: VERSAO_LEITURA = lida pela versão atual; valores menores
+    (inclusive 0 a -4, falhas) são lidos de novo. Itens abertos sem prazo são
+    relidos a cada RELER_APOS_DIAS dias."""
+    reler = (HOJE - dt.timedelta(days=RELER_APOS_DIAS)).isoformat()
+    linhas = con.execute(
+        "SELECT * FROM oportunidades WHERE (encerrado IS NULL OR encerrado = 0) "
+        "AND (prazo IS NULL OR prazo >= ?) "
+        "AND (detalhe IS NULL OR detalhe BETWEEN -4 AND ? "
+        "     OR (prazo IS NULL AND (lido_em IS NULL OR lido_em <= ?))) "
+        "ORDER BY detalhe IS NOT NULL, coletado_em DESC LIMIT ?",
+        (HOJE.isoformat(), VERSAO_LEITURA - 1, reler, limite)).fetchall()
+    lidas, com_prazo, encerradas, fora = 0, 0, 0, {}  # fora: falhas seguidas por site
     for l in linhas:
         site = urlparse(l["link"]).netloc
         if fora.get(site, 0) >= 2:  # site recusando conexão: fica para a próxima
             continue
-        texto = detalhar(l["link"])
-        if texto is None:
+        pagina = detalhar(l["link"], plone=site in hosts_plone)
+        if pagina is None:
             fora[site] = fora.get(site, 0) + 1
             con.execute("UPDATE oportunidades SET detalhe=? WHERE id=?",
-                        ((l["detalhe"] or 0) - 1, l["id"]))
+                        (min(l["detalhe"] or 0, 0) - 1, l["id"]))
             continue
         fora[site], lidas = 0, lidas + 1
-        resumo = norm(l["titulo"] + " " + l["contexto"] + " " + texto[:800])
+        texto = l["contexto"] + ". " + pagina["texto"]
+        prazo = extrair_prazo(texto)
+        if not prazo:
+            prazo = extrair_prazo(texto + ". " + ler_documentos(pagina["documentos"]))
+        encerrado = int(not prazo and any(DOC_ENCERRADO.search(norm(t))
+                                          for t, _ in pagina["documentos"]))
+        com_prazo, encerradas = com_prazo + bool(prazo), encerradas + encerrado
+        resumo = norm(l["titulo"] + " " + l["contexto"] + " " + pagina["texto"][:800])
         con.execute(
-            "UPDATE oportunidades SET prazo=?, areas=?, tipo=?, detalhe=1 WHERE id=?",
-            (l["prazo"] or extrair_prazo(texto), json.dumps(classificar_areas(resumo, areas)),
-             classificar_tipo(norm(l["titulo"]), l["tipo"]), l["id"]))
+            "UPDATE oportunidades SET prazo=?, areas=?, tipo=?, detalhe=?, encerrado=?, "
+            "lido_em=? WHERE id=?",
+            (prazo, json.dumps(classificar_areas(resumo, areas)),
+             classificar_tipo(norm(l["titulo"]), l["tipo"]), VERSAO_LEITURA, encerrado,
+             HOJE.isoformat(), l["id"]))
+        con.commit()  # uma página por vez: uma interrupção não perde o que já foi lido
         time.sleep(0.5)
-    con.commit()
-    print(f"detalhes: {lidas} páginas lidas de {len(linhas)} pendentes")
+    print(f"detalhes: {lidas} páginas lidas de {len(linhas)} pendentes "
+          f"({com_prazo} com prazo, {encerradas} já encerradas)")
+
+
+def hosts_plone(cfg_fontes):
+    return {urlparse(f["url"]).netloc for f in cfg_fontes if f.get("formato") == "plone"}
 
 
 def coletar(cfg_fontes, areas):
@@ -339,7 +473,7 @@ def coletar(cfg_fontes, areas):
                 novos.append(reg)
         print(f"ok   {fonte['nome']}: {len(itens)} itens")
     con.commit()
-    enriquecer(con, areas)
+    enriquecer(con, areas, hosts_plone(cfg_fontes))
     for f in falhas:
         print(f"FALHA {f}", file=sys.stderr)
     SAIDA.mkdir(exist_ok=True)
@@ -350,9 +484,11 @@ def coletar(cfg_fontes, areas):
 
 
 def abertas(con):
-    """Tudo que não tem prazo conhecido ou cujo prazo ainda não venceu."""
+    """Tudo que não tem prazo conhecido ou cujo prazo ainda não venceu, menos o
+    que a página do edital já mostra como encerrado."""
     linhas = con.execute(
-        "SELECT * FROM oportunidades WHERE prazo IS NULL OR prazo >= ? "
+        "SELECT * FROM oportunidades WHERE (prazo IS NULL OR prazo >= ?) "
+        "AND (encerrado IS NULL OR encerrado = 0) "
         "ORDER BY prazo IS NULL, prazo, coletado_em DESC", (HOJE.isoformat(),))
     unicos = {}  # retificações ("... - Alteração") contam como o mesmo edital
     for l in linhas:
@@ -453,7 +589,10 @@ def avisar_telegram(novos):
 
 def main():
     ap = argparse.ArgumentParser(description="Radar de Oportunidades")
-    ap.add_argument("comando", choices=["coletar", "gerar", "tudo"])
+    ap.add_argument("comando", choices=["coletar", "detalhar", "gerar", "tudo"],
+                    help="detalhar: só relê as páginas dos editais pendentes")
+    ap.add_argument("--limite", type=int, default=60,
+                    help="máximo de páginas de edital lidas por execução")
     ap.add_argument("--perfil", default="valber", help="perfil definido em config/areas.yaml")
     ap.add_argument("--areas", help="áreas separadas por vírgula (substitui o perfil)")
     ap.add_argument("--fontes", default="config/fontes.yaml")
@@ -467,6 +606,9 @@ def main():
         sys.exit(f"Áreas não cadastradas em config/areas.yaml: {desconhecidas}")
 
     falhas = []
+    if args.comando == "detalhar":
+        fontes = yaml.safe_load((RAIZ / args.fontes).read_text(encoding="utf-8"))["fontes"]
+        enriquecer(abrir_db(), areas, hosts_plone(fontes), args.limite)
     if args.comando in ("coletar", "tudo"):
         fontes = yaml.safe_load((RAIZ / args.fontes).read_text(encoding="utf-8"))["fontes"]
         novos, falhas = coletar(fontes, areas)

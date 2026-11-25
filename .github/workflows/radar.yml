@@ -17,6 +17,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
+      - name: Testes
+        run: python -m unittest discover -s tests
       - name: Coletar e gerar site
         run: python radar.py tudo --perfil valber
         env:
