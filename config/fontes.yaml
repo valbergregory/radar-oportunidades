@@ -1,10 +1,13 @@
 # Fontes monitoradas. Campos:
 #   nome         como aparece no site e na newsletter
-#   url          página de listagem (ou feed)
-#   formato      html (padrão) ou rss
+#   url          página de listagem, feed ou busca da API
+#   formato      html (padrão), rss ou plone (API de sites Plone, em JSON)
 #   padrao_link  opcional, regex que o endereço do item deve conter. Sem ele,
 #                o robô aceita links cujo texto pareça uma oportunidade.
 #   tipo_padrao  opcional: fomento, bolsa, pos-graduacao, evento, concurso-vaga
+#   ignorar      opcional, regex de títulos a descartar (sem acento, minúsculas)
+#   dias_max     opcional, descarta o que foi publicado há mais dias (padrão 180);
+#                só vale quando a fonte informa a data de publicação (rss e plone)
 #   ativa        false desliga a fonte sem apagar
 #
 # Calibrado em 25/11/2026 com a primeira execução contra os sites reais.
@@ -31,13 +34,17 @@ fontes:
     ativa: false
 
   - nome: FAPEAL
-    url: https://www.fapeal.br/tag/editais/
+    # página de editais mantida pela Fapeal (a etiqueta "editais" parou em 2024)
+    url: https://www.fapeal.br/pesquisador/editais/
+    padrao_link: ^https://www\.fapeal\.br/20\d\d/\d\d/[^/]+/$
+    ignorar: resultado|lista de|consultores|celebra|lanca
     tipo_padrao: fomento
 
   - nome: UFAL (editais)
-    url: https://editais.ufal.br/
-    # o link de cada edital diz só "Acessar"; o título vem do cartão
-    padrao_link: ^https://editais\.ufal\.br/[a-z0-9-]+/[^?]+$
+    # API aberta do site (Plone): os 40 editais mais recentes, em JSON
+    url: https://editais.ufal.br/++api++/@search?portal_type=ufal.edital.edital&sort_on=effective&sort_order=descending&b_size=40&metadata_fields=effective
+    formato: plone
+    dias_max: 60
     tipo_padrao: fomento
 
   # A acrescentar depois de confirmar o endereço da listagem de cada uma:
