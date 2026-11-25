@@ -1,0 +1,41 @@
+# Fontes monitoradas. Campos:
+#   nome         como aparece no site e na newsletter
+#   url          página de listagem (ou feed)
+#   formato      html (padrão) ou rss
+#   padrao_link  opcional, regex que o endereço do item deve conter. Sem ele,
+#                o robô aceita links cujo texto pareça uma oportunidade.
+#   tipo_padrao  opcional: fomento, bolsa, pos-graduacao, evento, concurso-vaga
+#   ativa        false desliga a fonte sem apagar
+#
+# Os endereços abaixo foram localizados por busca em 24/11/2026, mas o robô
+# ainda NÃO foi executado contra os sites reais. Na primeira execução, confira
+# a saída de cada fonte e ajuste "padrao_link" onde vier lixo ou vier vazio.
+
+fontes:
+  - nome: CNPq
+    url: https://www.gov.br/cnpq/pt-br/chamadas/abertas-para-submissao
+    padrao_link: /chamadas/todas-as-chamadas/
+    tipo_padrao: fomento
+
+  - nome: CAPES
+    url: https://www.gov.br/capes/pt-br/assuntos/editais-e-resultados-capes/
+    tipo_padrao: bolsa
+
+  - nome: Finep
+    url: http://www.finep.gov.br/chamadas-publicas?situacao=aberta
+    padrao_link: chamadapublica/
+    tipo_padrao: fomento
+
+  - nome: FAPEAL
+    url: https://www.fapeal.br/tag/editais/
+    tipo_padrao: fomento
+
+  - nome: UFAL (editais)
+    url: https://editais.ufal.br/
+    tipo_padrao: fomento
+
+  # A acrescentar depois de confirmar o endereço da listagem de cada uma:
+  #   - seleções de mestrado e doutorado da UFAL (SIGAA público, que depende de
+  #     JavaScript e talvez exija outro tipo de coletor)
+  #   - eventos da SBC e encontros da ANPEC
+  #   - um agregador de concursos e uma fonte de vagas e estágios em TI

@@ -1,0 +1,41 @@
+# Áreas de interesse. Cada pessoa escolhe as suas (no site, pelos filtros; na
+# newsletter, por um perfil abaixo ou pela opção --areas).
+# Para criar uma área nova, copie um bloco e ajuste os termos. Os termos são
+# comparados sem acento e sem diferenciar maiúsculas.
+# Itens que não casam com nenhuma área recebem "geral" e aparecem para todos,
+# pois chamadas transversais (Universal, bolsas de pós etc.) servem a qualquer área.
+
+areas:
+  administracao-publica:
+    nome: Administração pública
+    termos: [administração pública, gestão pública, políticas públicas, governo digital,
+             governança, setor público, serviço público, finanças públicas, orçamento público,
+             controle externo, municípios, inovação no setor público]
+  economia:
+    nome: Economia
+    termos: [economia, econômico, econômica, economistas, desenvolvimento regional,
+             econometria, bioeconomia, economia azul, pesca, agricultura familiar,
+             mercado de trabalho, ANPEC, finanças]
+  direito:
+    nome: Direito
+    termos: [direito, jurídico, jurídica, justiça, judiciário, legislação, regulação,
+             proteção de dados, LGPD, direitos humanos, advocacia, magistratura, CONPEDI]
+  sistemas-de-informacao:
+    nome: Sistemas de informação
+    termos: [sistemas de informação, computação, informática, tecnologia da informação,
+             software, inteligência artificial, ciência de dados, dados abertos,
+             cibersegurança, segurança da informação, transformação digital, TIC, TICs,
+             programação, startups, semicondutores, SBC]
+  turismo:
+    nome: Turismo
+    termos: [turismo, turístico, turística, hotelaria, hospitalidade, eventos turísticos]
+  engenharia-de-pesca:
+    nome: Engenharia de pesca
+    termos: [pesca, aquicultura, pescado, recursos pesqueiros, oceano, marinho, marinha,
+             recursos hídricos]
+
+perfis:
+  valber: [administracao-publica, economia, direito, sistemas-de-informacao]
+  bsi: [sistemas-de-informacao]
+  todos: [administracao-publica, economia, direito, sistemas-de-informacao, turismo,
+          engenharia-de-pesca]
