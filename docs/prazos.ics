@@ -1,13 +1,69 @@
-BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Radar de Oportunidades//PT-BR
-X-WR-CALNAME:Radar de Oportunidades (prazos)
-BEGIN:VEVENT
-UID:c931541578c0f7f4@radar-oportunidades
-DTSTAMP:20261125T000000Z
-DTSTART;VALUE=DATE:20270312
-DTEND;VALUE=DATE:20270313
-SUMMARY:Prazo: Chamada Pública MCTI/CNPq/CISB/SAAB AB Nº 37/2026 - Cooperação Brasil-Suécia
-URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-37-2026/chamada-publica-cnpq-N-37-2026
-END:VEVENT
-END:VCALENDAR
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Radar de Oportunidades//PT-BR
+X-WR-CALNAME:Radar de Oportunidades (prazos)
+BEGIN:VEVENT
+UID:e70547b72e81b3de@radar-oportunidades
+DTSTAMP:20261125T000000Z
+DTSTART;VALUE=DATE:20261204
+DTEND;VALUE=DATE:20261205
+SUMMARY:Prazo: Chamada CNPq Nº 34/2026 - Auxílio à Promoção de Eventos Científicos\, Tecnológicos e/ou de Inovação - ARC
+URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-34-2026/chamada-publica-cnpq-N-34-2026
+END:VEVENT
+BEGIN:VEVENT
+UID:95de50d98c1ab8f9@radar-oportunidades
+DTSTAMP:20261125T000000Z
+DTSTART;VALUE=DATE:20261208
+DTEND;VALUE=DATE:20261209
+SUMMARY:Prazo: Chamada Pública CNPq/Petrobras N° 31/2026 - Projeto InspirAÇÃO
+URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-31-2026/chamada-publica-cnpq-N-31-2026
+END:VEVENT
+BEGIN:VEVENT
+UID:24e2accdfe608744@radar-oportunidades
+DTSTAMP:20261125T000000Z
+DTSTART;VALUE=DATE:20261211
+DTEND;VALUE=DATE:20261212
+SUMMARY:Prazo: Chamada Pública CNPq/CAPES Nº 30/2026 – Programa de Mestrado e Doutorado Acadêmico para Inovação – MAI/DAI
+URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-30-2026/chamada-publica-cnpq-N-30-2026
+END:VEVENT
+BEGIN:VEVENT
+UID:73b044dd548b072e@radar-oportunidades
+DTSTAMP:20261125T000000Z
+DTSTART;VALUE=DATE:20270107
+DTEND;VALUE=DATE:20270108
+SUMMARY:Prazo: Chamada CNPq nº 33/2026 - Bolsas de Produtividade do CNPq
+URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-33-2026/chamada-publica-cnpq-N-33-2026
+END:VEVENT
+BEGIN:VEVENT
+UID:20a236aa695fb18a@radar-oportunidades
+DTSTAMP:20261125T000000Z
+DTSTART;VALUE=DATE:20270212
+DTEND;VALUE=DATE:20270213
+SUMMARY:Prazo: Chamada Pública CNPq/MCTI N° 36/2026 - Apoio a cursos de curta duração em biodiversidade\, no âmbito do Centro Franco-Brasileiro de Biodiversidade Amazônica (CFBBA)
+URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-36-2026/chamada-publica-cnpq-N-36-2026
+END:VEVENT
+BEGIN:VEVENT
+UID:4543466c0a28c815@radar-oportunidades
+DTSTAMP:20261125T000000Z
+DTSTART;VALUE=DATE:20270301
+DTEND;VALUE=DATE:20270302
+SUMMARY:Prazo: Chamada CNPq/MIR Nº 23/2026 - Programa Lélia Gonzalez de fomento a pesquisas sobre desigualdades étnico-raciais na ciência\, na educação e na sociedade brasileiras
+URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-23-2026/chamada-publica-cnpq-N-23-2026
+END:VEVENT
+BEGIN:VEVENT
+UID:c931541578c0f7f4@radar-oportunidades
+DTSTAMP:20261125T000000Z
+DTSTART;VALUE=DATE:20270312
+DTEND;VALUE=DATE:20270313
+SUMMARY:Prazo: Chamada Pública MCTI/CNPq/CISB/SAAB AB Nº 37/2026 - Cooperação Brasil-Suécia
+URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-37-2026/chamada-publica-cnpq-N-37-2026
+END:VEVENT
+BEGIN:VEVENT
+UID:363e01ec6c92de7a@radar-oportunidades
+DTSTAMP:20261125T000000Z
+DTSTART;VALUE=DATE:20270331
+DTEND;VALUE=DATE:20270401
+SUMMARY:Prazo: Chamada Pública MCTI/CNPq/ANR N° 32/2026
+URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-32-2026/chamada-publica-cnpq-N-32-2026
+END:VEVENT
+END:VCALENDAR
