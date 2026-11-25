@@ -23,6 +23,33 @@ python radar.py detalhar --limite 200             # só relê as páginas dos ed
 python -m unittest discover -s tests              # testes (não acessam a internet)
 ```
 
+## Abrir no celular
+
+O Radar se instala como aplicativo pelo navegador, sem loja:
+
+- **Android (Chrome):** abra o endereço do site e toque em **Instalar** no convite,
+  ou no menu ⋮ → **Instalar app**.
+- **iPhone (Safari):** abra o endereço, toque em **Compartilhar** e depois em
+  **Adicionar à Tela de Início**.
+
+O ícone vai para a tela inicial, e o app abre em tela cheia, mesmo sem internet.
+
+## Cadastro e entrada (opcional)
+
+O site funciona sem cadastro. Quem quiser pode entrar com um código enviado ao
+e-mail, sem senha, e guardar os interesses na conta, para usá-los em qualquer
+aparelho. O cadastro segue a LGPD:
+
+- coleta mínima e nenhum dado sensível;
+- autorização separada e opcional para uso em estudos;
+- histórico de aceites;
+- a própria pessoa vê, corrige, baixa e exclui os dados no app;
+- cada pessoa só acessa o próprio cadastro (regras no banco).
+
+O cadastro vem **desligado**. Para ativar, siga `supabase/LEIAME.md` e preencha
+`config/app.yaml`. A política de privacidade (`docs/privacidade.html`) é gerada
+a partir de `modelo_privacidade.html`.
+
 ## Publicar e automatizar (GitHub)
 
 1. Crie um repositório e envie estes arquivos.

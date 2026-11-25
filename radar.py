@@ -12,6 +12,7 @@ Uso:
 import argparse
 import datetime as dt
 import hashlib
+import html
 import io
 import json
 import logging
@@ -554,8 +555,51 @@ def gerar_ics(itens):
     (DOCS / "prazos.ics").write_text("\r\n".join(linhas) + "\r\n", encoding="utf-8")
 
 
+def config_app():
+    """config/app.yaml: cadastro opcional. "cadastro" só vale True com controlador
+    e Supabase preenchidos; sem isso, o app não mostra "Entrar"."""
+    arquivo = RAIZ / "config" / "app.yaml"
+    cfg = yaml.safe_load(arquivo.read_text(encoding="utf-8")) if arquivo.exists() else {}
+    cfg = cfg or {}
+    controlador = {k: str((cfg.get("controlador") or {}).get(k) or "").strip()
+                   for k in ("nome", "email")}
+    supabase = {k: str((cfg.get("supabase") or {}).get(k) or "").strip().rstrip("/")
+                for k in ("url", "chave_publica")}
+    priv = cfg.get("privacidade") or {}
+    versao = str(priv.get("versao") or "1")
+    regiao = str(priv.get("regiao_supabase") or "").strip()
+    preenchidos = [*controlador.values(), *supabase.values()]
+    if any(preenchidos) and not all(preenchidos):
+        print("aviso: config/app.yaml incompleto; o cadastro fica desligado até "
+              "controlador e Supabase estarem preenchidos", file=sys.stderr)
+    if supabase["url"] and not supabase["url"].startswith("https://"):
+        sys.exit("config/app.yaml: supabase.url precisa começar com https://")
+    return {"cadastro": all(preenchidos), "controlador": controlador,
+            "supabase": supabase, "versao": versao, "regiao": regiao}
+
+
+def gerar_privacidade(app):
+    """docs/privacidade.html a partir de modelo_privacidade.html e config/app.yaml."""
+    texto = (RAIZ / "modelo_privacidade.html").read_text(encoding="utf-8")
+    manter, remover = ("CADASTRO", "SEM_CADASTRO") if app["cadastro"] else ("SEM_CADASTRO", "CADASTRO")
+    texto = re.sub(rf"\s*<!--SE_{remover}-->.*?<!--FIM_SE_{remover}-->", "", texto, flags=re.S)
+    texto = re.sub(rf"\s*<!--(FIM_)?SE_{manter}-->", "", texto)
+    if app["regiao"] == "sa-east-1":
+        regiao = "Os dados ficam armazenados no Brasil (região de São Paulo do provedor)."
+    else:
+        regiao = ("Os dados ficam armazenados em servidores do provedor fora do Brasil "
+                  f"(região {app['regiao'] or 'não informada'}). A transferência internacional "
+                  "segue o art. 33 da LGPD, com as garantias contratuais do provedor.")
+    for chave, valor in {"VERSAO": app["versao"], "TEXTO_REGIAO": regiao,
+                         "CONTROLADOR_NOME": app["controlador"]["nome"],
+                         "CONTROLADOR_EMAIL": app["controlador"]["email"]}.items():
+        texto = texto.replace("{{" + chave + "}}", html.escape(valor))
+    (DOCS / "privacidade.html").write_text(texto, encoding="utf-8")
+
+
 def gerar_site(itens, areas):
     DOCS.mkdir(exist_ok=True)
+    app = config_app()
     campos = ("titulo", "link", "fonte", "tipo", "areas", "prazo", "coletado_em")
     dados = json.dumps({
         "atualizado": HOJE.strftime("%d/%m/%Y"),
@@ -567,7 +611,13 @@ def gerar_site(itens, areas):
     (DOCS / "dados.json").write_text(dados, encoding="utf-8")
     modelo = (RAIZ / "modelo_site.html").read_text(encoding="utf-8")
     embutido = dados.replace("</", "<\\/")
-    (DOCS / "index.html").write_text(modelo.replace("/*DADOS*/null", embutido), encoding="utf-8")
+    config = json.dumps({  # só o que o navegador precisa; nada aqui é segredo
+        "cadastro": app["cadastro"], "versao": app["versao"],
+        "supabase": app["supabase"] if app["cadastro"] else None,
+    }, ensure_ascii=False).replace("</", "<\\/")
+    pagina = modelo.replace("/*DADOS*/null", embutido).replace("/*CONFIG*/null", config)
+    (DOCS / "index.html").write_text(pagina, encoding="utf-8")
+    gerar_privacidade(app)
     gerar_ics(itens)
     print(f"site: {DOCS / 'index.html'} ({len(itens)} oportunidades abertas)")
 
