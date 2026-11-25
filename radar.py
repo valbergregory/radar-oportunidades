@@ -20,7 +20,7 @@ import sys
 import time
 import unicodedata
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import feedparser
 import requests
@@ -81,12 +81,19 @@ def limpar(texto):
 
 # ----------------------------------------------------------------- coleta
 
-def baixar(url):
+def baixar(url, tentativas=3):
+    """Baixa a página. O gov.br às vezes derruba a conexão: tenta de novo."""
     if url.startswith("file:"):  # usado nos testes locais
         return (RAIZ / url[5:]).read_bytes()
-    r = requests.get(url, headers=UA, timeout=40)
-    r.raise_for_status()
-    return r.content
+    for n in range(tentativas):
+        try:
+            r = requests.get(url, headers=UA, timeout=25)
+            r.raise_for_status()
+            return r.content
+        except requests.RequestException:
+            if n == tentativas - 1:
+                raise
+            time.sleep(5 * (n + 1))
 
 
 def titulo_do_cartao(a):
@@ -151,13 +158,13 @@ def coletar_rss(fonte):
 
 
 def detalhar(link):
-    """Texto principal da página do edital. Vazio se for arquivo ou se falhar."""
+    """Texto principal da página do edital. Vazio se for arquivo; None se falhar."""
     if re.search(r"\.(pdf|docx?|xlsx?|odt|zip)$", link.split("?")[0], re.I):
         return ""
     try:
-        bruto = baixar(link)
+        bruto = baixar(link, tentativas=1)
     except Exception:
-        return ""
+        return None
     if bruto[:5] == b"%PDF-":
         return ""
     sopa = BeautifulSoup(bruto, "html.parser")
@@ -228,27 +235,47 @@ def abrir_db():
         tipo TEXT, areas TEXT, prazo TEXT, coletado_em TEXT)""")
     if "detalhe" not in [c[1] for c in con.execute("PRAGMA table_info(oportunidades)")]:
         con.execute("ALTER TABLE oportunidades ADD COLUMN detalhe INTEGER")
+    con.execute("CREATE TABLE IF NOT EXISTS fontes (nome TEXT PRIMARY KEY, falhas INTEGER)")
     return con
 
 
+def registrar(con, nome, deu_certo):
+    """Conta as falhas seguidas de cada fonte. Devolve o total atual."""
+    atual = con.execute("SELECT falhas FROM fontes WHERE nome=?", (nome,)).fetchone()
+    falhas = 0 if deu_certo else (atual["falhas"] if atual else 0) + 1
+    con.execute("INSERT OR REPLACE INTO fontes VALUES (?, ?)", (nome, falhas))
+    return falhas
+
+
 def enriquecer(con, areas, limite=60):
-    """Abre a página de cada edital ainda não visitado para achar prazo e área."""
-    linhas = con.execute("SELECT * FROM oportunidades WHERE detalhe IS NULL LIMIT ?",
-                         (limite,)).fetchall()
+    """Abre a página de cada edital ainda não visitado para achar prazo e área.
+    Coluna detalhe: 1 = lida; 0 a -4 = falhou, tenta de novo na próxima execução."""
+    linhas = con.execute("SELECT * FROM oportunidades WHERE detalhe IS NULL "
+                         "OR detalhe BETWEEN -4 AND 0 LIMIT ?", (limite,)).fetchall()
+    lidas, fora = 0, {}  # fora: falhas seguidas por site nesta execução
     for l in linhas:
+        site = urlparse(l["link"]).netloc
+        if fora.get(site, 0) >= 2:  # site recusando conexão: fica para a próxima
+            continue
         texto = detalhar(l["link"])
+        if texto is None:
+            fora[site] = fora.get(site, 0) + 1
+            con.execute("UPDATE oportunidades SET detalhe=? WHERE id=?",
+                        ((l["detalhe"] or 0) - 1, l["id"]))
+            continue
+        fora[site], lidas = 0, lidas + 1
         resumo = norm(l["titulo"] + " " + l["contexto"] + " " + texto[:800])
         con.execute(
-            "UPDATE oportunidades SET prazo=?, areas=?, tipo=?, detalhe=? WHERE id=?",
+            "UPDATE oportunidades SET prazo=?, areas=?, tipo=?, detalhe=1 WHERE id=?",
             (l["prazo"] or extrair_prazo(texto), json.dumps(classificar_areas(resumo, areas)),
-             classificar_tipo(norm(l["titulo"]), l["tipo"]), 1 if texto else 0, l["id"]))
+             classificar_tipo(norm(l["titulo"]), l["tipo"]), l["id"]))
         time.sleep(0.5)
     con.commit()
-    print(f"detalhes: {len(linhas)} páginas visitadas")
+    print(f"detalhes: {lidas} páginas lidas de {len(linhas)} pendentes")
 
 
 def coletar(cfg_fontes, areas):
-    con, novos, falhas = abrir_db(), [], []
+    con, novos, falhas, persistentes = abrir_db(), [], [], []
     for fonte in cfg_fontes:
         if not fonte.get("ativa", True):
             continue
@@ -257,8 +284,12 @@ def coletar(cfg_fontes, areas):
             if not itens:
                 raise RuntimeError("nenhum item encontrado (o layout pode ter mudado)")
         except Exception as erro:  # uma fonte fora do ar não derruba as outras
-            falhas.append(f"{fonte['nome']}: {erro}")
+            seguidas = registrar(con, fonte["nome"], False)
+            falhas.append(f"{fonte['nome']} ({seguidas}ª falha seguida): {erro}")
+            if seguidas >= 3:
+                persistentes.append(fonte["nome"])
             continue
+        registrar(con, fonte["nome"], True)
         for item in itens:
             texto = norm(item["titulo"] + " " + item["contexto"])
             reg = {
@@ -285,8 +316,9 @@ def coletar(cfg_fontes, areas):
         print(f"FALHA {f}", file=sys.stderr)
     SAIDA.mkdir(exist_ok=True)
     (SAIDA / "falhas.txt").write_text("\n".join(falhas), encoding="utf-8")
-    print(f"{len(novos)} oportunidades novas, {len(falhas)} fontes com falha")
-    return novos, falhas
+    print(f"{len(novos)} oportunidades novas, {len(falhas)} fontes com falha "
+          f"({len(persistentes)} há 3 execuções ou mais)")
+    return novos, persistentes
 
 
 def abertas(con):
@@ -411,7 +443,9 @@ def main():
         itens = abertas(abrir_db())
         gerar_site(itens, areas)
         gerar_newsletter(itens, areas, args.perfil, escolhidas)
-    sys.exit(1 if falhas else 0)  # falha visível no GitHub Actions, que avisa por e-mail
+    # Falha passageira não gera aviso. Só termina com erro (e o GitHub avisa por
+    # e-mail) quando uma fonte falha em 3 execuções seguidas. Ver saida/falhas.txt.
+    sys.exit(1 if falhas else 0)
 
 
 if __name__ == "__main__":
