@@ -2,98 +2,558 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Radar de Oportunidades</title>
+<meta name="description" content="Editais, bolsas, seleções, eventos e vagas em um só lugar.">
+<meta name="theme-color" content="#0b4a8b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone.svg" type="image/svg+xml">
+<link rel="icon" href="icones/icone-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="icones/icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Radar">
 <style>
-  :root { --fundo:#f6f7f9; --cartao:#fff; --texto:#1c2430; --suave:#5b6675; --marca:#0b5cab; --borda:#dde2e8; }
-  @media (prefers-color-scheme: dark) {
-    :root { --fundo:#12161c; --cartao:#1b212a; --texto:#e8ecf1; --suave:#9aa6b5; --marca:#6db3ff; --borda:#2c3440; }
+  :root {
+    color-scheme: light;
+    --fundo:#f4f6fa; --cartao:#fff; --texto:#14213d; --suave:#4a5568; --borda:#d9e0ea;
+    --marca:#0b4a8b; --realce:#e8f0fb; --foco:#c2410c; --campo:#7b8799;
+    --etq-fundo:#dbe8f8; --etq-texto:#0b4a8b;
+    --urg-fundo:#ffedd5; --urg-texto:#9a3412;
+    --nor-fundo:#dbe8f8; --nor-texto:#0b4a8b;
+    --sem-fundo:#e9ecf1; --sem-texto:#3f4754;
+    --sombra:0 1px 2px rgba(20,33,61,.06), 0 2px 8px rgba(20,33,61,.06);
   }
-  * { box-sizing: border-box; }
-  body { margin:0; font:16px/1.5 system-ui, sans-serif; background:var(--fundo); color:var(--texto); }
-  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
-  h1 { margin: 0 0 4px; font-size: 1.6rem; }
-  .sub { color: var(--suave); margin: 0 0 20px; }
-  fieldset { border:1px solid var(--borda); border-radius:10px; margin:0 0 12px; padding:10px 14px; background:var(--cartao); }
-  legend { font-weight:600; padding:0 6px; }
-  label { display:inline-block; margin: 4px 14px 4px 0; cursor:pointer; }
-  input[type=search] { width:100%; padding:10px 12px; border:1px solid var(--borda); border-radius:10px; background:var(--cartao); color:inherit; font:inherit; margin-bottom:12px; }
-  ul { list-style:none; padding:0; margin:16px 0 0; }
-  li { background:var(--cartao); border:1px solid var(--borda); border-radius:10px; padding:14px 16px; margin-bottom:10px; }
-  li a { color:var(--marca); font-weight:600; text-decoration:none; }
-  li a:hover { text-decoration:underline; }
-  .meta { color:var(--suave); font-size:.9rem; margin-top:6px; }
-  .etq { display:inline-block; border:1px solid var(--borda); border-radius:999px; padding:0 8px; margin-right:6px; font-size:.8rem; }
-  .urgente { color:#c2410c; font-weight:600; }
-  #conta { color:var(--suave); }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --fundo:#0f1620; --cartao:#18212d; --texto:#e7edf5; --suave:#a9b4c2; --borda:#2c3746;
+      --marca:#8cc4ff; --realce:#1c2a3b; --foco:#fdba74; --campo:#6b7789;
+      --etq-fundo:#16324f; --etq-texto:#b9d9ff;
+      --urg-fundo:#4a2410; --urg-texto:#fdba74;
+      --nor-fundo:#16324f; --nor-texto:#b9d9ff;
+      --sem-fundo:#2a323d; --sem-texto:#c4ccd6;
+      --sombra:none;
+    }
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; font:16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background:var(--fundo); color:var(--texto); }
+  svg { flex:none; }
+  button, input, select { font:inherit; color:inherit; }
+  :focus-visible { outline:3px solid var(--foco); outline-offset:2px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);
+             white-space:nowrap; margin:-1px; padding:0; border:0; }
+  .pular { position:absolute; left:8px; top:-60px; z-index:50; background:#fff; color:#0b4a8b;
+           padding:8px 12px; border-radius:8px; font-weight:600; }
+  .pular:focus { top:8px; }
+
+  /* Cabeçalho */
+  .topo { background:linear-gradient(135deg, #0b4a8b 0%, #083a6e 100%); color:#fff;
+          padding:calc(16px + env(safe-area-inset-top)) 16px 20px;
+          border-bottom-right-radius:28px; }
+  .topo-dentro { max-width:1280px; margin:0 auto; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .marca { display:flex; gap:12px; align-items:center; flex:1 1 260px; min-width:0; }
+  .marca svg { width:48px; height:48px; }
+  .topo h1 { margin:0; font-size:1.55rem; line-height:1.1; letter-spacing:-.01em; }
+  .topo .sub { margin:4px 0 0; font-size:.95rem; color:#e3ecf8; }
+  .topo .atual { margin:6px 0 0; font-size:.85rem; color:#d2e0f2; }
+  .topo .atual:empty { display:none; }
+  .botao-instalar { display:inline-flex; align-items:center; gap:8px; min-height:44px; background:#fff; color:#0b4a8b;
+                    border:0; border-radius:999px; padding:8px 16px; font-weight:700; cursor:pointer; }
+  .topo :focus-visible { outline-color:#fdba74; }
+  @media (min-width:900px) { .topo h1 { font-size:2rem; } .topo .sub { font-size:1.05rem; } .marca svg { width:60px; height:60px; } }
+
+  /* Estrutura */
+  .corpo { max-width:1280px; margin:0 auto; padding:16px 16px 32px; }
+  @media (min-width:900px) {
+    .corpo { display:grid; grid-template-columns:280px 1fr; gap:28px; align-items:start; padding-top:24px; }
+  }
+
+  /* Barra de busca e ações */
+  .barra { display:flex; gap:10px; flex-wrap:wrap; }
+  .busca { position:relative; flex:1 1 280px; }
+  .busca svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:20px; height:20px; color:var(--suave); pointer-events:none; }
+  .busca input { width:100%; min-height:48px; padding:10px 12px 10px 42px; border:1px solid var(--campo);
+                 border-radius:12px; background:var(--cartao); }
+  .busca input::placeholder { color:var(--suave); opacity:1; }
+  .botao { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px;
+           padding:8px 16px; border-radius:12px; font-weight:700; cursor:pointer; text-decoration:none;
+           border:2px solid var(--marca); }
+  .botao svg { width:20px; height:20px; }
+  .botao-primario { background:#0b4a8b; border-color:#0b4a8b; color:#fff; }
+  .botao-secundario { background:var(--cartao); color:var(--marca); }
+  .botao-claro { background:var(--realce); color:var(--marca); border-color:transparent; width:100%; }
+  .barra .botao-secundario { flex:1 1 auto; }
+  @media (min-width:600px) { .barra .botao-secundario { flex:0 0 auto; } }
+
+  .resumo { display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap; margin:16px 0 12px; }
+  .conta { margin:0; font-size:1.05rem; font-weight:700; flex:1 1 auto; }
+  .conta strong { color:var(--marca); font-size:1.6rem; margin-right:2px; vertical-align:-2px; }
+  .ordem { display:flex; align-items:center; gap:8px; color:var(--suave); font-size:.95rem; }
+  .ordem select { min-height:44px; padding:6px 10px; border:1px solid var(--campo); border-radius:10px; background:var(--cartao); color:var(--texto); }
+  @media (max-width:899px) {
+    .ordem { order:3; width:100%; } .ordem select { flex:1; }
+    .conta { font-size:1rem; } .conta strong { font-size:1.4rem; }
+    #abrir-filtros { padding:8px 14px; }
+  }
+  @media (max-width:479px) {
+    .cartao { grid-template-columns:44px 1fr auto; gap:10px; padding:12px; }
+    .ico { width:44px; height:44px; border-radius:12px; } .ico svg { width:24px; height:24px; }
+    .prazo { min-width:84px; }
+  }
+  @media (min-width:900px) { #abrir-filtros { display:none; } .conta { font-size:1.25rem; } }
+
+  .aviso { margin:0 0 12px; padding:10px 14px; border-radius:10px; background:var(--sem-fundo); color:var(--sem-texto); font-size:.92rem; }
+
+  /* Filtros: folha inferior no celular, coluna fixa no computador */
+  .filtros { background:var(--cartao); }
+  .filtros fieldset { border:0; margin:0 0 14px; padding:12px 14px; border-radius:14px; background:var(--realce); min-width:0; }
+  .filtros legend { float:left; width:100%; padding:0 0 6px; font-weight:700; font-size:1.05rem; color:var(--marca); }
+  .filtros label { display:flex; align-items:center; gap:10px; min-height:40px; cursor:pointer; clear:left; }
+  .filtros input[type=checkbox] { width:20px; height:20px; accent-color:#0b4a8b; margin:0; flex:none; }
+  .folha-topo { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+  .folha-topo h2 { margin:0; font-size:1.2rem; }
+  .fechar { background:none; border:0; width:44px; height:44px; border-radius:50%; cursor:pointer; color:var(--texto); display:inline-flex; align-items:center; justify-content:center; }
+  .fechar svg { width:24px; height:24px; }
+  .acoes-filtro { display:grid; gap:10px; }
+  @media (max-width:899px) {
+    .filtros { position:fixed; inset:auto 0 0 0; z-index:30; max-height:85vh; max-height:85dvh; overflow:auto;
+               padding:16px 16px calc(16px + env(safe-area-inset-bottom)); border-radius:20px 20px 0 0;
+               box-shadow:0 -8px 30px rgba(0,0,0,.25); }
+    .filtros:not(.aberto) { display:none; }
+    .fundo-folha { position:fixed; inset:0; z-index:29; background:rgba(8,20,40,.5); }
+  }
+  @media (min-width:900px) {
+    .filtros { background:none; position:sticky; top:16px; }
+    .folha-topo, #ver-resultados, .fundo-folha { display:none !important; }
+  }
+
+  /* Cartões */
+  .lista { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+  .lista:focus { outline:none; }
+  .cartao { position:relative; display:grid; grid-template-columns:56px 1fr auto; gap:12px;
+            align-items:start; background:var(--cartao); border:1px solid var(--borda);
+            border-radius:16px; padding:14px; box-shadow:var(--sombra); }
+  .cartao:hover { border-color:var(--marca); }
+  .cartao:focus-within { outline:3px solid var(--foco); outline-offset:2px; }
+  .ico { width:56px; height:56px; border-radius:14px; background:var(--etq-fundo); color:var(--etq-texto);
+         display:flex; align-items:center; justify-content:center; }
+  .ico svg { width:30px; height:30px; }
+  .info { min-width:0; }
+  .cartao h3 { margin:0 0 2px; font-size:1.02rem; line-height:1.3; }
+  .cartao h3 a { color:var(--texto); text-decoration:none; overflow-wrap:anywhere; }
+  .cartao h3 a:focus-visible { outline:none; }
+  .cartao h3 a::after { content:""; position:absolute; inset:0; border-radius:16px; }
+  .cartao:hover h3 a { color:var(--marca); text-decoration:underline; }
+  .orgao, .areas { margin:2px 0; color:var(--suave); font-size:.9rem; }
+  .areas { font-size:.85rem; }
+  .etq { display:inline-block; margin:4px 0; padding:2px 10px; border-radius:999px; font-size:.8rem; font-weight:700;
+         background:var(--etq-fundo); color:var(--etq-texto); }
+  .prazo { display:flex; flex-direction:column; align-items:flex-start; padding:8px 10px; border-radius:12px;
+           font-size:.82rem; line-height:1.2; min-width:92px; }
+  .prazo svg { width:18px; height:18px; margin-bottom:4px; }
+  .prazo strong { font-size:1.05rem; }
+  .prazo small { display:none; margin-top:4px; font-size:.8rem; }
+  .prazo-urgente { background:var(--urg-fundo); color:var(--urg-texto); }
+  .prazo-normal { background:var(--nor-fundo); color:var(--nor-texto); }
+  .prazo-sem { background:var(--sem-fundo); color:var(--sem-texto); }
+  .seta { display:none; width:22px; height:22px; color:var(--marca); align-self:center; }
+  @media (min-width:900px) {
+    .cartao { grid-template-columns:64px 1fr 200px 22px; gap:16px; padding:16px 18px; align-items:center; }
+    .ico { width:64px; height:64px; }
+    .cartao h3 { font-size:1.12rem; }
+    .prazo small { display:block; }
+    .seta { display:block; }
+  }
+  .vazio { text-align:center; padding:32px 16px; background:var(--cartao); border:1px dashed var(--borda); border-radius:16px; }
+  .vazio p { margin:0 0 12px; }
+
+  /* Convite de instalação */
+  .convite { position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); z-index:20;
+             max-width:520px; margin:0 auto; display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+             padding:14px 16px; border-radius:16px; background:#083a6e; color:#fff; box-shadow:0 8px 30px rgba(0,0,0,.3); }
+  .convite p { margin:0; flex:1 1 220px; font-size:.95rem; }
+  .convite .botoes { display:flex; gap:8px; }
+  .convite button { min-height:44px; border-radius:10px; padding:6px 14px; font-weight:700; cursor:pointer; }
+  .convite .sim { background:#fff; color:#083a6e; border:0; }
+  .convite .nao { background:transparent; color:#fff; border:2px solid #fff; }
+  .convite :focus-visible { outline-color:#fdba74; }
+
+  /* Rodapé */
+  .rodape { max-width:1280px; margin:0 auto; padding:0 16px calc(96px + env(safe-area-inset-bottom)); color:var(--suave); font-size:.9rem; }
+  .rodape-dentro { display:flex; flex-wrap:wrap; gap:8px 20px; justify-content:space-between; align-items:center; padding:16px; border-radius:14px; background:var(--realce); }
+  .rodape p { margin:0; }
+  .rodape .alerta { font-weight:700; color:var(--texto); display:flex; gap:8px; align-items:center; }
+  .rodape .alerta svg { width:20px; height:20px; color:var(--marca); }
+  [hidden] { display:none !important; }
 </style>
 </head>
 <body>
-<main>
-  <h1>Radar de Oportunidades</h1>
-  <p class="sub">Editais, bolsas, seleções, eventos e vagas. Atualizado em <span id="atualizado"></span>.
-     Os prazos são estimados e devem ser conferidos no edital.
-     <a href="prazos.ics">Assinar o calendário de prazos</a></p>
+<a class="pular" href="#lista">Ir para a lista de oportunidades</a>
 
-  <input type="search" id="busca" placeholder="Buscar por palavra" aria-label="Buscar por palavra">
-  <fieldset><legend>Minhas áreas</legend><div id="areas"></div></fieldset>
-  <fieldset><legend>Tipo</legend><div id="tipos"></div></fieldset>
-  <p id="conta"></p>
-  <ul id="lista"></ul>
-</main>
+<header class="topo">
+  <div class="topo-dentro">
+    <div class="marca">
+      <svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round">
+        <circle cx="24" cy="24" r="20" stroke-opacity=".55"/><circle cx="24" cy="24" r="12" stroke-opacity=".8"/>
+        <path d="M24 24 L37 11"/><circle cx="24" cy="24" r="3" fill="#fff" stroke="none"/>
+      </svg>
+      <div>
+        <h1>Radar de Oportunidades</h1>
+        <p class="sub">Editais, bolsas, seleções, eventos e vagas em um só lugar</p>
+        <p class="atual" id="atualizado-topo"></p>
+      </div>
+    </div>
+    <button type="button" class="botao-instalar" id="instalar-topo" hidden>
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      Instalar aplicativo
+    </button>
+  </div>
+</header>
+
+<div class="corpo">
+  <div class="fundo-folha" id="fundo-folha" hidden></div>
+  <aside class="filtros" id="filtros" aria-labelledby="titulo-filtros">
+    <div class="folha-topo">
+      <h2 id="titulo-filtros" tabindex="-1">Filtros</h2>
+      <button type="button" class="fechar" id="fechar-filtros" aria-label="Fechar filtros">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <fieldset><legend>Minhas áreas</legend><div id="areas"></div></fieldset>
+    <fieldset><legend>Tipo</legend><div id="tipos"></div></fieldset>
+    <div class="acoes-filtro">
+      <button type="button" class="botao botao-primario" id="ver-resultados">Ver resultados</button>
+      <button type="button" class="botao botao-claro" id="limpar">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        Limpar filtros
+      </button>
+    </div>
+  </aside>
+
+  <main id="conteudo">
+    <div class="barra">
+      <div class="busca">
+        <label for="busca" class="sr-only">Buscar oportunidade por palavra-chave</label>
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input type="search" id="busca" placeholder="Buscar por palavra (ex.: bolsa, doutorado, evento)" autocomplete="off" enterkeyhint="search">
+      </div>
+      <a class="botao botao-secundario" href="prazos.ics" type="text/calendar">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+        Assinar calendário de prazos
+      </a>
+    </div>
+
+    <div class="resumo">
+      <p class="conta" id="conta" aria-live="polite"></p>
+      <button type="button" class="botao botao-primario" id="abrir-filtros" aria-expanded="false" aria-controls="filtros">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>
+        Filtrar<span id="filtros-ativos"></span>
+      </button>
+      <div class="ordem">
+        <label for="ordem">Ordenar por:</label>
+        <select id="ordem">
+          <option value="prazo">Prazo (mais próximo)</option>
+          <option value="recente">Mais recentes</option>
+        </select>
+      </div>
+    </div>
+
+    <p class="aviso" id="aviso" role="status" hidden></p>
+    <ul class="lista" id="lista" tabindex="-1" aria-label="Oportunidades"></ul>
+    <div class="vazio" id="vazio" hidden>
+      <p>Nenhuma oportunidade encontrada com esses filtros.</p>
+      <button type="button" class="botao botao-secundario" id="limpar-vazio">Limpar filtros</button>
+    </div>
+  </main>
+</div>
+
+<footer class="rodape">
+  <div class="rodape-dentro">
+    <p id="atualizado-rodape"></p>
+    <p class="alerta">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+      Confira sempre o prazo no edital.
+    </p>
+    <p>Os prazos são estimados automaticamente a partir da página de origem.</p>
+  </div>
+</footer>
+
+<div class="convite" id="convite" role="region" aria-label="Instalar aplicativo" hidden>
+  <p id="convite-texto"></p>
+  <div class="botoes">
+    <button type="button" class="sim" id="instalar">Instalar</button>
+    <button type="button" class="nao" id="dispensar">Agora não</button>
+  </div>
+</div>
+
 <script>
-const DADOS = /*DADOS*/null;
+"use strict";
+const DADOS_EMBUTIDOS = /*DADOS*/null;
 const TIPOS = { "fomento":"Fomento e editais", "bolsa":"Bolsas", "pos-graduacao":"Mestrado e doutorado",
                 "evento":"Congressos e eventos", "concurso-vaga":"Concursos e vagas" };
-const CHAVE = "radar-filtros";
-let salvo = {};
-try { salvo = JSON.parse(localStorage.getItem(CHAVE) || "{}"); } catch (e) {}
+const URGENTE_ATE = 14;  // dias: selo laranja até aqui, azul acima
+const CHAVE = "radar-filtros", CHAVE_CONVITE = "radar-convite-dispensado";
+const SEM_REDE = "Você está sem conexão. Mostrando os dados salvos de ";
 
-function caixas(destino, opcoes, marcadas) {
-  const div = document.getElementById(destino);
+// Ícones por tipo (traço, 24x24)
+const P = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+const ICONES = {
+  "fomento": `<svg ${P}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6M9 9h2"/></svg>`,
+  "bolsa": `<svg ${P}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>`,
+  "pos-graduacao": `<svg ${P}><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5M22 9v6"/></svg>`,
+  "evento": `<svg ${P}><rect x="3" y="3" width="18" height="12" rx="1.5"/><path d="M8 21l4-6 4 6M7 8h6M7 11h10"/></svg>`,
+  "concurso-vaga": `<svg ${P}><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>`,
+  "outro": `<svg ${P}><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>`,
+};
+const CALENDARIO = `<svg ${P}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>`;
+const SETA = `<svg class="seta" ${P}><path d="M9 6l6 6-6 6"/></svg>`;
+
+const $ = id => document.getElementById(id);
+const semAcento = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const fmtData = new Intl.DateTimeFormat("pt-BR", { day:"numeric", month:"short", year:"numeric" });
+const desktop = window.matchMedia("(min-width: 900px)");
+
+function lerArmazenado(chave) {
+  try { return JSON.parse(localStorage.getItem(chave) || "null"); } catch (e) { return null; }
+}
+function gravar(chave, valor) {
+  try { localStorage.setItem(chave, JSON.stringify(valor)); } catch (e) { /* modo privado ou bloqueado */ }
+}
+
+// Guarda o que foi DESMARCADO: assim uma área nova em config/areas.yaml já aparece marcada.
+const salvo = lerArmazenado(CHAVE) || {};
+const estado = {
+  semAreas: new Set(Array.isArray(salvo.semAreas) ? salvo.semAreas : []),
+  semTipos: new Set(Array.isArray(salvo.semTipos) ? salvo.semTipos : []),
+  ordem: salvo.ordem === "recente" ? "recente" : "prazo",
+};
+const valido = d => !!(d && typeof d === "object" && Array.isArray(d.itens) && d.areas);
+let DADOS = valido(DADOS_EMBUTIDOS) ? DADOS_EMBUTIDOS : null;
+
+function dataLocal(iso) {  // "2026-11-25" -> Date local, sem fuso
+  const [a, m, d] = (iso || "").split("-").map(Number);
+  return a && m && d ? new Date(a, m - 1, d) : null;
+}
+function dataBr(texto) {    // "25/11/2026" -> Date
+  const [d, m, a] = (texto || "").split("/").map(Number);
+  return a && m && d ? new Date(a, m - 1, d) : null;
+}
+function diasAte(iso) {
+  const d = dataLocal(iso);
+  if (!d) return null;
+  const h = new Date(); h.setHours(0, 0, 0, 0);
+  return Math.round((d - h) / 864e5);
+}
+function dataAtualizacao() {
+  const quando = dataBr(DADOS.atualizado);
+  return quando ? fmtData.format(quando) : (DADOS.atualizado || "uma visita anterior");
+}
+
+function salvarEstado() {
+  gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], ordem:estado.ordem });
+}
+
+function caixas(destino, opcoes, desmarcadas) {
+  const div = $(destino);
+  div.textContent = "";
   for (const [valor, rotulo] of Object.entries(opcoes)) {
     const l = document.createElement("label"), c = document.createElement("input");
-    c.type = "checkbox"; c.value = valor; c.checked = !marcadas || marcadas.includes(valor);
-    c.addEventListener("change", desenhar);
-    l.append(c, " " + rotulo); div.append(l);
+    c.type = "checkbox"; c.value = valor; c.checked = !desmarcadas.has(valor);
+    c.addEventListener("change", () => {
+      if (c.checked) desmarcadas.delete(valor); else desmarcadas.add(valor);
+      salvarEstado(); desenhar();
+    });
+    l.append(c, rotulo); div.append(l);
   }
 }
-const marcadas = id => [...document.querySelectorAll("#" + id + " input:checked")].map(c => c.value);
-const semAcento = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+function montarFiltros() {
+  caixas("areas", DADOS.areas, estado.semAreas);
+  caixas("tipos", TIPOS, estado.semTipos);
+  $("ordem").value = estado.ordem;
+  $("atualizado-topo").textContent = "Última atualização: " + dataAtualizacao();
+  $("atualizado-rodape").textContent = "Dados atualizados em " + dataAtualizacao() + ".";
+}
+
+function nomeArea(slug) {
+  return DADOS.areas[slug] || (slug === "geral" ? "Geral (todas as áreas)" : slug);
+}
+
+function filtrar() {
+  const termo = semAcento($("busca").value.trim());
+  const palavras = termo ? termo.split(/\s+/) : [];
+  const itens = DADOS.itens.filter(i => {
+    const dias = diasAte(i.prazo);
+    if (dias !== null && dias < 0) return false;  // dados guardados offline podem ter vencido
+    if (estado.semTipos.has(i.tipo)) return false;
+    const areas = i.areas || [];
+    if (!areas.includes("geral") && !areas.some(a => !estado.semAreas.has(a))) return false;
+    if (!palavras.length) return true;
+    const texto = semAcento([i.titulo, i.fonte, TIPOS[i.tipo], ...areas.map(nomeArea)].join(" "));
+    return palavras.every(p => texto.includes(p));
+  });
+  const prazo = i => i.prazo || "9999-12-31";   // sem prazo vai para o fim
+  const coleta = i => i.coletado_em || "";
+  if (estado.ordem === "recente") {
+    itens.sort((a, b) => coleta(b).localeCompare(coleta(a)) || prazo(a).localeCompare(prazo(b)));
+  } else {
+    itens.sort((a, b) => prazo(a).localeCompare(prazo(b)) || coleta(b).localeCompare(coleta(a)));
+  }
+  return itens;
+}
+
+function seloPrazo(i) {
+  const dias = diasAte(i.prazo);
+  let rotulo = "Prazo", valor, classe;
+  if (dias === null) { valor = "não informado"; classe = "prazo-sem"; }
+  else {
+    classe = dias <= URGENTE_ATE ? "prazo-urgente" : "prazo-normal";
+    if (dias === 0) valor = "hoje";
+    else if (dias === 1) valor = "amanhã";
+    else { rotulo = "Prazo em"; valor = dias + " dias"; }
+  }
+  const div = document.createElement("div");
+  div.className = "prazo " + classe;
+  div.innerHTML = CALENDARIO;
+  const r = document.createElement("span"), v = document.createElement("strong"), s = document.createElement("small");
+  r.textContent = rotulo + " "; v.textContent = valor;
+  s.textContent = i.prazo ? "Até " + fmtData.format(dataLocal(i.prazo)) : "Consulte o edital";
+  div.append(r, v, s);
+  return div;
+}
+
+function cartao(i) {
+  const li = document.createElement("li");
+  li.className = "cartao";
+  const ico = document.createElement("div");
+  ico.className = "ico"; ico.innerHTML = ICONES[i.tipo] || ICONES.outro;
+
+  const info = document.createElement("div"); info.className = "info";
+  const h = document.createElement("h3"), a = document.createElement("a");
+  a.href = i.link; a.target = "_blank"; a.rel = "noopener noreferrer";
+  a.textContent = i.titulo;
+  const nova = document.createElement("span"); nova.className = "sr-only";
+  nova.textContent = " (abre o edital em nova aba)";
+  a.append(nova); h.append(a);
+  const orgao = document.createElement("p"); orgao.className = "orgao";
+  orgao.textContent = "Órgão: " + i.fonte;
+  const etq = document.createElement("span"); etq.className = "etq";
+  etq.textContent = TIPOS[i.tipo] || i.tipo;
+  const areas = document.createElement("p"); areas.className = "areas";
+  areas.textContent = "Áreas: " + (i.areas || []).map(nomeArea).join(", ");
+  info.append(h, orgao, etq, areas);
+
+  li.append(ico, info, seloPrazo(i));
+  li.insertAdjacentHTML("beforeend", SETA);
+  return li;
+}
 
 function desenhar() {
-  const areas = marcadas("areas"), tipos = marcadas("tipos");
-  const termo = semAcento(document.getElementById("busca").value.trim());
-  try { localStorage.setItem(CHAVE, JSON.stringify({ areas, tipos })); } catch (e) {}
-  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-  const itens = DADOS.itens.filter(i =>
-    tipos.includes(i.tipo) &&
-    (i.areas.includes("geral") || i.areas.some(a => areas.includes(a))) &&
-    (!termo || semAcento(i.titulo + " " + i.fonte).includes(termo)));
-  const lista = document.getElementById("lista"); lista.textContent = "";
-  for (const i of itens) {
-    const li = document.createElement("li"), a = document.createElement("a");
-    a.href = i.link; a.textContent = i.titulo; a.target = "_blank"; a.rel = "noopener";
-    const meta = document.createElement("div"); meta.className = "meta";
-    const etq = document.createElement("span"); etq.className = "etq"; etq.textContent = TIPOS[i.tipo] || i.tipo;
-    meta.append(etq, i.fonte + " · ");
-    const prazo = document.createElement("span");
-    if (i.prazo) {
-      const [y, m, d] = i.prazo.split("-").map(Number), dias = Math.round((new Date(y, m - 1, d) - hoje) / 864e5);
-      prazo.textContent = "prazo " + [d, m, y].map(n => String(n).padStart(2, "0")).join("/") + " (" + dias + " dias)";
-      if (dias <= 14) prazo.className = "urgente";
-    } else prazo.textContent = "prazo não identificado";
-    meta.append(prazo, " · " + i.areas.map(s => DADOS.areas[s] || "Geral").join(", "));
-    li.append(a, meta); lista.append(li);
-  }
-  document.getElementById("conta").textContent = itens.length + " oportunidades abertas";
+  if (!DADOS) return;
+  const itens = filtrar();
+  $("lista").replaceChildren(...itens.map(cartao));
+  $("vazio").hidden = itens.length > 0;
+  const n = document.createElement("strong"); n.textContent = itens.length;
+  $("conta").replaceChildren(n, itens.length === 1 ? " oportunidade aberta" : " oportunidades abertas");
+  const ativos = estado.semAreas.size + estado.semTipos.size > 0;
+  $("filtros-ativos").textContent = ativos ? " (com filtros)" : "";
+  $("ver-resultados").textContent = "Ver " + itens.length + (itens.length === 1 ? " resultado" : " resultados");
 }
 
-document.getElementById("atualizado").textContent = DADOS.atualizado;
-caixas("areas", DADOS.areas, salvo.areas);
-caixas("tipos", TIPOS, salvo.tipos);
-document.getElementById("busca").addEventListener("input", desenhar);
-desenhar();
+function limparFiltros() {
+  estado.semAreas.clear(); estado.semTipos.clear(); estado.ordem = "prazo";
+  $("busca").value = "";
+  salvarEstado(); montarFiltros(); desenhar();
+}
+
+// ---- Painel de filtros no celular: folha inferior, com o resto da página inerte
+const FORA_DA_FOLHA = ".topo, main, .rodape, .convite, .pular";
+function abrirFiltros() {
+  $("filtros").classList.add("aberto");
+  $("fundo-folha").hidden = false;
+  $("abrir-filtros").setAttribute("aria-expanded", "true");
+  for (const el of document.querySelectorAll(FORA_DA_FOLHA)) el.inert = true;
+  $("titulo-filtros").focus();
+}
+function fecharFiltros(devolverFoco) {
+  if (!$("filtros").classList.contains("aberto")) return;
+  $("filtros").classList.remove("aberto");
+  $("fundo-folha").hidden = true;
+  $("abrir-filtros").setAttribute("aria-expanded", "false");
+  for (const el of document.querySelectorAll(FORA_DA_FOLHA)) el.inert = false;
+  if (devolverFoco) $("abrir-filtros").focus();
+}
+
+// ---- Dados: dados.json pela rede; offline, o service worker entrega a cópia guardada.
+// Se nada disso funcionar, fica a cópia embutida no HTML.
+function avisoRede(texto) { $("aviso").textContent = texto || ""; $("aviso").hidden = !texto; }
+
+function carregar() {
+  fetch("dados.json", { cache: "no-cache" })
+    .then(r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+    .then(d => {
+      if (!valido(d)) throw new Error("formato inesperado");
+      DADOS = d; montarFiltros(); desenhar();
+      avisoRede(navigator.onLine ? "" : SEM_REDE + dataAtualizacao() + ".");
+    })
+    .catch(() => {
+      if (!DADOS) avisoRede("Não foi possível carregar as oportunidades. Verifique a conexão e recarregue a página.");
+      else if (!navigator.onLine) avisoRede(SEM_REDE + dataAtualizacao() + ".");
+    });
+}
+
+// ---- Convite de instalação
+let pedidoInstalacao = null;
+function convidar(texto, comBotao) {
+  if (lerArmazenado(CHAVE_CONVITE)) return;
+  $("convite-texto").textContent = texto;
+  $("instalar").hidden = !comBotao;
+  $("convite").hidden = false;
+}
+function esconderConvite() { $("convite").hidden = true; $("instalar-topo").hidden = true; }
+function instalar() {
+  if (!pedidoInstalacao) return;
+  pedidoInstalacao.prompt();
+  pedidoInstalacao.userChoice.finally(() => { pedidoInstalacao = null; esconderConvite(); });
+}
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  pedidoInstalacao = e;
+  $("instalar-topo").hidden = false;
+  convidar("Instale o Radar no celular para abrir com um toque, até sem internet.", true);
+});
+window.addEventListener("appinstalled", () => { esconderConvite(); gravar(CHAVE_CONVITE, true); });
+const emApp = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+if (!emApp && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
+  convidar("Para instalar: no Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.", false);
+}
+
+// ---- Eventos
+$("busca").addEventListener("input", desenhar);
+$("ordem").addEventListener("change", e => { estado.ordem = e.target.value; salvarEstado(); desenhar(); });
+$("limpar").addEventListener("click", limparFiltros);
+$("limpar-vazio").addEventListener("click", limparFiltros);
+$("abrir-filtros").addEventListener("click", abrirFiltros);
+$("fechar-filtros").addEventListener("click", () => fecharFiltros(true));
+$("ver-resultados").addEventListener("click", () => fecharFiltros(true));
+$("fundo-folha").addEventListener("click", () => fecharFiltros(true));
+document.addEventListener("keydown", e => { if (e.key === "Escape") fecharFiltros(true); });
+desktop.addEventListener("change", () => fecharFiltros(false));
+$("instalar").addEventListener("click", instalar);
+$("instalar-topo").addEventListener("click", instalar);
+$("dispensar").addEventListener("click", () => { $("convite").hidden = true; gravar(CHAVE_CONVITE, true); });
+window.addEventListener("online", carregar);
+window.addEventListener("offline", () => { if (DADOS) avisoRede(SEM_REDE + dataAtualizacao() + "."); });
+
+if (DADOS) { montarFiltros(); desenhar(); }
+if (location.protocol !== "file:") carregar();
+else if (!DADOS) avisoRede("Não foi possível carregar as oportunidades.");
+
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
 </script>
 </body>
 </html>
