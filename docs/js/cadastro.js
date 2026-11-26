@@ -11,11 +11,11 @@ async function principal() {
   $("lugar-academicos").replaceWith(RC.camposAcademicos());
   for (const v of RC.UFS) $("uf").append(RC.el("option", { value: v, texto: v }));
   $("uf").append(RC.el("option", { value: "nao-informado", texto: "Prefiro não informar" }));
-  let areas = {};
-  try { areas = (await RC.dados()).areas || {}; } catch (e) { /* sem dados: só os tipos */ }
+  let areas = {}, emBreve = new Set();
+  try { const d = await RC.dados(); areas = d.areas || {}; emBreve = RC.tiposEmBreve(d); } catch (e) { /* sem dados: só os tipos */ }
   $("preferencias").append(
     RC.grupoPilulas("Preferências iniciais", "area", areas, [], "checkbox", RC.I.camadas, "Áreas do seu interesse (opcional)"),
-    RC.grupoPilulas("Tipos de oportunidades", "tipo", RC.TIPOS, [], "checkbox", RC.I.maleta, "Tipos que deseja acompanhar (opcional)"));
+    RC.grupoPilulas("Tipos de oportunidades", "tipo", RC.TIPOS, [], "checkbox", RC.I.maleta, "Tipos que deseja acompanhar (opcional)", emBreve));
 
   const senha = $("senha"), confirmar = $("confirmar");
   const conferir = () => {

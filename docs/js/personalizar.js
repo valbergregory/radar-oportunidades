@@ -9,10 +9,11 @@ async function principal() {
   if (!u) return;
   await FB.montarTopo();
   const painel = $("painel");
-  let p, areas = {};
+  let p, areas = {}, emBreve = new Set();
   try {
     p = await FB.lerPerfil(u.uid);
-    areas = (await RC.dados()).areas || {};
+    const d = await RC.dados();
+    areas = d.areas || {}; emBreve = RC.tiposEmBreve(d);
   } catch (e) {
     return RC.mensagem(painel, FB.traduzErro(e));
   }
@@ -44,7 +45,7 @@ async function principal() {
   const form = el("form", { class: "form" },
     RC.grupoPilulas("Áreas de interesse", "area", areas, p.areas, "checkbox", RC.I.camadas, "Selecione uma ou mais áreas."),
     aviso,
-    RC.grupoPilulas("Tipos de oportunidades", "tipo", RC.TIPOS, inicial("tipos"), "checkbox", RC.I.maleta, "O que você quer acompanhar."),
+    RC.grupoPilulas("Tipos de oportunidades", "tipo", RC.TIPOS, inicial("tipos"), "checkbox", RC.I.maleta, "O que você quer acompanhar.", emBreve),
     RC.grupoPilulas("Alcance", "alcance", RC.ALCANCES, inicial("alcances"), "checkbox", RC.I.camadas,
       semUf ? "Sem estado no perfil, Estadual e Regional não se aplicam. Informe seu estado em Minha conta › Perfil."
             : `Em relação ao seu estado (${p.uf}): Estadual = ${p.uf}; Regional = mesma região.`),

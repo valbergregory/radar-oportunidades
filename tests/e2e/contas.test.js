@@ -248,6 +248,8 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     const marcadosEm = nome => p.$$eval(`input[name=${nome}]:checked`, l => l.map(c => c.value).join());
     ok(await p.isVisible("text=Sugerimos estas opções pelo seu perfil. Altere o que quiser."), "personalizar: mostra o aviso da sugestão");
     ok(await marcadosEm("tipo") === "bolsa", "personalizar: tipos escolhidos no cadastro não são trocados pela sugestão");
+    ok(await p.locator("label.chip-check:has(input[value=estagio]) .selo-em-breve").count() === 1 &&
+       await p.isEnabled("input[name=tipo][value=estagio]"), "personalizar: Estágios com \"em breve\", mas dá para escolher");
     ok(await marcadosEm("alcance") === "estadual,regional,nacional,internacional" && await marcadosEm("idioma") === "pt,en",
        "personalizar: alcance e idioma vêm pré-marcados pela sugestão");
     await p.locator("label.chip-check", { hasText: "Inglês" }).click();
@@ -317,16 +319,19 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
        "index: \"Mudou desde a sua última visita\" na seção e no cartão");
     ok(await p.locator(`.cartao[data-id="${umId}"] .selo-mudou`).count() === 0, "index: favorito sem mudança não tem selo");
     await p.goto(SITE + "oportunidade.html?id=" + outroId); await p.waitForSelector("#acompanhar");
-    ok(await p.isVisible(".selo-mudou") && await p.isChecked("#acompanhar"), "oportunidade: mostra o selo e o Acompanhar ligado");
+    ok(await p.isVisible(".selo-mudou") && await p.isChecked("#acompanhar") && await p.getAttribute("#acompanhar", "aria-checked") === "true",
+       "oportunidade: mostra o selo e o Acompanhar ligado (aria-checked)");
     await p.waitForTimeout(800);
     await p.reload(); await p.waitForSelector("#acompanhar"); await p.waitForTimeout(400);
     ok(await p.locator(".selo-mudou").count() === 0, "oportunidade: depois de visto, o selo some");
     await p.goto(SITE + "conta.html?aba=acompanhando"); await p.waitForSelector(".lista-acompanhando li");
+    ok(!/\bnull\b/.test(await p.textContent("#painel")), "conta/acompanhando: nenhum texto \"null\" solto");
     ok(await p.isVisible("text=Outros favoritos") && await p.locator("button:has-text('Adicionar à agenda')").count() === 1,
        "conta/acompanhando: lista com agenda e outros favoritos");
     await p.click("button:has-text('Parar de acompanhar')"); await p.waitForTimeout(600);
     fv = await favorito(uid, outroId);
     ok(valor(fv.acompanhar) === false && (await favoritos(uid)).length === 2, "conta/acompanhando: parar de acompanhar mantém o favorito");
+    ok(!/\bnull\b/.test(await p.textContent("#painel")), "conta/acompanhando: sem \"null\" também sem ninguém acompanhado");
     await p.locator(".lista-acompanhando button:has-text('Acompanhar')").first().click(); await p.waitForTimeout(600);
     ok((await favoritos(uid)).length === 2 && await p.locator("button:has-text('Parar de acompanhar')").count() === 1,
        "conta/acompanhando: Acompanhar a partir de outros favoritos");
@@ -464,7 +469,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
         for (const n of await caches.keys()) for (const k of await (await caches.open(n)).keys()) r.push(new URL(k.url).pathname);
         return { nomes: await caches.keys(), r };
       });
-      ok(guardadas.nomes.includes("radar-v8"), "service worker: cache na versão radar-v8");
+      ok(guardadas.nomes.includes("radar-v9"), "service worker: cache na versão radar-v9");
       ok(!guardadas.r.some(u => /(entrar|cadastro|personalizar|conta)\.html|vendor\/|conta-index|acompanhar\.js/.test(u)) &&
          !guardadas.r.some(u => /googleapis|identitytoolkit/.test(u)),
          "service worker: nada de conta nem do Firebase no cache");

@@ -118,13 +118,20 @@ window.RC = (() => {
   function preferenciasMudaram() { try { localStorage.removeItem("radar-perfil-aplicado"); } catch (e) { /* ok */ } }
 
   // Grupo de opções em pílulas (checkbox ou radio).
-  function grupoPilulas(legenda, nome, opcoes, marcadas, tipo = "checkbox", icone, descricao) {
+  // emBreve: valores ainda sem itens (ficam marcáveis, com o selo "em breve").
+  function grupoPilulas(legenda, nome, opcoes, marcadas, tipo = "checkbox", icone, descricao, emBreve = new Set()) {
     return el("fieldset", { class: "chips-escolha" },
       el("legend", {}, el("span", { class: "secao-titulo" }, icone ? el("span", { class: "ico", html: icone }) : null,
          el("span", {}, el("span", { texto: legenda, style: "display:block" }),
             descricao ? el("span", { class: "areas", texto: descricao, style: "display:block;font-weight:400" }) : null))),
       ...Object.entries(opcoes).map(([v, r]) => el("label", { class: "chip-check" },
-        el("input", { type: tipo, name: nome, value: v, checked: marcadas.includes(v) }), r)));
+        el("input", { type: tipo, name: nome, value: v, checked: marcadas.includes(v) }), r,
+        emBreve.has(v) ? el("span", { class: "selo-em-breve", texto: "em breve" }) : null)));
+  }
+  // Tipos sem nenhuma oportunidade nos dados (ex.: estágio e emprego, ainda sem fonte).
+  function tiposEmBreve(dados) {
+    const com = new Set(((dados && dados.itens) || []).map(i => i.tipo));
+    return dados && dados.itens ? new Set(Object.keys(TIPOS).filter(t => !com.has(t))) : new Set();
   }
   function marcados(form, nome) { return [...form.querySelectorAll(`input[name="${nome}"]:checked`)].map(c => c.value); }
 
@@ -284,7 +291,7 @@ window.RC = (() => {
     return ms !== null && Date.parse(item.alterado_em) > ms;
   }
 
-  return { config: cfg, controlador, TIPOS, VINCULOS, TITULACOES, PERFIS_EXTERNOS, grupoVinculos, camposAcademicos,
+  return { config: cfg, controlador, TIPOS, VINCULOS, tiposEmBreve, TITULACOES, PERFIS_EXTERNOS, grupoVinculos, camposAcademicos,
            lerAcademicos, lerVinculos, vinculosDoPerfil, normalizarOrcid, normalizarLattes, normalizarLinkedin, FREQUENCIAS, CANAIS, REGIOES, UFS, regiaoDe, ALCANCES, IDIOMAS,
            relacaoAlcance, I, el, voltarPara, destinoSeguro, mensagem, ocupado, dados, preferenciasMudaram, grupoPilulas,
            marcados, indisponivel, fmtData, dataLocal, diasAte, contagem, baixarIcs, mudouDesde };
@@ -301,6 +308,12 @@ document.addEventListener("click", ev => {
   b.setAttribute("aria-label", mostrar ? "Esconder senha" : "Mostrar senha");
   b.innerHTML = mostrar ? window.RC.I.olhoFechado : window.RC.I.olho;
 });
+
+// Interruptores (role="switch"): alguns leitores de tela só leem aria-checked.
+document.addEventListener("change", ev => {
+  const c = ev.target;
+  if (c && c.getAttribute && c.getAttribute("role") === "switch") c.setAttribute("aria-checked", String(c.checked));
+}, true);
 
 // Validação acessível: em vez do balão do navegador (que some e não é lido por
 // todos os leitores de tela), mostra a mensagem fixa abaixo do campo, liga-a ao
