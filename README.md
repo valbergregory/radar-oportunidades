@@ -1,5 +1,9 @@
 # Radar de Oportunidades
 
+> **Versão de testes.** "Radar de Oportunidades" é um nome provisório. O projeto
+> será submetido como projeto de extensão, e a base de fontes pesquisadas é
+> ampliada semanalmente.
+
 Robô que visita diariamente portais públicos (CNPq, CAPES, FAPEAL, UFAL) e de
 associações científicas (ANPEC, SOBER, SBG),
 guarda editais, bolsas, seleções, eventos e vagas em um banco SQLite e gera
