@@ -106,6 +106,14 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
       ok(sdk.length === 0, "sem configuração: o SDK do Firebase nunca é baixado " + JSON.stringify(sdk));
       await p.goto(SITE + "privacidade.html");
       ok(await p.isVisible("text=As contas ainda não estão ativas."), "sem configuração: política avisa que não há coleta");
+      // cartão em 380px: prazo abaixo do título; aba Calendário abre a página
+      await p.goto(SITE); await p.waitForSelector(".cartao");
+      ok(await p.evaluate(() => { const c = document.querySelector(".cartao");
+        return c.querySelector(".prazo").getBoundingClientRect().top >= c.querySelector("h3").getBoundingClientRect().bottom - 2; }),
+         "cartão 380px: selo de prazo abaixo do título");
+      await p.click('.abas a:has-text("Calendário")'); await p.waitForSelector("#lista-prazos li");
+      ok(p.url().endsWith("calendario.html") && (await p.getAttribute("#webcal", "href")).startsWith("webcal://"),
+         "calendário: a aba abre a página, com assinatura webcal e lista de prazos");
       ok(ctx.erros.length === 0, "sem configuração: sem erros no console " + JSON.stringify(ctx.erros));
       await ctx.close();
     }
@@ -129,6 +137,15 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     p.on("dialog", d => d.accept());
     await p.goto(SITE); await p.waitForSelector("#acao-conta:not([hidden])");
     ok(await p.textContent("#acao-conta-rotulo") === "Entrar", "com configuração: index mostra Entrar");
+
+    // entrar: asterisco na mesma linha do rótulo e validação sem balão do navegador
+    await p.goto(SITE + "entrar.html"); await p.waitForSelector("#email");
+    ok(await p.evaluate(() => [...document.querySelectorAll("label.campo > span:first-child")].slice(0, 2).every(s =>
+         Math.abs(s.querySelector(".obrigatorio").getBoundingClientRect().top - s.getBoundingClientRect().top) < 4)),
+       "entrar: asterisco de obrigatório na mesma linha do rótulo");
+    await p.click("#botao-entrar");
+    ok((await p.$$eval(".erro-campo", l => l.length)) === 2 && await p.getAttribute("#email", "aria-invalid") === "true" &&
+       await p.evaluate(() => document.activeElement.id) === "email", "entrar: erros fixos abaixo dos campos, com foco no primeiro");
 
     // cadastro
     await p.goto(SITE + "cadastro.html"); await p.waitForSelector("input[name=area]");
@@ -316,7 +333,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
         for (const n of await caches.keys()) for (const k of await (await caches.open(n)).keys()) r.push(new URL(k.url).pathname);
         return { nomes: await caches.keys(), r };
       });
-      ok(guardadas.nomes.includes("radar-v5"), "service worker: cache na versão radar-v5");
+      ok(guardadas.nomes.includes("radar-v6"), "service worker: cache na versão radar-v6");
       ok(!guardadas.r.some(u => /(entrar|cadastro|personalizar|conta)\.html|vendor\/|conta-index/.test(u)) &&
          !guardadas.r.some(u => /googleapis|identitytoolkit/.test(u)),
          "service worker: nada de conta nem do Firebase no cache");

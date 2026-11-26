@@ -85,9 +85,15 @@ button, input, select { font:inherit; color:inherit; }
   #abrir-filtros { padding:8px 14px; }
 }
 @media (max-width:479px) {
-  .cartao { grid-template-columns:44px 1fr auto; gap:10px; padding:12px; }
+  /* Celular estreito: o título usa a largura toda e o prazo vai para baixo dele,
+     numa linha ("Prazo em 9 dias · Até 4 de dez."), em vez de uma coluna ao lado. */
+  .cartao { grid-template-columns:44px 1fr; gap:6px 10px; padding:12px; }
   .ico { width:44px; height:44px; border-radius:12px; } .ico svg { width:24px; height:24px; }
-  .prazo { min-width:84px; }
+  .prazo { grid-column:2; flex-direction:row; flex-wrap:wrap; align-items:center; gap:2px 6px;
+           justify-self:start; padding:6px 10px; min-width:0; }
+  .prazo svg { margin:0; width:16px; height:16px; }
+  .prazo small { display:inline; margin:0; }
+  .prazo small::before { content:"· "; }
 }
 @media (min-width:900px) { #abrir-filtros { display:none; } .conta { font-size:1.25rem; } }
 
@@ -381,3 +387,8 @@ input.interruptor:checked::after { transform:translateX(22px); }
 .texto-legal h2 { margin-top:18px; }
 .texto-legal li { margin:6px 0; }
 a.botao-instalar { text-decoration:none; }
+
+/* Mensagem de erro de campo (validação sem o balão do navegador) */
+.erro-campo { margin:4px 0 0; color:var(--urg-texto); font-size:.9rem; font-weight:600; }
+.erro-campo::before { content:"⚠ "; }
+[aria-invalid="true"] { border-color:var(--urg-texto) !important; box-shadow:0 0 0 1px var(--urg-texto); }
