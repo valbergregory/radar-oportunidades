@@ -30,7 +30,8 @@
   // ---- faixa no topo
   const abrir = criar("button", { type: "button", class: "faixa-botao", "aria-haspopup": "dialog", texto: "Dar sugestão" });
   const faixa = criar("div", { class: "faixa-testes", role: "region", "aria-label": "Versão de testes" },
-    criar("span", { texto: "Versão de testes (nome provisório). Novas fontes toda semana. Sua opinião ajuda a melhorar o Radar." }), abrir);
+    criar("span", { texto: "Versão de testes (nome provisório). Novas fontes toda semana. Sua opinião ajuda a melhorar o Radar." }), abrir,
+    criar("a", { class: "faixa-botao", href: new URL("../ideias.html", document.currentScript.src).href, texto: "Mural de ideias" }));
   document.body.prepend(faixa);
 
   // ---- formulário (diálogo)
@@ -46,6 +47,8 @@
   const form = criar("form", { class: "form", method: "dialog", novalidate: false },
     criar("div", { class: "sugestao-topo" }, criar("h2", { id: "sugestao-titulo", texto: "Sua opinião sobre o Radar" }), xis),
     criar("p", { class: "areas", texto: "É anônimo: não guardamos sua conta, e-mail nem outro dado seu. Por isso, não escreva nome, telefone ou e-mail no texto." }),
+    criar("p", { class: "areas" }, "Tem conta? No ", criar("a", { href: new URL("../ideias.html", document.currentScript.src).href, texto: "Mural de ideias" }),
+      " você acompanha a situação da sua ideia e apoia as dos colegas."),
     criar("fieldset", { class: "chips-escolha" }, criar("legend", { texto: "É sobre" }), ...opcoes("tipo", TIPOS, true)),
     criar("fieldset", { class: "chips-escolha notas" }, criar("legend", { texto: "Que nota você dá ao Radar? (opcional)" }),
       ...opcoes("nota", { 1: "1", 2: "2", 3: "3", 4: "4", 5: "5" }, false)),

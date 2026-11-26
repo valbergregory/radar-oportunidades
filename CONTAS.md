@@ -48,6 +48,23 @@ coletado.
 - A sugestão de filtros só pré-marca campos que a pessoa ainda não escolheu;
   "Restaurar sugestão" é sempre manual.
 - O **e-mail não é gravado no Firestore**: ele fica só no Authentication.
+- `sugestoes/{id}`: opinião anônima da fase de testes (sem conta, uid ou e-mail).
+  Só criação; lida pelo console.
+- `ideias/{id}`: **Mural de ideias** (página `ideias.html`). Quem tem conta lê,
+  propõe e apoia. A autoria fica **privada** em `perfis/{uid}/minhas_ideias/{id}`
+  e os apoios em `ideias/{id}/apoios/{uid}` + `perfis/{uid}/meus_apoios/{id}`
+  (cada pessoa só lê o próprio). O contador `apoios` só sobe ou desce 1, junto
+  com o apoio (regras). Status: recebida, em-analise, planejada, feita,
+  nao-sera-feita, duplicada. A "adequação" (categoria sugerida, ideias
+  parecidas, resumo "Como …, quero …, porque …") roda no navegador, com as
+  palavras-chave de `docs/js/ideias-regras.js`.
+- `admins/{uid}`: quem administra o mural (muda status, responde, marca
+  repetidas, remove). **Criado à mão no console**, nunca pelo site:
+  1. Authentication › Usuários: copie o "UID do usuário" da sua conta.
+  2. Firestore Database › Dados › Iniciar coleção `admins` › ID do documento =
+     esse UID › um campo qualquer, por exemplo `desde` (string) = a data de hoje.
+  3. Abra `ideias.html`: aparece "Você administra o mural". Para tirar alguém,
+     apague o documento dessa pessoa em `admins`.
 
 ## Estado da configuração (projeto `radar-oportunidades-88442`, novembro de 2026)
 

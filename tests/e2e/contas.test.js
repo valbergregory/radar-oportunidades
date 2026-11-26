@@ -18,7 +18,7 @@ const DONO = { Authorization: "Bearer owner" };  // emulador: acesso de administ
 let falhas = 0;
 const ok = (cond, msg) => { console.log((cond ? "ok   - " : "FALHA - ") + msg); if (!cond) falhas++; };
 
-const configJs = (versao = "2026-11-26.3") => `window.RADAR_CONTA = {
+const configJs = (versao = "2026-11-26.4") => `window.RADAR_CONTA = {
   firebase: { apiKey: "chave-de-teste", authDomain: "${PROJETO}.firebaseapp.com", projectId: "${PROJETO}",
               storageBucket: "", messagingSenderId: "1", appId: "1:1:web:1" },
   controlador: { nome: "Pessoa Responsável", email: "contato@exemplo.invalid" },
@@ -54,6 +54,21 @@ async function favorito(uid, id) {
 async function sugestoes() {
   const r = await api(`${DOCS_FS}/sugestoes`);
   return (r.json && r.json.documents || []).map(d => d.fields);
+}
+async function colecao(caminho) {
+  const r = await api(`${DOCS_FS}/${caminho}`);
+  return (r.json && r.json.documents || []).map(d => ({ id: d.name.split("/").pop(), ...d.fields }));
+}
+// Segunda pessoa (com perfil e termos aceitos), criada direto nos emuladores.
+async function outraPessoa(email, senha) {
+  const r = await fetch(`${AUTH}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=chave-de-teste`, { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password: senha, returnSecureToken: true }) });
+  const { localId } = await r.json(), agora = new Date().toISOString();
+  await api(`${DOCS_FS}/perfis/${localId}`, { method: "PATCH", body: JSON.stringify({ fields: {
+    areas: { arrayValue: {} }, tipos: { arrayValue: {} }, frequencia: { stringValue: "semanal" }, canais: { arrayValue: {} },
+    quer_newsletter: { booleanValue: false }, newsletter_em: { nullValue: null }, termos_versao: { stringValue: "2026-11-26.4" },
+    consentimento_em: { timestampValue: agora }, atualizado_em: { timestampValue: agora } } }) });
+  return localId;
 }
 async function codigos(tipo, email) {
   const r = await api(`${AUTH}/emulator/v1/projects/${PROJETO}/oobCodes`);
@@ -270,7 +285,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
        valor(pf.lattes) === "1234567890123456" && valor(pf.linkedin) === "pessoa-teste",
        "cadastro: vínculos, titulação, instituição e identificadores ORCID/Lattes/LinkedIn normalizados");
     ok(pf && valor(pf.vinculo) === "estudante-pos" && valor(pf.uf) === "AL" && valor(pf.areas).join() === "economia" && valor(pf.tipos).join() === "bolsa" &&
-       valor(pf.quer_newsletter) === false && valor(pf.newsletter_em) === null && valor(pf.termos_versao) === "2026-11-26.3" &&
+       valor(pf.quer_newsletter) === false && valor(pf.newsletter_em) === null && valor(pf.termos_versao) === "2026-11-26.4" &&
        !!valor(pf.consentimento_em), "cadastro: perfil gravado com aceite datado e newsletter desligada");
     ok(!JSON.stringify(pf).includes("exemplo.invalid"), "cadastro: e-mail não vai para o Firestore");
     ok((await codigos("VERIFY_EMAIL", "pessoa@exemplo.invalid")).length === 1, "cadastro: e-mail de verificação enviado");
@@ -370,6 +385,60 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     ok((await favoritos(uid)).length === 2 && await p.locator("button:has-text('Parar de acompanhar')").count() === 1,
        "conta/acompanhando: Acompanhar a partir de outros favoritos");
 
+    // mural de ideias
+    await p.goto(SITE + "ideias.html"); await p.waitForSelector("#aba-mural");
+    ok(await espera(p, "Ainda não há ideias"), "ideias: mural vazio convida a propor");
+    await p.click("text=Propor uma ideia"); await p.waitForSelector("#ideia-titulo");
+    await p.fill("#ideia-titulo", "Filtro por curso");
+    await p.fill("#ideia-problema", "Hoje vejo editais de todos os cursos e perco os do meu.");
+    await p.fill("#ideia-como", "Escolher meu curso e ver só os editais dele.");
+    await p.waitForTimeout(100);
+    ok(await p.inputValue("#ideia-categoria") === "filtro", "ideias: categoria sugerida pelo texto (Busca e filtros)");
+    ok((await p.textContent("#previa-resumo")).startsWith("Como pessoa que usa o Radar, quero escolher meu curso"),
+       "ideias: resumo padronizado \"Como …, quero …, porque …\"");
+    await p.click("text=Enviar ideia");
+    ok(await espera(p, "Ideia enviada!"), "ideias: confirma o envio e mostra Minhas ideias");
+    const [id1] = await colecao("ideias");
+    ok(id1 && valor(id1.status) === "recebida" && Number(id1.apoios.integerValue) === 0 && valor(id1.categoria) === "filtro" &&
+       !Object.keys(id1).some(k => /autor|uid|email/.test(k)), "ideias: gravada sem autor, como recebida e sem apoios");
+    ok((await colecao(`perfis/${uid}/minhas_ideias`)).length === 1, "ideias: autoria guardada só no perfil da pessoa");
+    {
+      const uid2 = await outraPessoa("colega@exemplo.invalid", "colega1234");
+      const c2 = await contexto(navegador, { config: configJs(), largura: 1280 });
+      const q = await c2.newPage(); q.on("dialog", d => d.accept());
+      await q.goto(SITE + "entrar.html?voltar=" + encodeURIComponent("ideias.html?aba=nova"));
+      await q.fill("#email", "colega@exemplo.invalid"); await q.fill("#senha", "colega1234"); await q.click("#botao-entrar");
+      await q.waitForSelector("#ideia-titulo");
+      await q.fill("#ideia-titulo", "Filtrar pelo meu curso");
+      await q.fill("#ideia-problema", "Quero ver os editais do meu curso de engenharia.");
+      await q.waitForSelector("#parecidas li");
+      ok((await q.textContent("#parecidas")).includes("Filtro por curso"), "ideias: mostra ideia parecida antes de enviar");
+      await q.click("#parecidas button:has-text('Apoiar esta')");
+      ok(await espera(q, "Você apoiou"), "ideias: apoiar a parecida em vez de repetir");
+      const [i1] = await colecao("ideias");
+      ok(Number(i1.apoios.integerValue) === 1 && (await colecao("ideias")).length === 1, "ideias: contador com 1 apoio e nenhuma ideia repetida");
+      const texto = await q.textContent("#painel");
+      ok(!texto.includes("Pessoa Teste") && !texto.includes("pessoa@exemplo"), "ideias: o mural não mostra quem escreveu");
+      ok(await q.getAttribute(".apoiar", "aria-pressed") === "true", "ideias: o apoio aparece marcado para quem apoiou");
+      await q.click(".apoiar"); await q.waitForTimeout(500);
+      ok(Number((await colecao("ideias"))[0].apoios.integerValue) === 0, "ideias: retirar o apoio desce o contador");
+      await q.click(".apoiar"); await q.waitForTimeout(500);
+      // administração
+      await api(`${DOCS_FS}/admins/${uid2}`, { method: "PATCH", body: JSON.stringify({ fields: { desde: { stringValue: "teste" } } }) });
+      await q.reload(); await q.waitForSelector(".moderacao");
+      ok(await q.isVisible("text=Você administra o mural"), "ideias: administrador vê os controles");
+      await q.selectOption(".moderacao select[name=status]", "planejada");
+      await q.fill(".moderacao textarea", "Vamos fazer no próximo mês.");
+      await q.click(".moderacao button[type=submit]");
+      ok(await espera(q, "Ideia atualizada."), "ideias: administrador muda a situação e responde");
+      ok(c2.erros.length === 0, "ideias (colega): sem erros no console " + JSON.stringify(c2.erros));
+      await c2.close();
+    }
+    await p.goto(SITE + "ideias.html?aba=minhas"); await p.waitForSelector(".ideia");
+    ok((await p.textContent(".ideia")).includes("Planejada") && (await p.textContent(".ideia")).includes("Vamos fazer no próximo mês.") &&
+       await p.locator(".ideia button:has-text('Editar')").count() === 0 && (await p.textContent(".ideia .apoiar")).includes("1"),
+       "ideias: a autora vê situação, resposta e apoios; sem editar depois de analisada");
+
     // conta
     await p.goto(SITE + "conta.html"); await p.waitForSelector("input[name=nome_exibicao]");
     ok(await p.inputValue("select[name=uf]") === "AL" && await p.inputValue("#campo-lattes") === "http://lattes.cnpq.br/1234567890123456" &&
@@ -407,6 +476,8 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     ok(exp.conta.email === "pessoa@exemplo.invalid" && exp.perfil.nome_exibicao === "Pessoa Teste" && exp.favoritos.length === 2 && exp.favoritos.some(f => f.acompanhar) && exp.favoritos.some(f => f.visto_em) &&
        exp.perfil.uf === "AL" && exp.perfil.idiomas.join() === "pt,en,es" &&
        exp.perfil.consentimento_em, "conta/privacidade: exportação JSON completa");
+    ok(exp.ideias_escritas.length === 1 && exp.ideias_escritas[0].titulo === "Filtro por curso" && Array.isArray(exp.ideias_apoiadas),
+       "conta/privacidade: exportação traz as ideias escritas e as apoiadas");
     await p.screenshot({ path: "/tmp/e2e-fb-privacidade.png", fullPage: true }).catch(() => {});
     await p.goto(SITE + "conta.html?aba=seguranca"); await p.waitForSelector("input[name=nova]");
     await p.fill("input[name=nova]", "novaSenha456"); await p.fill("input[name=confirmar]", "novaSenha456");
@@ -493,6 +564,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     await p.click("text=Confirmar e excluir"); await p.waitForURL(/motivo=excluida/);
     ok(!(await usuarios()).some(x => x.localId === uid) && !(await perfil(uid)) && (await favoritos(uid)).length === 0,
        "excluir: favoritos, perfil e usuário apagados");
+    ok((await colecao("ideias")).length === 0, "excluir: as ideias da pessoa saem do mural");
     ok(await espera(p, "Sua conta e seus dados foram excluídos."), "excluir: confirmação na tela");
     ok(ctx.erros.length === 0, "fluxo completo: sem erros no console " + JSON.stringify(ctx.erros));
     await ctx.close();
@@ -509,8 +581,8 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
         for (const n of await caches.keys()) for (const k of await (await caches.open(n)).keys()) r.push(new URL(k.url).pathname);
         return { nomes: await caches.keys(), r };
       });
-      ok(guardadas.nomes.includes("radar-v12"), "service worker: cache na versão radar-v12");
-      ok(!guardadas.r.some(u => /(entrar|cadastro|personalizar|conta)\.html|vendor\/|conta-index|acompanhar\.js/.test(u)) &&
+      ok(guardadas.nomes.includes("radar-v13"), "service worker: cache na versão radar-v13");
+      ok(!guardadas.r.some(u => /(entrar|cadastro|personalizar|conta|ideias)\.html|vendor\/|conta-index|acompanhar\.js|ideias/.test(u)) &&
          !guardadas.r.some(u => /googleapis|identitytoolkit/.test(u)),
          "service worker: nada de conta nem do Firebase no cache");
       await c.setOffline(true);
