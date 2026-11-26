@@ -70,17 +70,21 @@ ANO = re.compile(r"\b(20\d{2})\b")
 DOC_EDITAL = re.compile(r"edital|chamada|retifica|prorroga|errata|cronograma|alterac")
 DOC_ENCERRADO = re.compile(r"resultado|homologac|encerrament|classificac|convocac|"
                            r"recursos esgotados")
-VERSAO_LEITURA = 2  # suba quando a leitura dos editais melhorar: tudo é relido
+VERSAO_LEITURA = 3  # suba quando a leitura ou a classificação melhorar: tudo é relido
 RELER_APOS_DIAS = 7  # itens sem prazo são relidos (pode surgir prorrogação ou resultado)
 
 # Usado quando a fonte não define "padrao_link": o texto do link precisa
 # parecer uma oportunidade.
 GERAL = re.compile(
     r"edital|chamada|selecao|processo seletivo|inscric|bolsa|concurso|"
-    r"congresso|simposio|seminario|call for papers|mestrado|doutorado|vaga"
+    r"congresso|simposio|seminario|call for papers|mestrado|doutorado|vaga|"
+    r"competic|olimpiad|hackathon|maratona de programacao|premio"
 )
 
 TIPOS = [  # a ordem importa, vale o primeiro que casar
+    ("competicao", r"competic|olimpiad|hackathon|maratona de programacao|\bpremios?\b|"
+                   r"concurso (de|para) (projetos|ideias|startups|inovac|fotografi|redac|artigos|"
+                   r"monografi|tcc|dissertac|teses|trabalhos academicos)"),
     ("evento", r"congresso|simposio|seminario|workshop|call for papers|"
                r"submissao de (trabalhos|artigos)|jornada|\bencontro\b|"
                r"comunicacao oral|poster"),
@@ -88,7 +92,7 @@ TIPOS = [  # a ordem importa, vale o primeiro que casar
                       r"remocao|redistribuicao|processo seletivo interno"),
     ("pos-graduacao", r"mestrado|doutorado|pos-graduacao|aluno (regular|especial)"),
     ("bolsa", r"\bbolsas?\b|bolsista|\bmonitor(es|a|as|ia)?\b|\binstrutor|\btutor"),
-    ("fomento", r"edital|chamada|fomento|auxilio|subvencao|premio"),
+    ("fomento", r"edital|chamada|fomento|auxilio|subvencao"),
 ]
 
 
@@ -120,15 +124,19 @@ def baixar(url, tentativas=3, aceita=None):
 
 
 def titulo_do_cartao(a):
-    """Para links do tipo "Acessar": usa o título (h1 a h5) do cartão em volta."""
+    """Para links do tipo "Acessar": usa o título (h1 a h6) do cartão em volta,
+    do nível mais próximo do link. Se o primeiro título for uma sigla curta
+    ("RBCC 2027"), junta com o seguinte ("Reunião Brasileira de Citogenética")."""
     no = a.parent
     for _ in range(6):
         if no is None:
             break
-        for h in no.find_all(["h1", "h2", "h3", "h4", "h5"]):
-            texto = limpar(h.get_text(" "))
-            if len(texto) >= 20:
-                return texto
+        textos = [t for t in (limpar(h.get_text(" "))
+                              for h in no.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])) if t]
+        if textos:
+            titulo = textos[0] if len(textos[0]) >= 20 or len(textos) == 1 else " – ".join(textos[:2])
+            if len(titulo) >= 20:
+                return titulo
         no = no.parent
     return ""
 
@@ -344,6 +352,15 @@ def classificar_tipo(texto, padrao_fonte=None):
     return padrao_fonte or "fomento"
 
 
+def areas_do_item(texto, areas, fonte):
+    """Áreas pelas palavras-chave; sem nenhuma, a área padrão da fonte (ex.: ANPEC
+    é sempre economia), e só então "geral"."""
+    achadas = classificar_areas(texto, areas)
+    if achadas == ["geral"] and fonte.get("area_padrao") in areas:
+        return [fonte["area_padrao"]]
+    return achadas
+
+
 def classificar_areas(texto, areas):
     achadas = [slug for slug, a in areas.items()
                if any(re.search(r"\b" + re.escape(norm(t)) + r"\b", texto) for t in a["termos"])]
@@ -412,10 +429,13 @@ def enriquecer(con, areas, hosts_plone=(), limite=60):
                                           for t, _ in pagina["documentos"]))
         com_prazo, encerradas = com_prazo + bool(prazo), encerradas + encerrado
         resumo = norm(l["titulo"] + " " + l["contexto"] + " " + pagina["texto"][:800])
+        novas = classificar_areas(resumo, areas)
+        if novas == ["geral"]:  # a releitura não rebaixa uma área já conhecida (ex.: area_padrao)
+            novas = json.loads(l["areas"]) or novas
         con.execute(
             "UPDATE oportunidades SET prazo=?, areas=?, tipo=?, detalhe=?, encerrado=?, "
             "lido_em=? WHERE id=?",
-            (prazo, json.dumps(classificar_areas(resumo, areas)),
+            (prazo, json.dumps(novas),
              classificar_tipo(norm(l["titulo"]), l["tipo"]), VERSAO_LEITURA, encerrado,
              HOJE.isoformat(), l["id"]))
         con.commit()  # uma página por vez: uma interrupção não perde o que já foi lido
@@ -459,7 +479,7 @@ def coletar(cfg_fontes, areas):
                 "fonte": fonte["nome"], "titulo": item["titulo"], "link": item["link"],
                 "contexto": item["contexto"],
                 "tipo": classificar_tipo(norm(item["titulo"]), fonte.get("tipo_padrao")),
-                "areas": json.dumps(classificar_areas(texto, areas)),
+                "areas": json.dumps(areas_do_item(texto, areas, fonte)),
                 "prazo": extrair_prazo(item["contexto"]),
                 "coletado_em": HOJE.isoformat(),
             }
@@ -527,7 +547,8 @@ def gerar_newsletter(itens, areas, perfil, escolhidas, dias_novo=7, dias_prazo=2
     for tipo, titulo in [("fomento", "Fomento e editais"), ("bolsa", "Bolsas"),
                          ("pos-graduacao", "Mestrado e doutorado"),
                          ("evento", "Congressos e eventos"),
-                         ("concurso-vaga", "Concursos e vagas")]:
+                         ("concurso-vaga", "Concursos e vagas"),
+                         ("competicao", "Competições e prêmios")]:
         grupo = [i for i in novos if i["tipo"] == tipo]
         if grupo:
             partes += ["", f"## {titulo} (novidades)", ""] + [linha(i) for i in grupo]
@@ -577,6 +598,33 @@ def gerar_site(itens, areas):
     print(f"site: {DOCS / 'index.html'} ({len(itens)} oportunidades abertas)")
 
 
+def sondar(url):
+    """Mostra o que o coletor HTML enxerga numa página, para calibrar uma fonte
+    nova (padrao_link): links agrupados pelo começo do endereço, com exemplos."""
+    from collections import Counter
+    bruto = baixar(url)
+    sopa = BeautifulSoup(bruto, "html.parser")
+    links = []
+    for a in sopa.find_all("a", href=True):
+        link = urljoin(url, a["href"]).split("#")[0]
+        texto = limpar(a.get_text(" ")) or titulo_do_cartao(a)
+        links.append((link, texto))
+    scripts = len(sopa.find_all("script"))
+    print(f"{url}\n{len(bruto)} bytes, {len(links)} links, {scripts} scripts")
+    if len(links) < 5 and scripts:
+        print("Poucos links e muitos scripts: a lista provavelmente é montada por JavaScript.")
+    def prefixo(link):
+        partes = urlparse(link)
+        return partes.netloc + "/".join(partes.path.split("/")[:3])
+    grupos = Counter(prefixo(l) for l, _ in links)
+    for grupo, n in grupos.most_common(12):
+        print(f"\n[{n}] {grupo}")
+        for l, t in [x for x in links if prefixo(x[0]) == grupo][:4]:
+            marca = " *" if GERAL.search(norm(t)) else ""
+            print(f"    {t[:70]!r} -> {l}{marca}")
+    print("\n* = o texto parece oportunidade (o coletor aceitaria sem padrao_link)")
+
+
 def avisar_telegram(novos):
     """Opcional: só envia se TELEGRAM_TOKEN e TELEGRAM_CHAT estiverem definidos."""
     token, chat = os.environ.get("TELEGRAM_TOKEN"), os.environ.get("TELEGRAM_CHAT")
@@ -594,14 +642,20 @@ def avisar_telegram(novos):
 
 def main():
     ap = argparse.ArgumentParser(description="Radar de Oportunidades")
-    ap.add_argument("comando", choices=["coletar", "detalhar", "gerar", "tudo"],
-                    help="detalhar: só relê as páginas dos editais pendentes")
+    ap.add_argument("comando", choices=["coletar", "detalhar", "gerar", "tudo", "sondar"],
+                    help="detalhar: só relê as páginas dos editais pendentes; "
+                         "sondar URL: mostra os links de uma página para calibrar uma fonte")
+    ap.add_argument("url", nargs="?", help="endereço para o comando sondar")
     ap.add_argument("--limite", type=int, default=60,
                     help="máximo de páginas de edital lidas por execução")
     ap.add_argument("--perfil", default="valber", help="perfil definido em config/areas.yaml")
     ap.add_argument("--areas", help="áreas separadas por vírgula (substitui o perfil)")
     ap.add_argument("--fontes", default="config/fontes.yaml")
     args = ap.parse_args()
+    if args.comando == "sondar":
+        if not args.url:
+            sys.exit("uso: python radar.py sondar https://endereco-da-listagem")
+        return sondar(args.url)
 
     cfg = yaml.safe_load((RAIZ / "config" / "areas.yaml").read_text(encoding="utf-8"))
     areas = cfg["areas"]

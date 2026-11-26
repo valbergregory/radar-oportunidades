@@ -6,6 +6,8 @@
 #                o robô aceita links cujo texto pareça uma oportunidade.
 #   tipo_padrao  opcional: fomento, bolsa, pos-graduacao, evento, concurso-vaga
 #   ignorar      opcional, regex de títulos a descartar (sem acento, minúsculas)
+#   area_padrao  opcional, área usada quando as palavras-chave não acham nenhuma
+#                (ex.: tudo da ANPEC é economia); sem ela, o item fica em "geral"
 #   dias_max     opcional, descarta o que foi publicado há mais dias (padrão 180);
 #                só vale quando a fonte informa a data de publicação (rss e plone)
 #   ativa        false desliga a fonte sem apagar
@@ -47,8 +49,61 @@ fontes:
     dias_max: 60
     tipo_padrao: fomento
 
-  # A acrescentar depois de confirmar o endereço da listagem de cada uma:
-  #   - seleções de mestrado e doutorado da UFAL (SIGAA público, que depende de
-  #     JavaScript e talvez exija outro tipo de coletor)
-  #   - eventos da SBC e encontros da ANPEC
-  #   - um agregador de concursos e uma fonte de vagas e estágios em TI
+  # ---------------------------------------------- Economia (calibrado em 26/11/2026)
+  - nome: ANPEC
+    # destaques da página inicial: seleções de pós, concursos docentes, chamadas
+    url: https://www.anpec.org.br/novosite/br
+    ignorar: eleicao|assembleia|certificad|template|minicurso|premiados|resultado
+    tipo_padrao: evento
+    area_padrao: economia
+
+  - nome: ANPEC (encontros)
+    # Encontro Nacional (en.anpec.org.br) e encontros regionais (Sul, Nordeste…)
+    url: https://www.anpec.org.br/novosite/br/encontros
+    padrao_link: ^https://(en\.anpec\.org\.br/?$|www\.anpec\.org\.br/novosite/br/[^/]*encontro[^/]*$)
+    ignorar: encontros anteriores|certificad
+    tipo_padrao: evento
+    area_padrao: economia
+
+  - nome: SOBER
+    # Sociedade Brasileira de Economia, Administração e Sociologia Rural (RSS)
+    url: https://sober.org.br/feed/
+    formato: rss
+    ignorar: mudanca|homenag|anais|eleic|diretoria|conselho|participara|nota de|falecimento|posse
+    dias_max: 120
+    tipo_padrao: evento
+    area_padrao: economia
+
+  # ----------------------------------------------------- Biologia
+  - nome: SBG (Genética)
+    # eventos divulgados pela Sociedade Brasileira de Genética (links para o site de cada evento)
+    url: https://www.sbg.org.br/eventos_novos
+    padrao_link: ^https?://(?!(www\.)?sbg\.org\.br)
+    ignorar: newsletter|acesso rapido|associe|facebook|instagram
+    tipo_padrao: evento
+    area_padrao: biologia
+
+  # ----------------------------------------------------- Computação
+  - nome: SBC (JEMS)
+    # Eventos da Sociedade Brasileira de Computação no JEMS3. Desativada até
+    # calibrar: o servidor recusa conexões de fora do Brasil (inclusive do
+    # GitHub e da sessão que preparou esta fonte). Para calibrar, rode no
+    # computador local:  python radar.py sondar https://jems3.sbc.org.br/events
+    # e ajuste padrao_link pelo padrão dos links de evento listados.
+    url: https://jems3.sbc.org.br/events
+    tipo_padrao: evento
+    ativa: false
+
+  # Avaliadas em 26/11/2026 e deixadas de fora:
+  #   - SBZoologia (sbzoologia.org.br/eventos-e-concursos.php): agenda vazia; uma
+  #     fonte sem itens conta como falha e, após 3 execuções, quebra o fluxo.
+  #   - ABEPRO: só há o site de cada edição (portal.abepro.org.br/abepro2025/),
+  #     sem listagem estável; engenharia de produção vem pelas palavras-chave.
+  #   - Maratona de Programação (maratona.sbc.org.br), SBPC (portal.sbpcnet.org.br)
+  #     e Sociedade Botânica (botanica.org.br): recusam conexões de fora do Brasil
+  #     ou respondem 403; podem ser calibradas localmente com "radar.py sondar".
+  #   - OBI: voltada a estudantes do ensino fundamental e médio.
+  #   - aber.org.br é a Associação Brasileira de Encadernação e Restauro, não a
+  #     de Estudos Regionais e Urbanos (ENABER).
+  # A acrescentar: seleções de pós da UFAL (SIGAA, depende de JavaScript),
+  # um agregador de concursos e uma fonte de vagas e estágios em TI.

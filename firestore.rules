@@ -45,7 +45,7 @@ service cloud.firestore {
         && d.areas.join(',').size() <= 800
         && (d.areas.size() == 0 || d.areas.join(',').split(',') == d.areas)
         && d.tipos is list && d.tipos.size() <= 20
-        && d.tipos.hasOnly(['fomento', 'bolsa', 'pos-graduacao', 'evento', 'concurso-vaga'])
+        && d.tipos.hasOnly(['fomento', 'bolsa', 'pos-graduacao', 'evento', 'concurso-vaga', 'competicao'])
         && d.frequencia in ['diario', 'semanal', 'urgentes']
         && d.canais is list && d.canais.size() <= 2 && d.canais.hasOnly(['email', 'calendario'])
         && d.quer_newsletter is bool

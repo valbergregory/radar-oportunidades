@@ -8,7 +8,7 @@ import * as FB from "./firebase.js";
   const ICONES = {
     "fomento": RC.I.documento, "bolsa": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>`,
     "pos-graduacao": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5M22 9v6"/></svg>`,
-    "evento": RC.I.megafone, "concurso-vaga": RC.I.maleta,
+    "evento": RC.I.megafone, "concurso-vaga": RC.I.maleta, "competicao": RC.I.trofeu,
   };
 
   let dados;
