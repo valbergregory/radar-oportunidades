@@ -62,17 +62,11 @@
 
 - **Chamada Pública CNPq/CAPES Nº 30/2026 – Programa de Mestrado e Doutorado Acadêmico para Inovação – MAI/DAI** (CNPq, 11/12/2026)  
   https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-30-2026/chamada-publica-cnpq-N-30-2026
-- **PPGE-FEARP/USP - Processo seletivo de doutorado direto - turma 2027 Confira o edital** (ANPEC, prazo não identificado)  
-  https://www.fearp.usp.br/images/academico/ppge/ppge_editalprocessoseletivodd_2027_doe.pdf
-- **PPGE-FEARP/USP - Processo seletivo de doutorado - turma 2027 Confira o edital** (ANPEC, prazo não identificado)  
-  https://www.fearp.usp.br/images/academico/ppge/ppge_editalprocessoseletivodo_2027_doe.pdf
 
 ## Congressos e eventos (novidades)
 
 - **65º Congresso da SOBER será realizado em Viçosa (MG), de 25 a 29 de julho de 2027** (SOBER, 01/02/2027)  
   https://sober.org.br/noticias/65o-congresso-da-sober-sera-realizado-em-vicosa-mg-de-25-a-29-de-julho-de-2027/
-- **54° Encontro Nacional de Economia** (ANPEC (encontros), prazo não identificado)  
-  https://en.anpec.org.br
 - **XXIX Encontro de Economia da Região Sul** (ANPEC (encontros), prazo não identificado)  
   https://www.anpec.org.br/novosite/br/xxix-encontro-de-economia-da-regiao-sul
 - **XXXI Encontro Regional de Economia** (ANPEC (encontros), prazo não identificado)  
