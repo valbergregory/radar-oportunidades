@@ -8,6 +8,8 @@ async function principal() {
   await FB.montarTopo();
   const painel = $("painel"), form = $("form-cadastro");
   for (const [v, r] of Object.entries(RC.VINCULOS)) $("vinculo").append(RC.el("option", { value: v, texto: r }));
+  for (const v of RC.UFS) $("uf").append(RC.el("option", { value: v, texto: v }));
+  $("uf").append(RC.el("option", { value: "nao-informado", texto: "Prefiro não informar" }));
   let areas = {};
   try { areas = (await RC.dados()).areas || {}; } catch (e) { /* sem dados: só os tipos */ }
   $("preferencias").append(
@@ -33,7 +35,7 @@ async function principal() {
       catch (e) { return RC.mensagem(painel, FB.traduzErro(e)); }
       try {
         await FB.criarPerfil(user.uid, {
-          nome_exibicao: t("nome_exibicao"), vinculo: t("vinculo") || null, curso_area: t("curso_area"),
+          nome_exibicao: t("nome_exibicao"), vinculo: t("vinculo") || null, uf: t("uf") || null, curso_area: t("curso_area"),
           areas: RC.marcados(form, "area"), tipos: RC.marcados(form, "tipo"), quer_newsletter: !!d.get("quer_newsletter"),
         });
       } catch (e) {

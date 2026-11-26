@@ -4,7 +4,8 @@ Robô que visita diariamente portais públicos (CNPq, CAPES, FAPEAL, UFAL) e de
 associações científicas (ANPEC, SOBER, SBG),
 guarda editais, bolsas, seleções, eventos e vagas em um banco SQLite e gera
 
-- um **site com filtros** por área e tipo (`docs/index.html`, publicado no GitHub Pages),
+- um **site com filtros** por área, tipo, alcance (estadual, regional, nacional,
+  internacional, em relação ao estado da pessoa) e idioma (`docs/index.html`, publicado no GitHub Pages),
   que também é um **aplicativo instalável no celular** (PWA) e abre sem internet
 - os **dados do site** em `docs/dados.json`
 - um **rascunho de newsletter** em Markdown (`saida/newsletter-<perfil>.md`)
@@ -109,6 +110,13 @@ dias, azul acima disso e cinza quando o prazo não foi identificado.
 - **Áreas e palavras-chave** em `config/areas.yaml`
 - **Fontes** em `config/fontes.yaml`. Para incluir uma, basta nome e endereço da
   página de listagem. Se vier lixo, restrinja com `padrao_link`.
+  Cada fonte tem `uf`, `alcance` (local, estadual, nacional, internacional) e
+  `idioma` padrão; há um bloco comentado com modelos de fontes de estágio e emprego.
+- **Alcance internacional e idioma** em `config/classificacao.yaml`: termos que
+  tornam um item internacional e palavras usadas para detectar o idioma.
+- **Tipos**: fomento, bolsa, pós-graduação, evento, concurso, estágio, emprego e
+  competição. Quando o prazo de um item muda ou sai retificação, o robô grava
+  `alterado_em` (aviso "Mudou desde a sua última visita" para quem acompanha).
 
 ## Limites conhecidos
 

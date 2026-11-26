@@ -6,6 +6,12 @@
 #                o robô aceita links cujo texto pareça uma oportunidade.
 #   tipo_padrao  opcional: fomento, bolsa, pos-graduacao, evento, concurso-vaga
 #   ignorar      opcional, regex de títulos a descartar (sem acento, minúsculas)
+#   uf           sigla do estado da fonte (ex.: AL) ou vazio para fontes nacionais
+#   alcance      local, estadual, nacional ou internacional. Um item vira
+#                "internacional" quando o texto traz um dos termos de
+#                config/classificacao.yaml (país, agência estrangeira etc.)
+#   idioma       idioma padrão dos itens: pt (padrão), en, es ou outro; o texto
+#                lido pode trocá-lo (ver config/classificacao.yaml)
 #   area_padrao  opcional, área usada quando as palavras-chave não acham nenhuma
 #                (ex.: tudo da ANPEC é economia); sem ela, o item fica em "geral"
 #   dias_max     opcional, descarta o que foi publicado há mais dias (padrão 180);
@@ -17,16 +23,25 @@
 
 fontes:
   - nome: CNPq
+    uf: ""
+    alcance: nacional
+    idioma: pt
     url: https://www.gov.br/cnpq/pt-br/chamadas/abertas-para-submissao
     # só a página de cada chamada (sem anexos nem botões de compartilhar)
     padrao_link: ^https://www\.gov\.br/cnpq/pt-br/chamadas/todas-as-chamadas/.*/chamada-[^/.]*$
     tipo_padrao: fomento
 
   - nome: CAPES
+    uf: ""
+    alcance: nacional
+    idioma: pt
     url: https://www.gov.br/capes/pt-br/assuntos/editais-e-resultados-capes/
     tipo_padrao: bolsa
 
   - nome: Finep
+    uf: ""
+    alcance: nacional
+    idioma: pt
     # Desativada em 25/11/2026: o site foi refeito e a lista de chamadas
     # (https://www.finep.gov.br/oportunidades) é carregada por um serviço
     # protegido, fora do alcance deste coletor. Tratar por alerta ou feed.
@@ -36,6 +51,9 @@ fontes:
     ativa: false
 
   - nome: FAPEAL
+    uf: "AL"
+    alcance: estadual
+    idioma: pt
     # página de editais mantida pela Fapeal (a etiqueta "editais" parou em 2024)
     url: https://www.fapeal.br/pesquisador/editais/
     padrao_link: ^https://www\.fapeal\.br/20\d\d/\d\d/[^/]+/$
@@ -43,6 +61,9 @@ fontes:
     tipo_padrao: fomento
 
   - nome: UFAL (editais)
+    uf: "AL"
+    alcance: local
+    idioma: pt
     # API aberta do site (Plone): os 40 editais mais recentes, em JSON
     url: https://editais.ufal.br/++api++/@search?portal_type=ufal.edital.edital&sort_on=effective&sort_order=descending&b_size=40&metadata_fields=effective
     formato: plone
@@ -51,6 +72,9 @@ fontes:
 
   # ---------------------------------------------- Economia (calibrado em 26/11/2026)
   - nome: ANPEC
+    uf: ""
+    alcance: nacional
+    idioma: pt
     # destaques da página inicial: seleções de pós, concursos docentes, chamadas
     url: https://www.anpec.org.br/novosite/br
     ignorar: eleicao|assembleia|certificad|template|minicurso|premiados|resultado
@@ -58,6 +82,9 @@ fontes:
     area_padrao: economia
 
   - nome: ANPEC (encontros)
+    uf: ""
+    alcance: nacional
+    idioma: pt
     # Encontro Nacional (en.anpec.org.br) e encontros regionais (Sul, Nordeste…)
     url: https://www.anpec.org.br/novosite/br/encontros
     padrao_link: ^https://(en\.anpec\.org\.br/?$|www\.anpec\.org\.br/novosite/br/[^/]*encontro[^/]*$)
@@ -66,6 +93,9 @@ fontes:
     area_padrao: economia
 
   - nome: SOBER
+    uf: ""
+    alcance: nacional
+    idioma: pt
     # Sociedade Brasileira de Economia, Administração e Sociologia Rural (RSS)
     url: https://sober.org.br/feed/
     formato: rss
@@ -76,6 +106,9 @@ fontes:
 
   # ----------------------------------------------------- Biologia
   - nome: SBG (Genética)
+    uf: ""
+    alcance: nacional
+    idioma: pt
     # eventos divulgados pela Sociedade Brasileira de Genética (links para o site de cada evento)
     url: https://www.sbg.org.br/eventos_novos
     padrao_link: ^https?://(?!(www\.)?sbg\.org\.br)
@@ -85,6 +118,9 @@ fontes:
 
   # ----------------------------------------------------- Computação
   - nome: SBC (JEMS)
+    uf: ""
+    alcance: nacional
+    idioma: pt
     # Eventos da Sociedade Brasileira de Computação no JEMS3. Desativada até
     # calibrar: o servidor recusa conexões de fora do Brasil (inclusive do
     # GitHub e da sessão que preparou esta fonte). Para calibrar, rode no
@@ -93,6 +129,42 @@ fontes:
     url: https://jems3.sbc.org.br/events
     tipo_padrao: evento
     ativa: false
+
+  # ------------------------------------------- Estágios e empregos (modelo)
+  # Nenhuma fonte ativa ainda: os tipos "estagio" e "emprego" já existem no site
+  # (aparecem como "em breve" enquanto não houver itens). Para cadastrar uma,
+  # copie um dos blocos abaixo, tire o "#" e ajuste. Respeite os termos de uso de
+  # cada site: o LinkedIn, por exemplo, proíbe coleta automatizada.
+  #
+  # Página HTML com lista de vagas:
+  # - nome: Estágios da Empresa X
+  #   url: https://empresa.exemplo/vagas
+  #   padrao_link: ^https://empresa\.exemplo/vagas/\d+     # link de cada vaga
+  #   tipo_padrao: estagio            # ou emprego
+  #   uf: AL
+  #   alcance: local
+  #   idioma: pt
+  #   dias_max: 45
+  #   ativa: false
+  #
+  # Feed RSS/Atom de vagas:
+  # - nome: Vagas do Portal Y
+  #   url: https://portal.exemplo/vagas/feed/
+  #   formato: rss
+  #   tipo_padrao: emprego
+  #   uf: ""
+  #   alcance: nacional
+  #   ignorar: encerrad|preenchid
+  #   ativa: false
+  #
+  # API JSON (site Plone, como a da UFAL):
+  # - nome: Estágios da Instituição Z
+  #   url: https://site.exemplo/++api++/@search?portal_type=vaga&sort_on=effective&sort_order=descending
+  #   formato: plone
+  #   tipo_padrao: estagio
+  #   uf: AL
+  #   alcance: estadual
+  #   ativa: false
 
   # Avaliadas em 26/11/2026 e deixadas de fora:
   #   - SBZoologia (sbzoologia.org.br/eventos-e-concursos.php): agenda vazia; uma

@@ -6,7 +6,7 @@ rules_version = '2';
 //
 // Modelo:
 //   perfis/{uid}                    um documento por pessoa (sem e-mail: ele fica no Authentication)
-//   perfis/{uid}/favoritos/{itemId} só { criado_em }; itemId = id do Radar (16 hex)
+//   perfis/{uid}/favoritos/{itemId} { criado_em, acompanhar?, visto_em? }; itemId = id do Radar (16 hex)
 //
 // Tudo o que não está liberado abaixo é negado: leitura sem login, listagem
 // da coleção perfis, documentos de outras pessoas e qualquer outra coleção.
@@ -20,7 +20,19 @@ service cloud.firestore {
     // Campos permitidos no perfil (nada além disto).
     function camposPerfil() {
       return ['nome_exibicao', 'vinculo', 'curso_area', 'areas', 'tipos', 'frequencia', 'canais',
-              'quer_newsletter', 'newsletter_em', 'termos_versao', 'consentimento_em', 'atualizado_em'];
+              'quer_newsletter', 'newsletter_em', 'termos_versao', 'consentimento_em', 'atualizado_em',
+              'uf', 'alcances', 'idiomas', 'sugestao_aplicada'];
+    }
+
+    function ufsValidas() {
+      return ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB',
+              'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO', 'nao-informado'];
+    }
+
+    // Lista opcional (campo novo): ausente, ou lista de até `max` itens só com valores válidos.
+    // Perfis criados antes destes campos continuam válidos.
+    function listaOpcional(d, campo, max, validos) {
+      return !(campo in d) || (d[campo] is list && d[campo].size() <= max && d[campo].hasOnly(validos));
     }
 
     // Texto opcional: ausente, nulo ou string de até `max` caracteres.
@@ -36,7 +48,13 @@ service cloud.firestore {
         && textoOpcional(d, 'curso_area', 120)
         && (!('vinculo' in d) || d.vinculo == null
             || d.vinculo in ['estudante-graduacao', 'estudante-pos', 'estudante-medio-tecnico', 'docente',
-                             'tecnico-administrativo', 'pesquisador', 'egresso', 'comunidade', 'outro'])
+                             'tecnico-administrativo', 'pesquisador', 'egresso', 'comunidade', 'outro',
+                             'nao-informado'])
+        && (!('uf' in d) || d.uf == null || d.uf in ufsValidas())
+        && listaOpcional(d, 'alcances', 4, ['estadual', 'regional', 'nacional', 'internacional'])
+        && listaOpcional(d, 'idiomas', 4, ['pt', 'en', 'es', 'outro'])
+        && (!('sugestao_aplicada' in d) || d.sugestao_aplicada == null
+            || (d.sugestao_aplicada is string && d.sugestao_aplicada.size() <= 20))
         && d.areas is list && d.areas.size() <= 20
         // Só textos curtos. join() nega objetos e listas, mas converte números
         // e booleanos em texto; por isso a lista também precisa voltar igual
@@ -45,7 +63,8 @@ service cloud.firestore {
         && d.areas.join(',').size() <= 800
         && (d.areas.size() == 0 || d.areas.join(',').split(',') == d.areas)
         && d.tipos is list && d.tipos.size() <= 20
-        && d.tipos.hasOnly(['fomento', 'bolsa', 'pos-graduacao', 'evento', 'concurso-vaga', 'competicao'])
+        && d.tipos.hasOnly(['fomento', 'bolsa', 'pos-graduacao', 'evento', 'concurso-vaga', 'competicao',
+                            'estagio', 'emprego'])
         && d.frequencia in ['diario', 'semanal', 'urgentes']
         && d.canais is list && d.canais.size() <= 2 && d.canais.hasOnly(['email', 'calendario'])
         && d.quer_newsletter is bool
@@ -85,14 +104,28 @@ service cloud.firestore {
         && newsletterNaAlteracao(request.resource.data, resource.data);
       allow delete: if dono(uid);
 
+      // Favorito: criado_em (servidor); opcionais acompanhar (booleano) e
+      // visto_em (servidor: última vez que a pessoa abriu o item).
+      function favoritoValido(d) {
+        return d.keys().hasOnly(['criado_em', 'acompanhar', 'visto_em'])
+          && d.keys().hasAll(['criado_em'])
+          && (!('acompanhar' in d) || d.acompanhar is bool);
+      }
+
       match /favoritos/{itemId} {
         allow read: if dono(uid);
         allow create: if dono(uid)
           // Só ids no formato do Radar (16 caracteres hexadecimais, ver dados.json).
           && itemId.matches('^[0-9a-f]{16}$')
-          && request.resource.data.keys().hasOnly(['criado_em'])
-          && request.resource.data.keys().hasAll(['criado_em'])
-          && request.resource.data.criado_em == request.time;
+          && favoritoValido(request.resource.data)
+          && request.resource.data.criado_em == request.time
+          && (!('visto_em' in request.resource.data) || request.resource.data.visto_em == request.time);
+        // Alterar: só acompanhar e visto_em; criado_em fica como estava.
+        allow update: if dono(uid)
+          && favoritoValido(request.resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['acompanhar', 'visto_em'])
+          && (!('visto_em' in request.resource.data.diff(resource.data).affectedKeys())
+              || request.resource.data.visto_em == request.time);
         allow delete: if dono(uid);
       }
     }

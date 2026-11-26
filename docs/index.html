@@ -57,6 +57,14 @@
     </fieldset>
     <fieldset><legend>Minhas áreas</legend><div id="areas"></div></fieldset>
     <fieldset><legend>Tipo</legend><div id="tipos"></div></fieldset>
+    <fieldset><legend>Alcance</legend>
+      <label class="meu-estado">Meu estado
+        <select id="meu-uf" aria-describedby="dica-uf"><option value="">Não informar</option></select>
+      </label>
+      <p class="dica-filtro" id="dica-uf">Com o estado, "Estadual" e "Regional" passam a ser relativos a ele. Fica guardado só neste aparelho.</p>
+      <div id="alcances"></div>
+    </fieldset>
+    <fieldset><legend>Idioma</legend><div id="idiomas"></div></fieldset>
     <div class="acoes-filtro">
       <button type="button" class="botao botao-primario" id="ver-resultados">Ver resultados</button>
       <button type="button" class="botao botao-claro" id="limpar">
@@ -96,6 +104,7 @@
     </div>
 
     <p class="aviso" id="aviso" role="status" hidden></p>
+    <section class="acompanhando" id="acompanhando" aria-labelledby="titulo-acompanhando" hidden></section>
     <ul class="lista" id="lista" tabindex="-1" aria-label="Oportunidades"></ul>
     <div class="vazio" id="vazio" hidden>
       <p>Nenhuma oportunidade encontrada com esses filtros.</p>
@@ -134,13 +143,29 @@
 
 <script>
 "use strict";
-const DADOS_EMBUTIDOS = {"atualizado": "26/11/2026", "areas": {"administracao-publica": "Administração pública", "economia": "Economia", "direito": "Direito", "sistemas-de-informacao": "Sistemas de informação", "turismo": "Turismo", "engenharia-de-pesca": "Engenharia de pesca", "engenharia-de-producao": "Engenharia de produção", "biologia": "Biologia"}, "itens": [{"id": "7ced3082bdb9dc72", "titulo": "Processo Seletivo de Estudantes para atuação no Programa Nacional de Apoio à permanência, diversidade e visibilidade para discentes na área da Saúde - AfirmaSUS, no âmbito da UFAL", "link": "https://editais.ufal.br/extensao/processo-seletivo-de-estudantes-para-atuacao-no-programa-nacional-de-apoio-a-permanencia-diversidade-e-visibilidade-para-discentes-na-area-da-saude-afirmasus-no-ambito-da-ufal", "fonte": "UFAL (editais)", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-11-28", "coletado_em": "2026-11-25"}, {"id": "93655335db0eb0e5", "titulo": "Seleção de Monitores para o Programa Esporte na Ufal", "link": "https://editais.ufal.br/assistencia-estudantil/selecao-de-monitores-para-o-programa-esporte-na-ufal-1", "fonte": "UFAL (editais)", "tipo": "bolsa", "areas": ["geral"], "prazo": "2026-11-29", "coletado_em": "2026-11-25"}, {"id": "846220215d9be0e2", "titulo": "Seleção de mentores(as) científicos(as) voluntários(as) para o LabMent/Sinpete", "link": "https://editais.ufal.br/outros/selecao-de-mentores-as-cientificos-as-voluntarios-as-para-o-labment-sinpete", "fonte": "UFAL (editais)", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-11-30", "coletado_em": "2026-11-25"}, {"id": "8d07e5bc97196c67", "titulo": "Edital Nº 06/2026 – PNAGEI Centelha 3 Alagoas – Fapeal/Secti-AL/Sebrae-AL", "link": "https://www.fapeal.br/2026/11/edital-centelha-3-al/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-04", "coletado_em": "2026-11-25"}, {"id": "e70547b72e81b3de", "titulo": "Chamada CNPq Nº 34/2026 - Auxílio à Promoção de Eventos Científicos, Tecnológicos e/ou de Inovação - ARC", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-34-2026/chamada-publica-cnpq-N-34-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-04", "coletado_em": "2026-11-25"}, {"id": "95de50d98c1ab8f9", "titulo": "Chamada Pública CNPq/Petrobras N° 31/2026 - Projeto InspirAÇÃO", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-31-2026/chamada-publica-cnpq-N-31-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-08", "coletado_em": "2026-11-25"}, {"id": "24e2accdfe608744", "titulo": "Chamada Pública CNPq/CAPES Nº 30/2026 – Programa de Mestrado e Doutorado Acadêmico para Inovação – MAI/DAI", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-30-2026/chamada-publica-cnpq-N-30-2026", "fonte": "CNPq", "tipo": "pos-graduacao", "areas": ["geral"], "prazo": "2026-12-11", "coletado_em": "2026-11-25"}, {"id": "96edb845023c1e95", "titulo": "Chamada Pública para Envio de Proposta de Curso Novo - Edital nº 20/2026", "link": "https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2844920.pdf/@@display-file/file", "fonte": "CAPES", "tipo": "fomento", "areas": ["direito"], "prazo": "2026-12-18", "coletado_em": "2026-11-25"}, {"id": "73b044dd548b072e", "titulo": "Chamada CNPq nº 33/2026 - Bolsas de Produtividade do CNPq", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-33-2026/chamada-publica-cnpq-N-33-2026", "fonte": "CNPq", "tipo": "bolsa", "areas": ["geral"], "prazo": "2027-01-07", "coletado_em": "2026-11-25"}, {"id": "035b22270c2c6224", "titulo": "65º Congresso da SOBER será realizado em Viçosa (MG), de 25 a 29 de julho de 2027", "link": "https://sober.org.br/noticias/65o-congresso-da-sober-sera-realizado-em-vicosa-mg-de-25-a-29-de-julho-de-2027/", "fonte": "SOBER", "tipo": "evento", "areas": ["administracao-publica", "economia"], "prazo": "2027-02-01", "coletado_em": "2026-11-26"}, {"id": "20a236aa695fb18a", "titulo": "Chamada Pública CNPq/MCTI N° 36/2026 - Apoio a cursos de curta duração em biodiversidade, no âmbito do Centro Franco-Brasileiro de Biodiversidade Amazônica (CFBBA)", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-36-2026/chamada-publica-cnpq-N-36-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["biologia"], "prazo": "2027-02-12", "coletado_em": "2026-11-25"}, {"id": "4543466c0a28c815", "titulo": "Chamada CNPq/MIR Nº 23/2026 - Programa Lélia Gonzalez de fomento a pesquisas sobre desigualdades étnico-raciais na ciência, na educação e na sociedade brasileiras", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-23-2026/chamada-publica-cnpq-N-23-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-01", "coletado_em": "2026-11-25"}, {"id": "c931541578c0f7f4", "titulo": "Chamada Pública MCTI/CNPq/CISB/SAAB AB Nº 37/2026 - Cooperação Brasil-Suécia", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-37-2026/chamada-publica-cnpq-N-37-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-12", "coletado_em": "2026-11-25"}, {"id": "363e01ec6c92de7a", "titulo": "Chamada Pública MCTI/CNPq/ANR N° 32/2026", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-32-2026/chamada-publica-cnpq-N-32-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-31", "coletado_em": "2026-11-25"}, {"id": "f79e34127c28027f", "titulo": "Estudo de Ingressantes das Licenciaturas - Edital CAPES/INEP nº 26/2026", "link": "https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2904194_sei_2903303_edital_conjunto_26_2026.pdf/@@display-file/file", "fonte": "CAPES", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-07-15", "coletado_em": "2026-11-25"}, {"id": "c3d0231eae240149", "titulo": "Prêmio CAPES de Tese", "link": "https://www.gov.br/capes/pt-br/assuntos/premios/premio-capes-de-tese", "fonte": "CAPES", "tipo": "competicao", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-26"}, {"id": "e683d5a952329fab", "titulo": "DAE/FCE/UERJ - Processo Seletivo Simplificado – Professor Substituto Confira o edital", "link": "https://sites.google.com/view/concursodocentedaefce/edital", "fonte": "ANPEC", "tipo": "concurso-vaga", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26"}, {"id": "1b774ebd47e6d1cb", "titulo": "PPGE-FEARP/USP - Processo seletivo de doutorado direto - turma 2027 Confira o edital", "link": "https://www.fearp.usp.br/images/academico/ppge/ppge_editalprocessoseletivodd_2027_doe.pdf", "fonte": "ANPEC", "tipo": "pos-graduacao", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26"}, {"id": "33b5ee9256c967d8", "titulo": "PPGE-FEARP/USP - Processo seletivo de doutorado - turma 2027 Confira o edital", "link": "https://www.fearp.usp.br/images/academico/ppge/ppge_editalprocessoseletivodo_2027_doe.pdf", "fonte": "ANPEC", "tipo": "pos-graduacao", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26"}, {"id": "c5b166b348821f3e", "titulo": "54° Encontro Nacional de Economia", "link": "https://en.anpec.org.br", "fonte": "ANPEC (encontros)", "tipo": "evento", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26"}, {"id": "c1e54535d6c76626", "titulo": "XXIX Encontro de Economia da Região Sul", "link": "https://www.anpec.org.br/novosite/br/xxix-encontro-de-economia-da-regiao-sul", "fonte": "ANPEC (encontros)", "tipo": "evento", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26"}, {"id": "fb4003e840ece767", "titulo": "XXXI Encontro Regional de Economia", "link": "https://www.anpec.org.br/novosite/br/xxxi-encontro-regional-de-economia", "fonte": "ANPEC (encontros)", "tipo": "evento", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26"}, {"id": "befadcb7f3a9e481", "titulo": "RBCC 2027 – Reunião Brasileira de Citogenética e Citogenômica", "link": "https://rbcc2027.com.br/", "fonte": "SBG (Genética)", "tipo": "evento", "areas": ["biologia"], "prazo": null, "coletado_em": "2026-11-26"}, {"id": "c9703f0ae805ceb8", "titulo": "Chamada Transnacional Conjunta Biodiversa+ (BiodivConnect) 2025-2026", "link": "https://www.fapeal.br/2026/10/chamada-transnacional-conjunta-biodiversa-biodivconnect-2025-2026/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25"}, {"id": "71dc8bdd565d06b6", "titulo": "Chamada transnacional conjunta Gestão Sustentável dos Recursos Hídricos", "link": "https://www.fapeal.br/2026/09/chamada-transnacional-conjunta-gestao-sustentavel-dos-recursos-hidricos/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["engenharia-de-pesca"], "prazo": null, "coletado_em": "2026-11-25"}, {"id": "13a5a1f6cd4f618a", "titulo": "Bolsas para doutorandos na Alemanha DAAD/Confap", "link": "https://www.fapeal.br/2026/06/bolsas-doutorado-alemanha/", "fonte": "FAPEAL", "tipo": "bolsa", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25"}, {"id": "21155eb155b17631", "titulo": "Edital Fapeal Nº5/2024 – Credenciamento de Avaliadores Ad hoc", "link": "https://www.fapeal.br/2026/01/edital-consultores-adhoc/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25"}]};
-// Os mesmos rótulos estão em js/comum.js (páginas de conta e da oportunidade).
+const DADOS_EMBUTIDOS = {"atualizado": "26/11/2026", "areas": {"administracao-publica": "Administração pública", "economia": "Economia", "direito": "Direito", "sistemas-de-informacao": "Sistemas de informação", "turismo": "Turismo", "engenharia-de-pesca": "Engenharia de pesca", "engenharia-de-producao": "Engenharia de produção", "biologia": "Biologia"}, "itens": [{"id": "7ced3082bdb9dc72", "titulo": "Processo Seletivo de Estudantes para atuação no Programa Nacional de Apoio à permanência, diversidade e visibilidade para discentes na área da Saúde - AfirmaSUS, no âmbito da UFAL", "link": "https://editais.ufal.br/extensao/processo-seletivo-de-estudantes-para-atuacao-no-programa-nacional-de-apoio-a-permanencia-diversidade-e-visibilidade-para-discentes-na-area-da-saude-afirmasus-no-ambito-da-ufal", "fonte": "UFAL (editais)", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-11-28", "coletado_em": "2026-11-25", "uf": "AL", "alcance": "local", "idioma": "pt", "alterado_em": null}, {"id": "93655335db0eb0e5", "titulo": "Seleção de Monitores para o Programa Esporte na Ufal", "link": "https://editais.ufal.br/assistencia-estudantil/selecao-de-monitores-para-o-programa-esporte-na-ufal-1", "fonte": "UFAL (editais)", "tipo": "bolsa", "areas": ["geral"], "prazo": "2026-11-29", "coletado_em": "2026-11-25", "uf": "AL", "alcance": "local", "idioma": "pt", "alterado_em": null}, {"id": "846220215d9be0e2", "titulo": "Seleção de mentores(as) científicos(as) voluntários(as) para o LabMent/Sinpete", "link": "https://editais.ufal.br/outros/selecao-de-mentores-as-cientificos-as-voluntarios-as-para-o-labment-sinpete", "fonte": "UFAL (editais)", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-11-30", "coletado_em": "2026-11-25", "uf": "AL", "alcance": "local", "idioma": "pt", "alterado_em": null}, {"id": "8d07e5bc97196c67", "titulo": "Edital Nº 06/2026 – PNAGEI Centelha 3 Alagoas – Fapeal/Secti-AL/Sebrae-AL", "link": "https://www.fapeal.br/2026/11/edital-centelha-3-al/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-04", "coletado_em": "2026-11-25", "uf": "AL", "alcance": "estadual", "idioma": "pt", "alterado_em": null}, {"id": "e70547b72e81b3de", "titulo": "Chamada CNPq Nº 34/2026 - Auxílio à Promoção de Eventos Científicos, Tecnológicos e/ou de Inovação - ARC", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-34-2026/chamada-publica-cnpq-N-34-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-04", "coletado_em": "2026-11-25", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "95de50d98c1ab8f9", "titulo": "Chamada Pública CNPq/Petrobras N° 31/2026 - Projeto InspirAÇÃO", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-31-2026/chamada-publica-cnpq-N-31-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2026-12-08", "coletado_em": "2026-11-25", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "24e2accdfe608744", "titulo": "Chamada Pública CNPq/CAPES Nº 30/2026 – Programa de Mestrado e Doutorado Acadêmico para Inovação – MAI/DAI", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-30-2026/chamada-publica-cnpq-N-30-2026", "fonte": "CNPq", "tipo": "pos-graduacao", "areas": ["geral"], "prazo": "2026-12-11", "coletado_em": "2026-11-25", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "96edb845023c1e95", "titulo": "Chamada Pública para Envio de Proposta de Curso Novo - Edital nº 20/2026", "link": "https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2844920.pdf/@@display-file/file", "fonte": "CAPES", "tipo": "fomento", "areas": ["direito"], "prazo": "2026-12-18", "coletado_em": "2026-11-25", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "73b044dd548b072e", "titulo": "Chamada CNPq nº 33/2026 - Bolsas de Produtividade do CNPq", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-33-2026/chamada-publica-cnpq-N-33-2026", "fonte": "CNPq", "tipo": "bolsa", "areas": ["geral"], "prazo": "2027-01-07", "coletado_em": "2026-11-25", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "035b22270c2c6224", "titulo": "65º Congresso da SOBER será realizado em Viçosa (MG), de 25 a 29 de julho de 2027", "link": "https://sober.org.br/noticias/65o-congresso-da-sober-sera-realizado-em-vicosa-mg-de-25-a-29-de-julho-de-2027/", "fonte": "SOBER", "tipo": "evento", "areas": ["administracao-publica", "economia"], "prazo": "2027-02-01", "coletado_em": "2026-11-26", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "20a236aa695fb18a", "titulo": "Chamada Pública CNPq/MCTI N° 36/2026 - Apoio a cursos de curta duração em biodiversidade, no âmbito do Centro Franco-Brasileiro de Biodiversidade Amazônica (CFBBA)", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-36-2026/chamada-publica-cnpq-N-36-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["biologia"], "prazo": "2027-02-12", "coletado_em": "2026-11-25", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "4543466c0a28c815", "titulo": "Chamada CNPq/MIR Nº 23/2026 - Programa Lélia Gonzalez de fomento a pesquisas sobre desigualdades étnico-raciais na ciência, na educação e na sociedade brasileiras", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-23-2026/chamada-publica-cnpq-N-23-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-01", "coletado_em": "2026-11-25", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "c931541578c0f7f4", "titulo": "Chamada Pública MCTI/CNPq/CISB/SAAB AB Nº 37/2026 - Cooperação Brasil-Suécia", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-37-2026/chamada-publica-cnpq-N-37-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-12", "coletado_em": "2026-11-25", "uf": null, "alcance": "internacional", "idioma": "pt", "alterado_em": null}, {"id": "363e01ec6c92de7a", "titulo": "Chamada Pública MCTI/CNPq/ANR N° 32/2026", "link": "https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-32-2026/chamada-publica-cnpq-N-32-2026", "fonte": "CNPq", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-03-31", "coletado_em": "2026-11-25", "uf": null, "alcance": "internacional", "idioma": "pt", "alterado_em": null}, {"id": "f79e34127c28027f", "titulo": "Estudo de Ingressantes das Licenciaturas - Edital CAPES/INEP nº 26/2026", "link": "https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2904194_sei_2903303_edital_conjunto_26_2026.pdf/@@display-file/file", "fonte": "CAPES", "tipo": "fomento", "areas": ["geral"], "prazo": "2027-07-15", "coletado_em": "2026-11-25", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "c3d0231eae240149", "titulo": "Prêmio CAPES de Tese", "link": "https://www.gov.br/capes/pt-br/assuntos/premios/premio-capes-de-tese", "fonte": "CAPES", "tipo": "competicao", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-26", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "e683d5a952329fab", "titulo": "DAE/FCE/UERJ - Processo Seletivo Simplificado – Professor Substituto Confira o edital", "link": "https://sites.google.com/view/concursodocentedaefce/edital", "fonte": "ANPEC", "tipo": "concurso-vaga", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "1b774ebd47e6d1cb", "titulo": "PPGE-FEARP/USP - Processo seletivo de doutorado direto - turma 2027 Confira o edital", "link": "https://www.fearp.usp.br/images/academico/ppge/ppge_editalprocessoseletivodd_2027_doe.pdf", "fonte": "ANPEC", "tipo": "pos-graduacao", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "33b5ee9256c967d8", "titulo": "PPGE-FEARP/USP - Processo seletivo de doutorado - turma 2027 Confira o edital", "link": "https://www.fearp.usp.br/images/academico/ppge/ppge_editalprocessoseletivodo_2027_doe.pdf", "fonte": "ANPEC", "tipo": "pos-graduacao", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "c5b166b348821f3e", "titulo": "54° Encontro Nacional de Economia", "link": "https://en.anpec.org.br", "fonte": "ANPEC (encontros)", "tipo": "evento", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "c1e54535d6c76626", "titulo": "XXIX Encontro de Economia da Região Sul", "link": "https://www.anpec.org.br/novosite/br/xxix-encontro-de-economia-da-regiao-sul", "fonte": "ANPEC (encontros)", "tipo": "evento", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "fb4003e840ece767", "titulo": "XXXI Encontro Regional de Economia", "link": "https://www.anpec.org.br/novosite/br/xxxi-encontro-regional-de-economia", "fonte": "ANPEC (encontros)", "tipo": "evento", "areas": ["economia"], "prazo": null, "coletado_em": "2026-11-26", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "befadcb7f3a9e481", "titulo": "RBCC 2027 – Reunião Brasileira de Citogenética e Citogenômica", "link": "https://rbcc2027.com.br/", "fonte": "SBG (Genética)", "tipo": "evento", "areas": ["biologia"], "prazo": null, "coletado_em": "2026-11-26", "uf": null, "alcance": "nacional", "idioma": "pt", "alterado_em": null}, {"id": "c9703f0ae805ceb8", "titulo": "Chamada Transnacional Conjunta Biodiversa+ (BiodivConnect) 2025-2026", "link": "https://www.fapeal.br/2026/10/chamada-transnacional-conjunta-biodiversa-biodivconnect-2025-2026/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25", "uf": "AL", "alcance": "internacional", "idioma": "pt", "alterado_em": null}, {"id": "71dc8bdd565d06b6", "titulo": "Chamada transnacional conjunta Gestão Sustentável dos Recursos Hídricos", "link": "https://www.fapeal.br/2026/09/chamada-transnacional-conjunta-gestao-sustentavel-dos-recursos-hidricos/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["engenharia-de-pesca"], "prazo": null, "coletado_em": "2026-11-25", "uf": "AL", "alcance": "internacional", "idioma": "pt", "alterado_em": null}, {"id": "13a5a1f6cd4f618a", "titulo": "Bolsas para doutorandos na Alemanha DAAD/Confap", "link": "https://www.fapeal.br/2026/06/bolsas-doutorado-alemanha/", "fonte": "FAPEAL", "tipo": "bolsa", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25", "uf": "AL", "alcance": "internacional", "idioma": "pt", "alterado_em": null}, {"id": "21155eb155b17631", "titulo": "Edital Fapeal Nº5/2024 – Credenciamento de Avaliadores Ad hoc", "link": "https://www.fapeal.br/2026/01/edital-consultores-adhoc/", "fonte": "FAPEAL", "tipo": "fomento", "areas": ["geral"], "prazo": null, "coletado_em": "2026-11-25", "uf": "AL", "alcance": "estadual", "idioma": "pt", "alterado_em": null}]};
+// Os mesmos rótulos e regras estão em js/comum.js (páginas de conta e da oportunidade).
 const TIPOS = { "fomento":"Fomento e editais", "bolsa":"Bolsas", "pos-graduacao":"Mestrado e doutorado",
-                "evento":"Congressos e eventos", "concurso-vaga":"Concursos e vagas",
-                "competicao":"Competições e prêmios" };
+                "evento":"Congressos e eventos", "concurso-vaga":"Concursos", "estagio":"Estágios",
+                "emprego":"Empregos", "competicao":"Competições e prêmios" };
+const ALCANCES = { "estadual":"Estadual", "regional":"Regional", "nacional":"Nacional", "internacional":"Internacional" };
+const IDIOMAS = { "pt":"Português", "en":"Inglês", "es":"Espanhol", "outro":"Outros" };
+const REGIOES = { "Norte":["AC","AP","AM","PA","RO","RR","TO"], "Nordeste":["AL","BA","CE","MA","PB","PE","PI","RN","SE"],
+                  "Centro-Oeste":["DF","GO","MT","MS"], "Sudeste":["ES","MG","RJ","SP"], "Sul":["PR","RS","SC"] };
+const regiaoDe = uf => Object.keys(REGIOES).find(r => REGIOES[r].includes(uf)) || null;
+// Alcance do item para a pessoa: estadual (mesmo estado), regional (mesma
+// região), nacional, internacional, ou "fora" (estadual de outra região: só
+// aparece com todos os alcances marcados). Sem estado escolhido, vale o do item.
+function relacaoAlcance(i, uf) {
+  const a = i.alcance || "nacional";
+  if (a === "internacional") return a;
+  if (a === "nacional" || !i.uf) return "nacional";
+  if (!uf || !regiaoDe(uf)) return "estadual";
+  if (i.uf === uf) return "estadual";
+  return regiaoDe(i.uf) === regiaoDe(uf) ? "regional" : "fora";
+}
 const URGENTE_ATE = 14;  // dias: selo laranja até aqui, azul acima
-const CHAVE = "radar-filtros", CHAVE_CONVITE = "radar-convite-dispensado";
+const CHAVE = "radar-filtros", CHAVE_CONVITE = "radar-convite-dispensado", CHAVE_UF = "radar-uf";
 const SEM_REDE = "Você está sem conexão. Mostrando os dados salvos de ";
 
 // Ícones por tipo (traço, 24x24)
@@ -152,6 +177,8 @@ const ICONES = {
   "evento": `<svg ${P}><rect x="3" y="3" width="18" height="12" rx="1.5"/><path d="M8 21l4-6 4 6M7 8h6M7 11h10"/></svg>`,
   "concurso-vaga": `<svg ${P}><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>`,
   "competicao": `<svg ${P}><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>`,
+  "estagio": `<svg ${P}><path d="M4 20V8l8-5 8 5v12"/><path d="M9 20v-6h6v6M9 10h6"/></svg>`,
+  "emprego": `<svg ${P}><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.5"/><path d="M5.5 17c.7-1.8 2-2.8 3.5-2.8s2.8 1 3.5 2.8M15 10h3M15 13h3"/></svg>`,
   "outro": `<svg ${P}><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>`,
 };
 const CALENDARIO = `<svg ${P}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>`;
@@ -174,7 +201,10 @@ const salvo = lerArmazenado(CHAVE) || {};
 const estado = {
   semAreas: new Set(Array.isArray(salvo.semAreas) ? salvo.semAreas : []),
   semTipos: new Set(Array.isArray(salvo.semTipos) ? salvo.semTipos : []),
+  semAlcances: new Set(Array.isArray(salvo.semAlcances) ? salvo.semAlcances : []),
+  semIdiomas: new Set(Array.isArray(salvo.semIdiomas) ? salvo.semIdiomas : []),
   ordem: salvo.ordem === "recente" ? "recente" : "prazo",
+  uf: regiaoDe(lerArmazenado(CHAVE_UF)) ? lerArmazenado(CHAVE_UF) : "",
 };
 const valido = d => !!(d && typeof d === "object" && Array.isArray(d.itens) && d.areas);
 let DADOS = valido(DADOS_EMBUTIDOS) ? DADOS_EMBUTIDOS : null;
@@ -199,7 +229,8 @@ function dataAtualizacao() {
 }
 
 function salvarEstado() {
-  gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], ordem:estado.ordem });
+  gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], semAlcances:[...estado.semAlcances],
+                  semIdiomas:[...estado.semIdiomas], ordem:estado.ordem });
 }
 
 // Pontos de extensão usados por js/conta-index.js (só quando há contas):
@@ -207,16 +238,28 @@ function salvarEstado() {
 window.radar = {
   ganchos: { cartao: [], filtro: [] },
   redesenhar() { if (DADOS) desenhar(); },
-  aplicarInteresses(areas, tipos) {
+  // Preferências da conta viram filtros (listas vazias = não mexe naquele filtro).
+  aplicarInteresses(areas, tipos, alcances = [], idiomas = [], uf) {
     if (!DADOS) return false;
     if (areas.length) estado.semAreas = new Set(Object.keys(DADOS.areas).filter(a => !areas.includes(a)));
     if (tipos.length) estado.semTipos = new Set(Object.keys(TIPOS).filter(t => !tipos.includes(t)));
+    if (alcances.length) estado.semAlcances = new Set(Object.keys(ALCANCES).filter(a => !alcances.includes(a)));
+    if (idiomas.length) estado.semIdiomas = new Set(Object.keys(IDIOMAS).filter(l => !idiomas.includes(l)));
+    if (uf !== undefined) definirUf(regiaoDe(uf) ? uf : "");
     salvarEstado(); montarFiltros(); desenhar();
     return true;
   },
+  uf: () => estado.uf,
+  dados: () => DADOS,
 };
 
-function caixas(destino, opcoes, desmarcadas) {
+function definirUf(uf) {
+  estado.uf = uf;
+  gravar(CHAVE_UF, uf || null);
+}
+
+// vazios: opções sem nenhum item nos dados (ficam desabilitadas, "em breve").
+function caixas(destino, opcoes, desmarcadas, vazios = new Set()) {
   const div = $(destino);
   div.textContent = "";
   for (const [valor, rotulo] of Object.entries(opcoes)) {
@@ -226,13 +269,28 @@ function caixas(destino, opcoes, desmarcadas) {
       if (c.checked) desmarcadas.delete(valor); else desmarcadas.add(valor);
       salvarEstado(); desenhar();
     });
-    l.append(c, rotulo); div.append(l);
+    l.append(c, rotulo);
+    if (vazios.has(valor)) {
+      c.disabled = true;
+      l.classList.add("em-breve");
+      const e = document.createElement("span"); e.className = "selo-em-breve"; e.textContent = "em breve";
+      l.append(" ", e);
+    }
+    div.append(l);
   }
 }
 
 function montarFiltros() {
   caixas("areas", DADOS.areas, estado.semAreas);
-  caixas("tipos", TIPOS, estado.semTipos);
+  const comItens = new Set(DADOS.itens.map(i => i.tipo));
+  caixas("tipos", TIPOS, estado.semTipos, new Set(Object.keys(TIPOS).filter(t => !comItens.has(t))));
+  caixas("alcances", ALCANCES, estado.semAlcances);
+  caixas("idiomas", IDIOMAS, estado.semIdiomas);
+  const sel = $("meu-uf");
+  if (sel.options.length === 1) {
+    for (const uf of Object.values(REGIOES).flat().sort()) sel.add(new Option(uf, uf));
+  }
+  sel.value = estado.uf || "";
   $("ordem").value = estado.ordem;
   $("atualizado-topo").textContent = "Última atualização: " + dataAtualizacao();
   $("atualizado-rodape").textContent = "Dados atualizados em " + dataAtualizacao() + ".";
@@ -250,6 +308,9 @@ function filtrar() {
     const dias = diasAte(i.prazo);
     if (dias !== null && dias < 0) return false;  // dados guardados offline podem ter vencido
     if (estado.semTipos.has(i.tipo)) return false;
+    if (estado.semIdiomas.has(i.idioma || "pt")) return false;
+    const rel = relacaoAlcance(i, estado.uf);
+    if (rel === "fora" ? estado.semAlcances.size > 0 : estado.semAlcances.has(rel)) return false;
     const areas = i.areas || [];
     if (!areas.includes("geral") && !areas.some(a => !estado.semAreas.has(a))) return false;
     if (!extras.every(f => f(i))) return false;
@@ -310,7 +371,16 @@ function cartao(i) {
   etq.textContent = TIPOS[i.tipo] || i.tipo;
   const areas = document.createElement("p"); areas.className = "areas";
   areas.textContent = "Áreas: " + (i.areas || []).map(nomeArea).join(", ");
-  info.append(h, orgao, etq, areas);
+  // Alcance (relativo ao estado da pessoa) e idioma, quando não for português
+  const rel = relacaoAlcance(i, estado.uf);
+  const alc = document.createElement("span"); alc.className = "etq etq-alcance";
+  alc.textContent = (rel === "fora" ? "Estadual" : ALCANCES[rel]) + (i.uf && rel !== "nacional" && rel !== "internacional" ? " (" + i.uf + ")" : "");
+  const extras = [alc];
+  if (i.idioma && i.idioma !== "pt") {
+    const lang = document.createElement("span"); lang.className = "etq etq-idioma";
+    lang.textContent = IDIOMAS[i.idioma] || i.idioma; extras.push(lang);
+  }
+  info.append(h, orgao, etq, " ", ...extras, areas);
 
   li.append(ico, info, seloPrazo(i));
   li.insertAdjacentHTML("beforeend", SETA);
@@ -325,13 +395,15 @@ function desenhar() {
   $("vazio").hidden = itens.length > 0;
   const n = document.createElement("strong"); n.textContent = itens.length;
   $("conta").replaceChildren(n, itens.length === 1 ? " oportunidade aberta" : " oportunidades abertas");
-  const ativos = estado.semAreas.size + estado.semTipos.size > 0 || $("so-favoritos").checked;
+  const ativos = estado.semAreas.size + estado.semTipos.size + estado.semAlcances.size + estado.semIdiomas.size > 0
+                 || $("so-favoritos").checked;
   $("filtros-ativos").textContent = ativos ? " (com filtros)" : "";
   $("ver-resultados").textContent = "Ver " + itens.length + (itens.length === 1 ? " resultado" : " resultados");
 }
 
 function limparFiltros() {
-  estado.semAreas.clear(); estado.semTipos.clear(); estado.ordem = "prazo";
+  estado.semAreas.clear(); estado.semTipos.clear(); estado.semAlcances.clear(); estado.semIdiomas.clear();
+  estado.ordem = "prazo";
   $("busca").value = "";
   if ($("so-favoritos").checked) { $("so-favoritos").checked = false; $("so-favoritos").dispatchEvent(new Event("change")); }
   salvarEstado(); montarFiltros(); desenhar();
@@ -401,6 +473,7 @@ if (!emApp && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
 
 // ---- Eventos
 $("busca").addEventListener("input", desenhar);
+$("meu-uf").addEventListener("change", e => { definirUf(e.target.value); desenhar(); });
 $("ordem").addEventListener("change", e => { estado.ordem = e.target.value; salvarEstado(); desenhar(); });
 $("limpar").addEventListener("click", limparFiltros);
 $("limpar-vazio").addEventListener("click", limparFiltros);

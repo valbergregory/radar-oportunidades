@@ -5,15 +5,41 @@
 window.RC = (() => {
   const cfg = window.RADAR_CONTA || {};
   const controlador = cfg.controlador || {};
+  // Os mesmos rótulos estão no modelo do index (modelo_site.html) e em radar.py.
   const TIPOS = { "fomento": "Fomento e editais", "bolsa": "Bolsas", "pos-graduacao": "Mestrado e doutorado",
-                  "evento": "Congressos e eventos", "concurso-vaga": "Concursos e vagas",
-                  "competicao": "Competições e prêmios" };
+                  "evento": "Congressos e eventos", "concurso-vaga": "Concursos", "estagio": "Estágios",
+                  "emprego": "Empregos", "competicao": "Competições e prêmios" };
   const VINCULOS = {
     "estudante-graduacao": "Estudante de graduação", "estudante-pos": "Estudante de pós-graduação",
     "estudante-medio-tecnico": "Estudante de ensino médio ou técnico", "docente": "Docente",
     "tecnico-administrativo": "Técnico(a)-administrativo(a)", "pesquisador": "Pesquisador(a)",
     "egresso": "Egresso(a)", "comunidade": "Comunidade externa", "outro": "Outro",
+    "nao-informado": "Prefiro não informar",
   };
+  // Estados por região (para o alcance "Regional").
+  const REGIOES = {
+    "Norte": ["AC", "AP", "AM", "PA", "RO", "RR", "TO"],
+    "Nordeste": ["AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"],
+    "Centro-Oeste": ["DF", "GO", "MT", "MS"],
+    "Sudeste": ["ES", "MG", "RJ", "SP"],
+    "Sul": ["PR", "RS", "SC"],
+  };
+  const UFS = Object.values(REGIOES).flat().sort();
+  const regiaoDe = uf => Object.keys(REGIOES).find(r => REGIOES[r].includes(uf)) || null;
+  const ALCANCES = { "estadual": "Estadual", "regional": "Regional", "nacional": "Nacional", "internacional": "Internacional" };
+  const IDIOMAS = { "pt": "Português", "en": "Inglês", "es": "Espanhol", "outro": "Outros" };
+
+  // Alcance do item em relação ao estado da pessoa:
+  //   internacional/nacional: como o item; local ou estadual: "estadual" se for
+  //   o estado da pessoa, "regional" se for da mesma região, "fora" se não.
+  //   Sem estado da pessoa (ou item sem UF), fica o alcance bruto do item.
+  function relacaoAlcance(item, ufPessoa) {
+    const a = item.alcance || "nacional";
+    if (a === "internacional" || a === "nacional" || !item.uf) return a === "internacional" ? a : "nacional";
+    if (!ufPessoa || !REGIOES[regiaoDe(ufPessoa)]) return "estadual";
+    if (item.uf === ufPessoa) return "estadual";
+    return regiaoDe(item.uf) === regiaoDe(ufPessoa) ? "regional" : "fora";
+  }
   const FREQUENCIAS = { "diario": "Resumo diário", "semanal": "Resumo semanal", "urgentes": "Só prazos urgentes" };
   const CANAIS = { "email": "E-mail", "calendario": "Calendário" };
 
@@ -42,6 +68,9 @@ window.RC = (() => {
     maleta: `<svg ${P}><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>`,
     aviao: `<svg ${P}><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>`,
     trofeu: `<svg ${P}><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>`,
+    estagio: `<svg ${P}><path d="M4 20V8l8-5 8 5v12"/><path d="M9 20v-6h6v6M9 10h6"/></svg>`,
+    emprego: `<svg ${P}><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.5"/><path d="M5.5 17c.7-1.8 2-2.8 3.5-2.8s2.8 1 3.5 2.8M15 10h3M15 13h3"/></svg>`,
+    olhoAberto: `<svg ${P}><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`,
     grafico: `<svg ${P}><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>`,
   };
 
@@ -112,9 +141,54 @@ window.RC = (() => {
     const [a, m, d] = (iso || "").split("-").map(Number);
     return a && m && d ? new Date(a, m - 1, d) : null;
   }
+  function diasAte(iso) {
+    const d = dataLocal(iso);
+    if (!d) return null;
+    const h = new Date(); h.setHours(0, 0, 0, 0);
+    return Math.round((d - h) / 864e5);
+  }
+  // "Faltam 9 dias", "Termina hoje", "Encerrado", "Prazo não informado"
+  function contagem(iso) {
+    const n = diasAte(iso);
+    if (n === null) return "Prazo não informado";
+    if (n < 0) return "Encerrado";
+    if (n === 0) return "Termina hoje";
+    if (n === 1) return "Termina amanhã";
+    return "Faltam " + n + " dias";
+  }
 
-  return { config: cfg, controlador, TIPOS, VINCULOS, FREQUENCIAS, CANAIS, I, el, voltarPara, destinoSeguro,
-           mensagem, ocupado, dados, preferenciasMudaram, grupoPilulas, marcados, indisponivel, fmtData, dataLocal };
+  // Prazo de um item como evento de agenda (.ics), com lembrete 3 dias antes.
+  function baixarIcs(item) {
+    const dPrazo = dataLocal(item.prazo);
+    if (!dPrazo) return;
+    const esc = t => t.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+    const dobrar = l => { const p = []; for (let i = 0; i < l.length; i += 60) p.push((i ? " " : "") + l.slice(i, i + 60)); return p.join("\r\n"); };
+    const fim = new Date(dPrazo); fim.setDate(fim.getDate() + 1);
+    const ymd = d => d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
+    const linhas = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Radar de Oportunidades//PT-BR", "BEGIN:VEVENT",
+      "UID:" + item.id + "@radar-oportunidades", "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z",
+      "DTSTART;VALUE=DATE:" + ymd(dPrazo), "DTEND;VALUE=DATE:" + ymd(fim), "SUMMARY:" + esc("Prazo: " + item.titulo),
+      "DESCRIPTION:" + esc("Prazo estimado pelo Radar de Oportunidades. Confira no edital: " + item.link), "URL:" + item.link,
+      "BEGIN:VALARM", "TRIGGER:-P3D", "ACTION:DISPLAY", "DESCRIPTION:" + esc("Faltam 3 dias: " + item.titulo), "END:VALARM",
+      "END:VEVENT", "END:VCALENDAR"];
+    const url = URL.createObjectURL(new Blob([linhas.map(dobrar).join("\r\n") + "\r\n"], { type: "text/calendar" }));
+    const a = el("a", { href: url, download: "prazo-" + item.id + ".ics" });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+
+  // "Mudou desde a sua última visita": alterado_em (ISO, do robô) depois de
+  // visto_em (ou criado_em) do favorito (Timestamp do Firestore).
+  function mudouDesde(item, favorito) {
+    if (!item || !item.alterado_em || !favorito) return false;
+    const ref = favorito.visto_em || favorito.criado_em;
+    const ms = ref && typeof ref.toMillis === "function" ? ref.toMillis() : null;
+    return ms !== null && Date.parse(item.alterado_em) > ms;
+  }
+
+  return { config: cfg, controlador, TIPOS, VINCULOS, FREQUENCIAS, CANAIS, REGIOES, UFS, regiaoDe, ALCANCES, IDIOMAS,
+           relacaoAlcance, I, el, voltarPara, destinoSeguro, mensagem, ocupado, dados, preferenciasMudaram, grupoPilulas,
+           marcados, indisponivel, fmtData, dataLocal, diasAte, contagem, baixarIcs, mudouDesde };
 })();
 
 // Botões "mostrar senha" (olho) de qualquer página.
