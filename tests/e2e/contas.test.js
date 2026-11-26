@@ -87,8 +87,9 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
   await limparTudo();
   try {
     // ------------------------------------------------- 1. sem configuração
+    // (apiKey vazia; independe do docs/conta-config.js real, que já está preenchido)
     {
-      const ctx = await contexto(navegador);
+      const ctx = await contexto(navegador, { config: configJs().replace('apiKey: "chave-de-teste"', 'apiKey: ""') });
       const p = await ctx.newPage();
       const sdk = [];
       p.on("request", r => { if (/vendor\/firebase|googleapis/.test(r.url())) sdk.push(r.url()); });
@@ -106,6 +107,19 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
       await p.goto(SITE + "privacidade.html");
       ok(await p.isVisible("text=As contas ainda não estão ativas."), "sem configuração: política avisa que não há coleta");
       ok(ctx.erros.length === 0, "sem configuração: sem erros no console " + JSON.stringify(ctx.erros));
+      await ctx.close();
+    }
+
+    // ------------------------------------- 1b. sem o arquivo conta-config.js
+    {
+      const ctx = await navegador.newContext({ serviceWorkers: "block" });
+      await ctx.route("**/conta-config.js", r => r.fulfill({ status: 404, body: "" }));
+      const p = await ctx.newPage(); const erros = [];
+      p.on("pageerror", e => erros.push(e.message));
+      await p.goto(SITE); await p.waitForTimeout(600);
+      ok(await p.isHidden("#acao-conta") && await p.locator(".cartao").count() > 0, "sem conta-config.js: site funciona sem contas");
+      await p.goto(SITE + "entrar.html");
+      ok(await espera(p, "Contas ainda não disponíveis") && erros.length === 0, "sem conta-config.js: páginas de conta avisam, sem erros " + JSON.stringify(erros));
       await ctx.close();
     }
 

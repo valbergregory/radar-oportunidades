@@ -1,6 +1,7 @@
 # Radar de Oportunidades
 
-Robô que visita diariamente portais públicos (CNPq, CAPES, Finep, FAPEAL, UFAL),
+Robô que visita diariamente portais públicos (CNPq, CAPES, FAPEAL, UFAL) e de
+associações científicas (ANPEC, SOBER, SBG),
 guarda editais, bolsas, seleções, eventos e vagas em um banco SQLite e gera
 
 - um **site com filtros** por área e tipo (`docs/index.html`, publicado no GitHub Pages),

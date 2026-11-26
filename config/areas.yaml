@@ -33,9 +33,20 @@ areas:
     nome: Engenharia de pesca
     termos: [pesca, aquicultura, pescado, recursos pesqueiros, oceano, marinho, marinha,
              recursos hídricos]
+  engenharia-de-producao:
+    nome: Engenharia de produção
+    termos: [engenharia de produção, gestão da produção, gestão de operações, logística,
+             cadeia de suprimentos, pesquisa operacional, engenharia da qualidade,
+             gestão da qualidade, ergonomia, manufatura, indústria 4.0, lean,
+             engenharia econômica, ENEGEP, ABEPRO]
+  biologia:
+    nome: Biologia
+    termos: [biologia, biológicas, ciências biológicas, biodiversidade, ecologia, zoologia,
+             botânica, genética, microbiologia, biotecnologia, bioinformática, evolução,
+             conservação da natureza, ecossistemas, fauna, flora]
 
 perfis:
   valber: [administracao-publica, economia, direito, sistemas-de-informacao]
   bsi: [sistemas-de-informacao]
   todos: [administracao-publica, economia, direito, sistemas-de-informacao, turismo,
-          engenharia-de-pesca]
+          engenharia-de-pesca, engenharia-de-producao, biologia]

@@ -66,6 +66,8 @@ await negado("listar perfis sem login", getDocs(collection(anonimo, "perfis")));
 // ---- alterações
 await permitido("alterar preferências", updateDoc(doc(ana, "perfis/ana"),
   { areas: ["economia", "direito"], frequencia: "diario", atualizado_em: serverTimestamp() }));
+await permitido("tipo novo: competições e prêmios", updateDoc(doc(ana, "perfis/ana"),
+  { tipos: ["competicao", "evento"], atualizado_em: serverTimestamp() }));
 await permitido("20 áreas de até 30 caracteres (620 no total)", updateDoc(doc(ana, "perfis/ana"),
   { areas: Array.from({ length: 20 }, (_, i) => String(i).padStart(30, "a")), atualizado_em: serverTimestamp() }));
 await negado("alterar áreas para mais de 800 caracteres", updateDoc(doc(ana, "perfis/ana"),

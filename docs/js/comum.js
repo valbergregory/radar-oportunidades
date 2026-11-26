@@ -6,7 +6,8 @@ window.RC = (() => {
   const cfg = window.RADAR_CONTA || {};
   const controlador = cfg.controlador || {};
   const TIPOS = { "fomento": "Fomento e editais", "bolsa": "Bolsas", "pos-graduacao": "Mestrado e doutorado",
-                  "evento": "Congressos e eventos", "concurso-vaga": "Concursos e vagas" };
+                  "evento": "Congressos e eventos", "concurso-vaga": "Concursos e vagas",
+                  "competicao": "Competições e prêmios" };
   const VINCULOS = {
     "estudante-graduacao": "Estudante de graduação", "estudante-pos": "Estudante de pós-graduação",
     "estudante-medio-tecnico": "Estudante de ensino médio ou técnico", "docente": "Docente",
@@ -40,6 +41,7 @@ window.RC = (() => {
     camadas: `<svg ${P}><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>`,
     maleta: `<svg ${P}><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>`,
     aviao: `<svg ${P}><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>`,
+    trofeu: `<svg ${P}><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>`,
     grafico: `<svg ${P}><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>`,
   };
 
