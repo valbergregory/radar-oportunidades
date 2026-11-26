@@ -77,12 +77,20 @@ window.RADAR_IDEIAS = (() => {
   }
 
   // "Como estudante de graduação, quero <como deveria>, porque <problema>."
+  // Sem "como deveria": "Como …, preciso de uma solução para isto: <problema>."
   function resumo({ para_quem, problema, como_deveria }, rotulosQuem = {}) {
     const quem = para_quem === "todos" || !para_quem ? "pessoa que usa o Radar" : (rotulosQuem[para_quem] || para_quem).toLowerCase();
     const limpar = t => String(t || "").trim().replace(/\s+/g, " ").replace(/[.!;]+$/, "");
     const minuscula = t => t ? t.charAt(0).toLowerCase() + t.slice(1) : t;
-    const quero = limpar(como_deveria) || "que isso seja resolvido";
-    const texto = `Como ${quem}, quero ${minuscula(quero)}, porque ${minuscula(limpar(problema))}.`;
+    // "Quero/queria/gostaria de …" no começo do texto não se repete na frase.
+    const semQuero = t => t.replace(/^(eu\s+)?(quero|queria|gostaria\s+de|gostaria\s+que|preciso\s+de|precisava\s+de)\s+/i, "");
+    const como = semQuero(limpar(como_deveria)), prob = limpar(problema);
+    // Sem "como deveria funcionar", a frase fala da necessidade (sem "quero que isso seja resolvido").
+    // Se o próprio problema já é um pedido ("Quero ver só…"), ele vira o "quero".
+    const pedido = !como && semQuero(prob) !== prob ? semQuero(prob) : "";
+    const texto = como ? `Como ${quem}, quero ${minuscula(como)}, porque ${minuscula(prob)}.`
+      : pedido ? `Como ${quem}, quero ${minuscula(pedido)}.`
+      : `Como ${quem}, preciso de uma solução para isto: ${minuscula(prob)}.`;
     return texto.length > 600 ? texto.slice(0, 597) + "…" : texto;
   }
 

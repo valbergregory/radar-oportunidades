@@ -487,3 +487,10 @@ fieldset.academicos legend { padding:0; margin-bottom:8px; font-weight:700; colo
 .previa-ideia { display:grid; gap:6px; padding:10px 12px; border:1px dashed var(--marca); border-radius:12px; }
 .link-botao.perigo-texto { color:var(--urg-texto); }
 .filtros-ideias { align-items:end; }
+
+/* Confirmação com a cara do site (RC.confirmar) */
+.dialogo-confirmar { width:min(440px, calc(100vw - 32px)); border:0; border-radius:16px; padding:20px;
+                     background:var(--cartao); color:var(--texto); }
+.dialogo-confirmar::backdrop { background:rgb(0 0 0 / .45); }
+.dialogo-confirmar p { margin:0 0 16px; font-weight:600; }
+a.faixa-botao { text-decoration:none; display:inline-flex; align-items:center; }
