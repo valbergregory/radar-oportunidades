@@ -9,6 +9,7 @@ import * as FB from "./firebase.js";
     "fomento": RC.I.documento, "bolsa": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>`,
     "pos-graduacao": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5M22 9v6"/></svg>`,
     "evento": RC.I.megafone, "concurso-vaga": RC.I.maleta, "competicao": RC.I.trofeu,
+    "estagio": RC.I.estagio, "emprego": RC.I.emprego,
   };
 
   let dados;
@@ -32,24 +33,6 @@ import * as FB from "./firebase.js";
   const prazoTexto = dias === null ? "não informado: confira no edital"
     : "até " + RC.fmtData.format(dPrazo) + " (" + (dias === 0 ? "hoje" : dias === 1 ? "amanhã" : dias < 0 ? "encerrado" : "em " + dias + " dias") + ")";
   const prazoClasse = dias === null ? "prazo-sem" : dias <= URGENTE_ATE ? "prazo-urgente" : "prazo-normal";
-
-  // ---- .ics de um prazo, com lembrete 3 dias antes
-  const ics = s => s.replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
-  const dobrar = l => { const p = []; for (let i = 0; i < l.length; i += 60) p.push((i ? " " : "") + l.slice(i, i + 60)); return p.join("\r\n"); };
-  function baixarIcs() {
-    const fim = new Date(dPrazo); fim.setDate(fim.getDate() + 1);
-    const ymd = d => d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
-    const linhas = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Radar de Oportunidades//PT-BR", "BEGIN:VEVENT",
-      "UID:" + item.id + "@radar-oportunidades", "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z",
-      "DTSTART;VALUE=DATE:" + ymd(dPrazo), "DTEND;VALUE=DATE:" + ymd(fim), "SUMMARY:" + ics("Prazo: " + item.titulo),
-      "DESCRIPTION:" + ics("Prazo estimado pelo Radar de Oportunidades. Confira no edital: " + item.link), "URL:" + item.link,
-      "BEGIN:VALARM", "TRIGGER:-P3D", "ACTION:DISPLAY", "DESCRIPTION:" + ics("Faltam 3 dias: " + item.titulo), "END:VALARM",
-      "END:VEVENT", "END:VCALENDAR"];
-    const url = URL.createObjectURL(new Blob([linhas.map(dobrar).join("\r\n") + "\r\n"], { type: "text/calendar" }));
-    const a = el("a", { href: url, download: "prazo-" + item.id + ".ics" });
-    document.body.append(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-  }
 
   const sanfona = (icone, titulo, aberta, ...miolo) => el("details", { class: "sanfona", open: aberta },
     el("summary", {}, el("span", { class: "ico", html: icone }), el("span", { texto: titulo }), el("span", { html: RC.I.abaixo })),
@@ -83,7 +66,7 @@ import * as FB from "./firebase.js";
                            html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Acessar portal original` },
                    el("span", { class: "sr-only", texto: " (abre em nova aba)" }));
   const agenda = el("button", { type: "button", class: "botao botao-secundario", disabled: !dPrazo || dias < 0, html: RC.I.calendario + "Adicionar prazo ao calendário" });
-  agenda.addEventListener("click", baixarIcs);
+  agenda.addEventListener("click", () => RC.baixarIcs(item));
   const favorito = el("div", { id: "lugar-favorito", class: "acoes" });
   const acoes = el("div", { class: "acoes" }, portal, agenda);
 
@@ -91,6 +74,8 @@ import * as FB from "./firebase.js";
   const lateral = el("aside", { class: "painel resumo-rapido", "aria-labelledby": "rr" }, el("h2", { id: "rr", texto: "Resumo rápido" }),
     el("dl", {}, item2(RC.I.documento, "Organização responsável", item.fonte), item2(RC.I.maleta, "Tipo", tipo),
        item2(RC.I.camadas, "Áreas", areas.join(", ")), item2(RC.I.calendario, "Prazo de inscrição", prazoTexto),
+       item.alcance ? item2(RC.I.aviao, "Alcance", (RC.ALCANCES[item.alcance] || "Local") + (item.uf ? " (" + item.uf + ")" : "")) : null,
+       item.idioma ? item2(RC.I.documento, "Idioma", RC.IDIOMAS[item.idioma] || item.idioma) : null,
        item2(RC.I.aviao, "Inscrição", "No portal de " + item.fonte)));
 
   area.replaceChildren(el("div", { class: "detalhe-grade" },
@@ -108,18 +93,41 @@ import * as FB from "./firebase.js";
     return;
   }
   const botao = el("button", { type: "button", class: "botao botao-secundario" });
-  const desenhar = salvo => {
-    botao.setAttribute("aria-pressed", String(salvo));
-    botao.innerHTML = RC.I.estrela + (salvo ? "Salvo nos favoritos" : "Salvar nos favoritos");
+  const acompanhar = el("input", { type: "checkbox", class: "interruptor", role: "switch", id: "acompanhar" });
+  const linhaAcomp = el("label", { class: "linha-interruptor", for: "acompanhar" }, el("span", { html: RC.I.olhoAberto }),
+    el("span", {}, el("strong", { texto: "Acompanhar" }),
+       el("span", { class: "desc", texto: "Aparece em \u201cAcompanhando\u201d, com contagem do prazo, e avisa quando o prazo mudar ou sair retificação." })),
+    acompanhar);
+  let fav = null;
+  const desenhar = () => {
+    botao.setAttribute("aria-pressed", String(!!fav));
+    botao.innerHTML = RC.I.estrela + (fav ? "Salvo nos favoritos" : "Salvar nos favoritos");
+    acompanhar.checked = !!(fav && fav.acompanhar);
   };
-  let salvo = false;
-  try { salvo = (await FB.listarFavoritos(u.uid)).some(f => f.item_id === id); } catch (e) { /* sem rede: começa desmarcado */ }
-  desenhar(salvo);
+  try { fav = (await FB.listarFavoritos(u.uid)).find(f => f.item_id === id) || null; } catch (e) { /* sem rede: começa desmarcado */ }
+  // Selo antes de registrar a visita; depois a visita vira a nova referência.
+  if (fav && RC.mudouDesde(item, fav)) {
+    destaque.querySelector(".etq").after(" ", el("span", { class: "selo-mudou", texto: "Mudou desde a sua última visita" }));
+  }
+  if (fav) FB.marcarVisto(u.uid, id).catch(() => {});
+  desenhar();
   botao.addEventListener("click", () => RC.ocupado(botao, async () => {
     try {
-      if (salvo) await FB.desfavoritar(u.uid, id); else await FB.favoritar(u.uid, id);
-      salvo = !salvo; desenhar(salvo);
+      if (fav) { await FB.desfavoritar(u.uid, id); fav = null; }
+      else { await FB.favoritar(u.uid, id, { visto: true }); fav = { item_id: id, acompanhar: false }; }
+      desenhar();
     } catch (e) { RC.mensagem(area, FB.traduzErro(e)); }
   }));
-  favorito.append(botao);
+  acompanhar.addEventListener("change", async () => {
+    const quer = acompanhar.checked;
+    acompanhar.disabled = true;
+    try {
+      if (fav) await FB.definirAcompanhar(u.uid, id, quer);
+      else await FB.favoritar(u.uid, id, { visto: true, acompanhar: quer });
+      fav = { ...(fav || { item_id: id }), acompanhar: quer };
+    } catch (e) { RC.mensagem(area, FB.traduzErro(e)); }
+    acompanhar.disabled = false;
+    desenhar();
+  });
+  favorito.append(botao, linhaAcomp);
 })();

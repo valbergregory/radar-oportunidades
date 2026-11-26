@@ -57,6 +57,14 @@
     </fieldset>
     <fieldset><legend>Minhas áreas</legend><div id="areas"></div></fieldset>
     <fieldset><legend>Tipo</legend><div id="tipos"></div></fieldset>
+    <fieldset><legend>Alcance</legend>
+      <label class="meu-estado">Meu estado
+        <select id="meu-uf" aria-describedby="dica-uf"><option value="">Não informar</option></select>
+      </label>
+      <p class="dica-filtro" id="dica-uf">Com o estado, "Estadual" e "Regional" passam a ser relativos a ele. Fica guardado só neste aparelho.</p>
+      <div id="alcances"></div>
+    </fieldset>
+    <fieldset><legend>Idioma</legend><div id="idiomas"></div></fieldset>
     <div class="acoes-filtro">
       <button type="button" class="botao botao-primario" id="ver-resultados">Ver resultados</button>
       <button type="button" class="botao botao-claro" id="limpar">
@@ -96,6 +104,7 @@
     </div>
 
     <p class="aviso" id="aviso" role="status" hidden></p>
+    <section class="acompanhando" id="acompanhando" aria-labelledby="titulo-acompanhando" hidden></section>
     <ul class="lista" id="lista" tabindex="-1" aria-label="Oportunidades"></ul>
     <div class="vazio" id="vazio" hidden>
       <p>Nenhuma oportunidade encontrada com esses filtros.</p>
@@ -135,12 +144,28 @@
 <script>
 "use strict";
 const DADOS_EMBUTIDOS = /*DADOS*/null;
-// Os mesmos rótulos estão em js/comum.js (páginas de conta e da oportunidade).
+// Os mesmos rótulos e regras estão em js/comum.js (páginas de conta e da oportunidade).
 const TIPOS = { "fomento":"Fomento e editais", "bolsa":"Bolsas", "pos-graduacao":"Mestrado e doutorado",
-                "evento":"Congressos e eventos", "concurso-vaga":"Concursos e vagas",
-                "competicao":"Competições e prêmios" };
+                "evento":"Congressos e eventos", "concurso-vaga":"Concursos", "estagio":"Estágios",
+                "emprego":"Empregos", "competicao":"Competições e prêmios" };
+const ALCANCES = { "estadual":"Estadual", "regional":"Regional", "nacional":"Nacional", "internacional":"Internacional" };
+const IDIOMAS = { "pt":"Português", "en":"Inglês", "es":"Espanhol", "outro":"Outros" };
+const REGIOES = { "Norte":["AC","AP","AM","PA","RO","RR","TO"], "Nordeste":["AL","BA","CE","MA","PB","PE","PI","RN","SE"],
+                  "Centro-Oeste":["DF","GO","MT","MS"], "Sudeste":["ES","MG","RJ","SP"], "Sul":["PR","RS","SC"] };
+const regiaoDe = uf => Object.keys(REGIOES).find(r => REGIOES[r].includes(uf)) || null;
+// Alcance do item para a pessoa: estadual (mesmo estado), regional (mesma
+// região), nacional, internacional, ou "fora" (estadual de outra região: só
+// aparece com todos os alcances marcados). Sem estado escolhido, vale o do item.
+function relacaoAlcance(i, uf) {
+  const a = i.alcance || "nacional";
+  if (a === "internacional") return a;
+  if (a === "nacional" || !i.uf) return "nacional";
+  if (!uf || !regiaoDe(uf)) return "estadual";
+  if (i.uf === uf) return "estadual";
+  return regiaoDe(i.uf) === regiaoDe(uf) ? "regional" : "fora";
+}
 const URGENTE_ATE = 14;  // dias: selo laranja até aqui, azul acima
-const CHAVE = "radar-filtros", CHAVE_CONVITE = "radar-convite-dispensado";
+const CHAVE = "radar-filtros", CHAVE_CONVITE = "radar-convite-dispensado", CHAVE_UF = "radar-uf";
 const SEM_REDE = "Você está sem conexão. Mostrando os dados salvos de ";
 
 // Ícones por tipo (traço, 24x24)
@@ -152,6 +177,8 @@ const ICONES = {
   "evento": `<svg ${P}><rect x="3" y="3" width="18" height="12" rx="1.5"/><path d="M8 21l4-6 4 6M7 8h6M7 11h10"/></svg>`,
   "concurso-vaga": `<svg ${P}><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>`,
   "competicao": `<svg ${P}><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>`,
+  "estagio": `<svg ${P}><path d="M4 20V8l8-5 8 5v12"/><path d="M9 20v-6h6v6M9 10h6"/></svg>`,
+  "emprego": `<svg ${P}><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.5"/><path d="M5.5 17c.7-1.8 2-2.8 3.5-2.8s2.8 1 3.5 2.8M15 10h3M15 13h3"/></svg>`,
   "outro": `<svg ${P}><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>`,
 };
 const CALENDARIO = `<svg ${P}><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>`;
@@ -174,7 +201,10 @@ const salvo = lerArmazenado(CHAVE) || {};
 const estado = {
   semAreas: new Set(Array.isArray(salvo.semAreas) ? salvo.semAreas : []),
   semTipos: new Set(Array.isArray(salvo.semTipos) ? salvo.semTipos : []),
+  semAlcances: new Set(Array.isArray(salvo.semAlcances) ? salvo.semAlcances : []),
+  semIdiomas: new Set(Array.isArray(salvo.semIdiomas) ? salvo.semIdiomas : []),
   ordem: salvo.ordem === "recente" ? "recente" : "prazo",
+  uf: regiaoDe(lerArmazenado(CHAVE_UF)) ? lerArmazenado(CHAVE_UF) : "",
 };
 const valido = d => !!(d && typeof d === "object" && Array.isArray(d.itens) && d.areas);
 let DADOS = valido(DADOS_EMBUTIDOS) ? DADOS_EMBUTIDOS : null;
@@ -199,7 +229,8 @@ function dataAtualizacao() {
 }
 
 function salvarEstado() {
-  gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], ordem:estado.ordem });
+  gravar(CHAVE, { semAreas:[...estado.semAreas], semTipos:[...estado.semTipos], semAlcances:[...estado.semAlcances],
+                  semIdiomas:[...estado.semIdiomas], ordem:estado.ordem });
 }
 
 // Pontos de extensão usados por js/conta-index.js (só quando há contas):
@@ -207,16 +238,28 @@ function salvarEstado() {
 window.radar = {
   ganchos: { cartao: [], filtro: [] },
   redesenhar() { if (DADOS) desenhar(); },
-  aplicarInteresses(areas, tipos) {
+  // Preferências da conta viram filtros (listas vazias = não mexe naquele filtro).
+  aplicarInteresses(areas, tipos, alcances = [], idiomas = [], uf) {
     if (!DADOS) return false;
     if (areas.length) estado.semAreas = new Set(Object.keys(DADOS.areas).filter(a => !areas.includes(a)));
     if (tipos.length) estado.semTipos = new Set(Object.keys(TIPOS).filter(t => !tipos.includes(t)));
+    if (alcances.length) estado.semAlcances = new Set(Object.keys(ALCANCES).filter(a => !alcances.includes(a)));
+    if (idiomas.length) estado.semIdiomas = new Set(Object.keys(IDIOMAS).filter(l => !idiomas.includes(l)));
+    if (uf !== undefined) definirUf(regiaoDe(uf) ? uf : "");
     salvarEstado(); montarFiltros(); desenhar();
     return true;
   },
+  uf: () => estado.uf,
+  dados: () => DADOS,
 };
 
-function caixas(destino, opcoes, desmarcadas) {
+function definirUf(uf) {
+  estado.uf = uf;
+  gravar(CHAVE_UF, uf || null);
+}
+
+// vazios: opções sem nenhum item nos dados (ficam desabilitadas, "em breve").
+function caixas(destino, opcoes, desmarcadas, vazios = new Set()) {
   const div = $(destino);
   div.textContent = "";
   for (const [valor, rotulo] of Object.entries(opcoes)) {
@@ -226,13 +269,28 @@ function caixas(destino, opcoes, desmarcadas) {
       if (c.checked) desmarcadas.delete(valor); else desmarcadas.add(valor);
       salvarEstado(); desenhar();
     });
-    l.append(c, rotulo); div.append(l);
+    l.append(c, rotulo);
+    if (vazios.has(valor)) {
+      c.disabled = true;
+      l.classList.add("em-breve");
+      const e = document.createElement("span"); e.className = "selo-em-breve"; e.textContent = "em breve";
+      l.append(" ", e);
+    }
+    div.append(l);
   }
 }
 
 function montarFiltros() {
   caixas("areas", DADOS.areas, estado.semAreas);
-  caixas("tipos", TIPOS, estado.semTipos);
+  const comItens = new Set(DADOS.itens.map(i => i.tipo));
+  caixas("tipos", TIPOS, estado.semTipos, new Set(Object.keys(TIPOS).filter(t => !comItens.has(t))));
+  caixas("alcances", ALCANCES, estado.semAlcances);
+  caixas("idiomas", IDIOMAS, estado.semIdiomas);
+  const sel = $("meu-uf");
+  if (sel.options.length === 1) {
+    for (const uf of Object.values(REGIOES).flat().sort()) sel.add(new Option(uf, uf));
+  }
+  sel.value = estado.uf || "";
   $("ordem").value = estado.ordem;
   $("atualizado-topo").textContent = "Última atualização: " + dataAtualizacao();
   $("atualizado-rodape").textContent = "Dados atualizados em " + dataAtualizacao() + ".";
@@ -250,6 +308,9 @@ function filtrar() {
     const dias = diasAte(i.prazo);
     if (dias !== null && dias < 0) return false;  // dados guardados offline podem ter vencido
     if (estado.semTipos.has(i.tipo)) return false;
+    if (estado.semIdiomas.has(i.idioma || "pt")) return false;
+    const rel = relacaoAlcance(i, estado.uf);
+    if (rel === "fora" ? estado.semAlcances.size > 0 : estado.semAlcances.has(rel)) return false;
     const areas = i.areas || [];
     if (!areas.includes("geral") && !areas.some(a => !estado.semAreas.has(a))) return false;
     if (!extras.every(f => f(i))) return false;
@@ -310,7 +371,16 @@ function cartao(i) {
   etq.textContent = TIPOS[i.tipo] || i.tipo;
   const areas = document.createElement("p"); areas.className = "areas";
   areas.textContent = "Áreas: " + (i.areas || []).map(nomeArea).join(", ");
-  info.append(h, orgao, etq, areas);
+  // Alcance (relativo ao estado da pessoa) e idioma, quando não for português
+  const rel = relacaoAlcance(i, estado.uf);
+  const alc = document.createElement("span"); alc.className = "etq etq-alcance";
+  alc.textContent = (rel === "fora" ? "Estadual" : ALCANCES[rel]) + (i.uf && rel !== "nacional" && rel !== "internacional" ? " (" + i.uf + ")" : "");
+  const extras = [alc];
+  if (i.idioma && i.idioma !== "pt") {
+    const lang = document.createElement("span"); lang.className = "etq etq-idioma";
+    lang.textContent = IDIOMAS[i.idioma] || i.idioma; extras.push(lang);
+  }
+  info.append(h, orgao, etq, " ", ...extras, areas);
 
   li.append(ico, info, seloPrazo(i));
   li.insertAdjacentHTML("beforeend", SETA);
@@ -325,13 +395,15 @@ function desenhar() {
   $("vazio").hidden = itens.length > 0;
   const n = document.createElement("strong"); n.textContent = itens.length;
   $("conta").replaceChildren(n, itens.length === 1 ? " oportunidade aberta" : " oportunidades abertas");
-  const ativos = estado.semAreas.size + estado.semTipos.size > 0 || $("so-favoritos").checked;
+  const ativos = estado.semAreas.size + estado.semTipos.size + estado.semAlcances.size + estado.semIdiomas.size > 0
+                 || $("so-favoritos").checked;
   $("filtros-ativos").textContent = ativos ? " (com filtros)" : "";
   $("ver-resultados").textContent = "Ver " + itens.length + (itens.length === 1 ? " resultado" : " resultados");
 }
 
 function limparFiltros() {
-  estado.semAreas.clear(); estado.semTipos.clear(); estado.ordem = "prazo";
+  estado.semAreas.clear(); estado.semTipos.clear(); estado.semAlcances.clear(); estado.semIdiomas.clear();
+  estado.ordem = "prazo";
   $("busca").value = "";
   if ($("so-favoritos").checked) { $("so-favoritos").checked = false; $("so-favoritos").dispatchEvent(new Event("change")); }
   salvarEstado(); montarFiltros(); desenhar();
@@ -401,6 +473,7 @@ if (!emApp && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
 
 // ---- Eventos
 $("busca").addEventListener("input", desenhar);
+$("meu-uf").addEventListener("change", e => { definirUf(e.target.value); desenhar(); });
 $("ordem").addEventListener("change", e => { estado.ordem = e.target.value; salvarEstado(); desenhar(); });
 $("limpar").addEventListener("click", limparFiltros);
 $("limpar-vazio").addEventListener("click", limparFiltros);

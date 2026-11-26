@@ -18,7 +18,7 @@ const DONO = { Authorization: "Bearer owner" };  // emulador: acesso de administ
 let falhas = 0;
 const ok = (cond, msg) => { console.log((cond ? "ok   - " : "FALHA - ") + msg); if (!cond) falhas++; };
 
-const configJs = (versao = "2026-11-25") => `window.RADAR_CONTA = {
+const configJs = (versao = "2026-11-26") => `window.RADAR_CONTA = {
   firebase: { apiKey: "chave-de-teste", authDomain: "${PROJETO}.firebaseapp.com", projectId: "${PROJETO}",
               storageBucket: "", messagingSenderId: "1", appId: "1:1:web:1" },
   controlador: { nome: "Pessoa Responsável", email: "contato@exemplo.invalid" },
@@ -47,6 +47,10 @@ async function favoritos(uid) {
   const r = await api(`${DOCS_FS}/perfis/${uid}/favoritos`);
   return (r.json && r.json.documents || []).map(d => d.name.split("/").pop());
 }
+async function favorito(uid, id) {
+  const r = await api(`${DOCS_FS}/perfis/${uid}/favoritos/${id}`);
+  return r.status === 200 ? r.json.fields : null;
+}
 async function codigos(tipo, email) {
   const r = await api(`${AUTH}/emulator/v1/projects/${PROJETO}/oobCodes`);
   return (r.json.oobCodes || []).filter(c => c.requestType === tipo && (!email || c.email === email));
@@ -61,6 +65,7 @@ function valor(f) {
   if (!f) return undefined;
   if ("nullValue" in f) return null;
   if (f.arrayValue) return (f.arrayValue.values || []).map(v => v.stringValue);
+  if ("integerValue" in f) return Number(f.integerValue);
   return f.stringValue ?? f.booleanValue ?? f.timestampValue;
 }
 
@@ -114,6 +119,37 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
       await p.click('.abas a:has-text("Calendário")'); await p.waitForSelector("#lista-prazos li");
       ok(p.url().endsWith("calendario.html") && (await p.getAttribute("#webcal", "href")).startsWith("webcal://"),
          "calendário: a aba abre a página, com assinatura webcal e lista de prazos");
+      // filtros novos: tipos sem itens "em breve", alcance relativo ao estado, idioma
+      await p.goto(SITE); await p.waitForSelector(".cartao");
+      ok(await p.evaluate(() => ["estagio", "emprego"].every(t => {
+           const c = document.querySelector(`#tipos input[value="${t}"]`);
+           return c && c.disabled && c.closest("label").textContent.includes("em breve"); })),
+         "filtros: Estágios e Empregos sem itens aparecem desabilitados com \"em breve\"");
+      ok((await p.$$eval("#idiomas input", l => l.map(c => c.value))).join() === "pt,en,es,outro", "filtros: Idioma com 4 opções");
+      const so = async (uf, alcances) => {
+        await p.selectOption("#meu-uf", uf);
+        for (const c of await p.$$("#alcances input")) {
+          const v = await c.getAttribute("value");
+          if (alcances.includes(v) !== await c.isChecked()) await c.click();
+        }
+        return p.$$eval(".cartao", l => l.map(li => li.querySelector(".orgao, .fonte")?.textContent || li.textContent));
+      };
+      await p.click("#abrir-filtros");
+      const daqui = await so("AL", ["estadual"]);
+      ok(daqui.length > 0 && daqui.every(t => /UFAL|FAPEAL/.test(t)), "alcance: AL + Estadual mostra só fontes de Alagoas " + daqui.length);
+      ok(await p.locator(".etq-alcance", { hasText: "Estadual (AL)" }).count() > 0, "alcance: cartão mostra \"Estadual (AL)\"");
+      const vizinho = await so("SE", ["regional"]);
+      ok(vizinho.length === daqui.length, "alcance: SE + Regional mostra os itens de Alagoas (mesma região)");
+      const longe = await so("SP", ["estadual", "regional"]);
+      ok(longe.length === 0, "alcance: SP + Estadual/Regional não mostra itens de Alagoas");
+      const todos = await so("SP", ["estadual", "regional", "nacional", "internacional"]);
+      ok(todos.length === dados.itens.filter(i => !i.prazo || i.prazo >= new Date().toISOString().slice(0, 10)).length,
+         "alcance: com todos marcados, aparece tudo (inclusive estadual de outra região)");
+      ok(await p.evaluate(() => localStorage.getItem("radar-uf")) === '"SP"', "alcance: Meu estado fica guardado no aparelho");
+      const inter = await so("", ["internacional"]);
+      ok(inter.length === dados.itens.filter(i => i.alcance === "internacional").length && inter.length > 0,
+         "alcance: só Internacional mostra os itens internacionais");
+      await p.click("#limpar"); await p.keyboard.press("Escape");
       ok(ctx.erros.length === 0, "sem configuração: sem erros no console " + JSON.stringify(ctx.erros));
       await ctx.close();
     }
@@ -133,6 +169,10 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
 
     // ------------------------------------------------- 2. fluxo completo
     const ctx = await contexto(navegador, { config: configJs() });
+    // dados.json com alterado_em controlado pelo teste (simula o robô registrando mudança)
+    const alterado = {};
+    await ctx.route("**/dados.json", r => r.fulfill({ contentType: "application/json", body: JSON.stringify({
+      ...dados, itens: dados.itens.map(i => alterado[i.id] ? { ...i, alterado_em: alterado[i.id] } : i) }) }));
     const p = await ctx.newPage();
     p.on("dialog", d => d.accept());
     await p.goto(SITE); await p.waitForSelector("#acao-conta:not([hidden])");
@@ -157,7 +197,14 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     await p.fill("#confirmar", "segredo123");
     await p.locator("label.chip-check", { hasText: "Economia" }).click();
     await p.locator("label.chip-check", { hasText: "Bolsas" }).click();
+    await p.check("input[name=termos]");
+    await p.click("#botao-criar"); await p.waitForTimeout(400);
+    ok((await usuarios()).length === 0 && await p.getAttribute("#vinculo", "aria-invalid") === "true",
+       "cadastro: \"Você é\" e \"Seu estado\" são obrigatórios");
+    ok((await p.$$eval("#vinculo option, #uf option", l => l.map(o => o.textContent))).filter(t => t === "Prefiro não informar").length === 2,
+       "cadastro: os dois têm \"Prefiro não informar\"");
     await p.selectOption("#vinculo", "docente");
+    await p.selectOption("#uf", "AL");
     await p.fill("input[name=nome_exibicao]", "Pessoa");
     await p.check("input[name=termos]");
     await p.click("#botao-criar");
@@ -166,15 +213,25 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     ok(user && user.email === "pessoa@exemplo.invalid", "cadastro: conta criada no Authentication");
     const uid = user.localId;
     let pf = await perfil(uid);
-    ok(pf && valor(pf.vinculo) === "docente" && valor(pf.areas).join() === "economia" && valor(pf.tipos).join() === "bolsa" &&
-       valor(pf.quer_newsletter) === false && valor(pf.newsletter_em) === null && valor(pf.termos_versao) === "2026-11-25" &&
+    ok(pf && valor(pf.vinculo) === "docente" && valor(pf.uf) === "AL" && valor(pf.areas).join() === "economia" && valor(pf.tipos).join() === "bolsa" &&
+       valor(pf.quer_newsletter) === false && valor(pf.newsletter_em) === null && valor(pf.termos_versao) === "2026-11-26" &&
        !!valor(pf.consentimento_em), "cadastro: perfil gravado com aceite datado e newsletter desligada");
     ok(!JSON.stringify(pf).includes("exemplo.invalid"), "cadastro: e-mail não vai para o Firestore");
     ok((await codigos("VERIFY_EMAIL", "pessoa@exemplo.invalid")).length === 1, "cadastro: e-mail de verificação enviado");
     ok(await espera(p, "Enviamos um e-mail para confirmar"), "cadastro: avisa sobre a verificação");
 
-    // personalizar
+    // personalizar: sugestão pelo perfil (docente em AL), sem trocar os tipos já escolhidos no cadastro
     await p.waitForSelector("input[name=frequencia]");
+    const marcadosEm = nome => p.$$eval(`input[name=${nome}]:checked`, l => l.map(c => c.value).join());
+    ok(await p.isVisible("text=Sugerimos estas opções pelo seu perfil. Altere o que quiser."), "personalizar: mostra o aviso da sugestão");
+    ok(await marcadosEm("tipo") === "bolsa", "personalizar: tipos escolhidos no cadastro não são trocados pela sugestão");
+    ok(await marcadosEm("alcance") === "estadual,regional,nacional,internacional" && await marcadosEm("idioma") === "pt,en",
+       "personalizar: alcance e idioma vêm pré-marcados pela sugestão");
+    await p.locator("label.chip-check", { hasText: "Inglês" }).click();
+    ok(await marcadosEm("idioma") === "pt", "personalizar: dá para alterar a sugestão");
+    await p.click("#restaurar-sugestao");
+    ok(await marcadosEm("idioma") === "pt,en" && await marcadosEm("tipo") === "fomento,bolsa,evento",
+       "personalizar: Restaurar sugestão volta tipos, alcance e idioma sugeridos");
     await p.locator("label.chip-check", { hasText: "Direito" }).click();
     await p.locator("label.chip-check", { hasText: "Resumo diário" }).click();
     await p.locator("label.chip-check", { hasText: "E-mail" }).click();
@@ -184,11 +241,21 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     pf = await perfil(uid);
     ok(valor(pf.areas).join() === "economia,direito" && valor(pf.frequencia) === "diario" && valor(pf.canais).join() === "email",
        "personalizar: preferências gravadas no Firestore");
+    ok(valor(pf.tipos).join() === "fomento,bolsa,evento" && valor(pf.alcances).length === 4 && valor(pf.idiomas).join() === "pt,en" &&
+       valor(pf.sugestao_aplicada) === "1", "personalizar: alcance, idioma e versão da sugestão gravados");
+    await p.reload(); await p.waitForSelector("input[name=frequencia]");
+    await p.locator("label.chip-check", { hasText: "Espanhol" }).click(); await p.click("text=Salvar preferências");
+    await espera(p, "Preferências salvas");
+    await p.reload(); await p.waitForSelector("input[name=frequencia]");
+    ok(await p.isHidden("#aviso-sugestao") && await marcadosEm("idioma") === "pt,en,es",
+       "personalizar: depois de salvo, a sugestão não substitui as escolhas");
     await p.screenshot({ path: "/tmp/e2e-fb-personalizar.png", fullPage: true }).catch(() => {});
 
     // index: preferências e favoritos
     await p.goto(SITE); await p.waitForSelector(".estrela");
     ok((await p.$$eval("#areas input:checked", l => l.map(c => c.value))).join() === "economia,direito", "index: preferências viram filtros");
+    ok(await p.inputValue("#meu-uf") === "AL" && (await p.$$eval("#idiomas input:checked", l => l.map(c => c.value))).join() === "pt,en,es",
+       "index: estado e idiomas do perfil viram filtros");
     await p.click("#abrir-filtros");
     ok(await p.isVisible("#campo-favoritos"), "index: filtro Meus favoritos aparece logado");
     await p.click("#limpar"); await p.keyboard.press("Escape");
@@ -210,8 +277,40 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     const [ics] = await Promise.all([p.waitForEvent("download"), p.click("text=Adicionar prazo ao calendário")]).catch(() => [null]);
     if (ics) ok(fs.readFileSync(await ics.path(), "utf8").includes("BEGIN:VEVENT"), "oportunidade: prazo vira .ics");
 
+    // acompanhar: liga em uma oportunidade não salva (cria o favorito já acompanhando)
+    await p.goto(SITE + "oportunidade.html?id=" + outroId); await p.waitForSelector("#acompanhar");
+    await p.check("#acompanhar"); await p.waitForTimeout(600);
+    let fv = await favorito(uid, outroId);
+    ok(fv && valor(fv.acompanhar) === true && !!valor(fv.visto_em) && !!valor(fv.criado_em), "acompanhar: favorito com acompanhar e visto_em");
+    ok(await p.getAttribute("#lugar-favorito button", "aria-pressed") === "true", "acompanhar: também marca como salvo");
+    await p.waitForTimeout(1200);
+    alterado[outroId] = new Date().toISOString();  // o robô registrou mudança de prazo depois da visita
+    await p.goto(SITE); await p.waitForSelector("#acompanhando:not([hidden]) li");
+    const sec = await p.textContent("#acompanhando");
+    const it2 = dados.itens.find(i => i.id === outroId);
+    ok(sec.includes("Acompanhando") && sec.includes(it2.titulo.slice(0, 30)) && /Faltam \d+ dias|Termina|Prazo não informado/.test(sec),
+       "index: seção Acompanhando no topo com contagem");
+    ok(sec.includes("Mudou desde a sua última visita") && await p.locator(`.cartao[data-id="${outroId}"] .selo-mudou`).count() === 1,
+       "index: \"Mudou desde a sua última visita\" na seção e no cartão");
+    ok(await p.locator(`.cartao[data-id="${umId}"] .selo-mudou`).count() === 0, "index: favorito sem mudança não tem selo");
+    await p.goto(SITE + "oportunidade.html?id=" + outroId); await p.waitForSelector("#acompanhar");
+    ok(await p.isVisible(".selo-mudou") && await p.isChecked("#acompanhar"), "oportunidade: mostra o selo e o Acompanhar ligado");
+    await p.waitForTimeout(800);
+    await p.reload(); await p.waitForSelector("#acompanhar"); await p.waitForTimeout(400);
+    ok(await p.locator(".selo-mudou").count() === 0, "oportunidade: depois de visto, o selo some");
+    await p.goto(SITE + "conta.html?aba=acompanhando"); await p.waitForSelector(".lista-acompanhando li");
+    ok(await p.isVisible("text=Outros favoritos") && await p.locator("button:has-text('Adicionar à agenda')").count() === 1,
+       "conta/acompanhando: lista com agenda e outros favoritos");
+    await p.click("button:has-text('Parar de acompanhar')"); await p.waitForTimeout(600);
+    fv = await favorito(uid, outroId);
+    ok(valor(fv.acompanhar) === false && (await favoritos(uid)).length === 2, "conta/acompanhando: parar de acompanhar mantém o favorito");
+    await p.locator(".lista-acompanhando button:has-text('Acompanhar')").first().click(); await p.waitForTimeout(600);
+    ok((await favoritos(uid)).length === 2 && await p.locator("button:has-text('Parar de acompanhar')").count() === 1,
+       "conta/acompanhando: Acompanhar a partir de outros favoritos");
+
     // conta
     await p.goto(SITE + "conta.html"); await p.waitForSelector("input[name=nome_exibicao]");
+    ok(await p.inputValue("select[name=uf]") === "AL", "conta/perfil: mostra o estado");
     ok(await p.isVisible("text=ainda não foi confirmado"), "conta: avisa que o e-mail não foi confirmado");
     await p.fill("input[name=nome_exibicao]", "Pessoa Teste"); await p.click("text=Salvar alterações");
     ok(await espera(p, "Dados salvos."), "conta/perfil: salvo");
@@ -229,7 +328,8 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     ok(valor(pf.quer_newsletter) === false && valor(pf.newsletter_em) === null, "conta/privacidade: retirada zera a data");
     const [download] = await Promise.all([p.waitForEvent("download"), p.click("text=Baixar meus dados")]);
     const exp = JSON.parse(fs.readFileSync(await download.path(), "utf8"));
-    ok(exp.conta.email === "pessoa@exemplo.invalid" && exp.perfil.nome_exibicao === "Pessoa Teste" && exp.favoritos.length === 1 &&
+    ok(exp.conta.email === "pessoa@exemplo.invalid" && exp.perfil.nome_exibicao === "Pessoa Teste" && exp.favoritos.length === 2 && exp.favoritos.some(f => f.acompanhar) && exp.favoritos.some(f => f.visto_em) &&
+       exp.perfil.uf === "AL" && exp.perfil.idiomas.join() === "pt,en,es" &&
        exp.perfil.consentimento_em, "conta/privacidade: exportação JSON completa");
     await p.screenshot({ path: "/tmp/e2e-fb-privacidade.png", fullPage: true }).catch(() => {});
     await p.goto(SITE + "conta.html?aba=seguranca"); await p.waitForSelector("input[name=nova]");
@@ -312,7 +412,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     await p.check("#titulo-exclusao ~ label input[type=checkbox]");
     await p.click("text=Excluir definitivamente");
     ok(await espera(p, "Por segurança, confirme sua senha"), "excluir: login antigo pede a senha de novo");
-    ok((await favoritos(uid)).length === 1 && !!(await perfil(uid)), "excluir: nada é apagado antes de confirmar a senha");
+    ok((await favoritos(uid)).length === 2 && !!(await perfil(uid)), "excluir: nada é apagado antes de confirmar a senha");
     await p.fill("form.alerta-laranja input[type=password]", "novaSenha456");
     await p.click("text=Confirmar e excluir"); await p.waitForURL(/motivo=excluida/);
     ok(!(await usuarios()).some(x => x.localId === uid) && !(await perfil(uid)) && (await favoritos(uid)).length === 0,
@@ -333,8 +433,8 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
         for (const n of await caches.keys()) for (const k of await (await caches.open(n)).keys()) r.push(new URL(k.url).pathname);
         return { nomes: await caches.keys(), r };
       });
-      ok(guardadas.nomes.includes("radar-v6"), "service worker: cache na versão radar-v6");
-      ok(!guardadas.r.some(u => /(entrar|cadastro|personalizar|conta)\.html|vendor\/|conta-index/.test(u)) &&
+      ok(guardadas.nomes.includes("radar-v7"), "service worker: cache na versão radar-v7");
+      ok(!guardadas.r.some(u => /(entrar|cadastro|personalizar|conta)\.html|vendor\/|conta-index|acompanhar\.js/.test(u)) &&
          !guardadas.r.some(u => /googleapis|identitytoolkit/.test(u)),
          "service worker: nada de conta nem do Firebase no cache");
       await c.setOffline(true);

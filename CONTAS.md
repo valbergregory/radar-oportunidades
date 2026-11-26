@@ -20,19 +20,29 @@ coletado.
 | `docs/oportunidade.html?id=…` | Detalhe, favoritar e prazo na agenda |
 | `docs/privacidade.html`, `docs/termos.html` | Política e termos |
 | `docs/js/firebase.js` | Todo o acesso ao Firebase |
+| `docs/js/sugestoes.js` | Tabelas da sugestão de filtros por vínculo (editável; aumente `versao` ao mudar) |
+| `docs/js/acompanhar.js` | Lista "Acompanhando" e selo "Mudou desde a sua última visita" |
 | `docs/vendor/firebase-13.2.0/` | SDK modular fixado (app, auth e firestore) |
 | `tests/firestore/regras.test.mjs` | Testes das regras no emulador |
 | `tests/e2e/contas.test.js` | Telas com Playwright contra os emuladores |
 
 ## Dados no Firestore
 
-- `perfis/{uid}`: `nome_exibicao`, `vinculo`, `curso_area`, `areas`, `tipos`,
+- `perfis/{uid}`: `nome_exibicao`, `vinculo` (inclui `nao-informado`), `uf`
+  (sigla, `nao-informado` ou nulo), `curso_area`, `areas`, `tipos`, `alcances`
+  (estadual, regional, nacional, internacional), `idiomas` (pt, en, es, outro),
+  `sugestao_aplicada` (versão de `sugestoes.js` usada, ou nula),
   `frequencia`, `canais`, `quer_newsletter`, `newsletter_em` (data da
   autorização da newsletter, nula sem ela), `termos_versao`,
   `consentimento_em` (data do aceite) e `atualizado_em`. As datas são sempre
   do servidor: as regras recusam datas enviadas pelo navegador.
-- `perfis/{uid}/favoritos/{itemId}`: só `criado_em`; `itemId` é o id do Radar
-  (16 caracteres hexadecimais, o mesmo de `dados.json`).
+- `perfis/{uid}/favoritos/{itemId}`: `criado_em`, `acompanhar` (opcional, sim/não)
+  e `visto_em` (opcional, data do servidor da última visita); `itemId` é o id do
+  Radar (16 caracteres hexadecimais, o mesmo de `dados.json`). Depois de criado,
+  só `acompanhar` e `visto_em` podem mudar. Perfis e favoritos antigos, sem os
+  campos novos, continuam válidos.
+- A sugestão de filtros só pré-marca campos que a pessoa ainda não escolheu;
+  "Restaurar sugestão" é sempre manual.
 - O **e-mail não é gravado no Firestore**: ele fica só no Authentication.
 
 ## Estado da configuração (projeto `radar-oportunidades-88442`, novembro de 2026)

@@ -649,7 +649,9 @@ def gerar_newsletter(itens, areas, perfil, escolhidas, dias_novo=7, dias_prazo=2
     for tipo, titulo in [("fomento", "Fomento e editais"), ("bolsa", "Bolsas"),
                          ("pos-graduacao", "Mestrado e doutorado"),
                          ("evento", "Congressos e eventos"),
-                         ("concurso-vaga", "Concursos e vagas"),
+                         ("concurso-vaga", "Concursos"),
+                         ("estagio", "Estágios"),
+                         ("emprego", "Empregos"),
                          ("competicao", "Competições e prêmios")]:
         grupo = [i for i in novos if i["tipo"] == tipo]
         if grupo:

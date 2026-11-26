@@ -78,7 +78,7 @@
 - **XXXI Encontro Regional de Economia** (ANPEC (encontros), prazo não identificado)  
   https://www.anpec.org.br/novosite/br/xxxi-encontro-regional-de-economia
 
-## Concursos e vagas (novidades)
+## Concursos (novidades)
 
 - **DAE/FCE/UERJ - Processo Seletivo Simplificado – Professor Substituto Confira o edital** (ANPEC, prazo não identificado)  
   https://sites.google.com/view/concursodocentedaefce/edital

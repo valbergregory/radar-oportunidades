@@ -75,7 +75,7 @@ export async function alterarPerfil(uid, campos, antes) {
 // Só os campos que o perfil aceita; textos vazios viram null.
 function limpar(c) {
   const ok = ["nome_exibicao", "vinculo", "curso_area", "areas", "tipos", "frequencia", "canais",
-              "quer_newsletter", "termos_versao"];
+              "quer_newsletter", "termos_versao", "uf", "alcances", "idiomas", "sugestao_aplicada"];
   const r = {};
   for (const k of ok) if (k in c) r[k] = typeof c[k] === "string" ? (c[k].trim().slice(0, 120) || null) : c[k];
   return r;
@@ -85,11 +85,24 @@ function limpar(c) {
 export async function listarFavoritos(uid) {
   const f = await iniciar();
   const s = await f.S.getDocs(refFavoritos(f, uid));
-  return s.docs.map(d => ({ item_id: d.id, criado_em: d.data().criado_em }));
+  return s.docs.map(d => ({ item_id: d.id, ...d.data() }));  // criado_em, acompanhar?, visto_em?
 }
-export async function favoritar(uid, itemId) {
+// visto: a pessoa está vendo o item agora (página da oportunidade) — grava visto_em.
+// acompanhar: já salva acompanhando (mostra em "Acompanhando" e avisa mudanças).
+export async function favoritar(uid, itemId, { visto = false, acompanhar = false } = {}) {
+  const f = await iniciar(), agora = f.S.serverTimestamp();
+  const doc = { criado_em: agora };
+  if (visto) doc.visto_em = agora;
+  if (acompanhar) doc.acompanhar = true;
+  await f.S.setDoc(f.S.doc(refFavoritos(f, uid), itemId), doc);
+}
+export async function definirAcompanhar(uid, itemId, acompanhar) {
   const f = await iniciar();
-  await f.S.setDoc(f.S.doc(refFavoritos(f, uid), itemId), { criado_em: f.S.serverTimestamp() });
+  await f.S.updateDoc(f.S.doc(refFavoritos(f, uid), itemId), { acompanhar: !!acompanhar });
+}
+export async function marcarVisto(uid, itemId) {
+  const f = await iniciar();
+  await f.S.updateDoc(f.S.doc(refFavoritos(f, uid), itemId), { visto_em: f.S.serverTimestamp() });
 }
 export async function desfavoritar(uid, itemId) {
   const f = await iniciar();
@@ -184,16 +197,18 @@ export async function exportar() {
   const f = await iniciar(), u = f.auth.currentUser;
   const iso = v => v && typeof v.toDate === "function" ? v.toDate().toISOString() : v;
   const perfil = await lerPerfil(u.uid);
-  const favoritos = (await listarFavoritos(u.uid)).map(x => ({ item_id: x.item_id, criado_em: iso(x.criado_em) }));
-  let filtros = null;
+  const favoritos = (await listarFavoritos(u.uid)).map(x => ({ item_id: x.item_id, criado_em: iso(x.criado_em),
+    acompanhar: !!x.acompanhar, visto_em: iso(x.visto_em) || null }));
+  let filtros = null, uf = null;
   try { filtros = JSON.parse(localStorage.getItem("radar-filtros")); } catch (e) { /* ok */ }
+  try { uf = JSON.parse(localStorage.getItem("radar-uf")); } catch (e) { /* ok */ }
   return {
     gerado_em: new Date().toISOString(),
     conta: { uid: u.uid, email: u.email, email_verificado: u.emailVerified,
              criada_em: u.metadata.creationTime, ultimo_acesso: u.metadata.lastSignInTime },
     perfil: perfil && Object.fromEntries(Object.entries(perfil).map(([k, v]) => [k, iso(v)])),
     favoritos,
-    neste_aparelho: { filtros },
+    neste_aparelho: { filtros, meu_estado: uf },
   };
 }
 

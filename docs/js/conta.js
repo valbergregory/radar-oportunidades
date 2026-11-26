@@ -1,5 +1,6 @@
-// conta.html?aba=perfil|interesses|notificacoes|privacidade|seguranca
+// conta.html?aba=perfil|interesses|acompanhando|notificacoes|privacidade|seguranca
 import * as FB from "./firebase.js";
+import { listaAcompanhando, seloMudou } from "./acompanhar.js";
 const RC = window.RC, $ = id => document.getElementById(id), el = RC.el;
 
 async function principal() {
@@ -13,7 +14,8 @@ async function principal() {
 
   const ABAS = [
     ["perfil", RC.I.pessoa, "Perfil", "Seus dados básicos"],
-    ["interesses", RC.I.alvo, "Interesses", "Áreas e tipos de oportunidade"],
+    ["interesses", RC.I.alvo, "Interesses", "Áreas, tipos, alcance e idioma"],
+    ["acompanhando", RC.I.olhoAberto, "Acompanhando", "Prazos e mudanças dos salvos"],
     ["notificacoes", RC.I.sino, "Notificações", "Alertas e newsletter"],
     ["privacidade", RC.I.escudo, "Privacidade e dados", "Consentimentos e LGPD"],
     ["seguranca", RC.I.cadeado, "Segurança", "Senha e acesso"],
@@ -73,8 +75,11 @@ async function principal() {
 
   // ---------------------------------------------------------------- abas
   function abaPerfil() {
-    const vinc = el("select", { name: "vinculo" }, el("option", { value: "", texto: "Selecione seu vínculo" }),
+    const vinc = el("select", { name: "vinculo" }, el("option", { value: "", texto: "Selecione" }),
       ...Object.entries(RC.VINCULOS).map(([v, r]) => el("option", { value: v, texto: r, selected: p.vinculo === v })));
+    const uf = el("select", { name: "uf" }, el("option", { value: "", texto: "Selecione" }),
+      ...RC.UFS.map(v => el("option", { value: v, texto: v, selected: p.uf === v })),
+      el("option", { value: "nao-informado", texto: "Prefiro não informar", selected: p.uf === "nao-informado" }));
     const opcional = t => el("span", {}, t + " ", el("span", { class: "opcional", texto: "Opcional" }));
     const salvar = el("button", { type: "submit", class: "botao botao-primario", html: RC.I.check + "Salvar alterações" });
     const form = el("form", { class: "form" },
@@ -84,16 +89,19 @@ async function principal() {
       el("div", { class: "grade-campos" },
         el("label", { class: "campo" }, opcional("Nome de exibição"),
            el("input", { name: "nome_exibicao", value: p.nome_exibicao || "", maxlength: "120", autocomplete: "nickname" })),
-        el("label", { class: "campo" }, opcional("Vínculo"), vinc),
+        el("label", { class: "campo" }, opcional("Você é"), vinc),
+        el("label", { class: "campo" }, opcional("Seu estado"), uf),
         el("label", { class: "campo" }, opcional("Curso ou área"),
            el("input", { name: "curso_area", value: p.curso_area || "", maxlength: "120" }))),
       el("p", { class: "caixa-info", html: RC.I.info },
-         el("span", {}, el("strong", { texto: "Somente o e-mail é essencial para identificar a conta." }), " Os demais campos são opcionais.")),
+         el("span", {}, el("strong", { texto: "Somente o e-mail é essencial para identificar a conta." }),
+            " Os demais campos são opcionais. Vínculo e estado servem para sugerir filtros e para o alcance (Estadual, Regional)." )),
       el("div", { class: "acoes" }, salvar, el("button", { type: "reset", class: "botao botao-secundario", texto: "Cancelar" })));
     form.addEventListener("submit", ev => {
       ev.preventDefault();
       const d = new FormData(form), t = n => (d.get(n) || "").toString().trim() || null;
-      RC.ocupado(salvar, () => alterar({ nome_exibicao: t("nome_exibicao"), vinculo: t("vinculo"), curso_area: t("curso_area") }, "Dados salvos."));
+      RC.ocupado(salvar, () => alterar({ nome_exibicao: t("nome_exibicao"), vinculo: t("vinculo"), uf: t("uf"), curso_area: t("curso_area") },
+                                         "Dados salvos.", RC.preferenciasMudaram));
     });
     return form;
   }
@@ -112,16 +120,54 @@ async function principal() {
     try { areas = (await RC.dados()).areas || {}; } catch (e) { /* segue com o que houver */ }
     const salvar = el("button", { type: "submit", class: "botao botao-primario", html: RC.I.check + "Salvar interesses" });
     const form = el("form", { class: "form" },
-      titulo(RC.I.alvo, "Interesses", "As áreas e os tipos escolhidos viram os filtros da lista de oportunidades."),
+      titulo(RC.I.alvo, "Interesses", "Áreas, tipos, alcance e idioma viram os filtros da lista de oportunidades."),
       RC.grupoPilulas("Áreas de interesse", "area", areas, p.areas, "checkbox", RC.I.camadas),
       RC.grupoPilulas("Tipos de oportunidades", "tipo", RC.TIPOS, p.tipos, "checkbox", RC.I.maleta),
+      RC.grupoPilulas("Alcance", "alcance", RC.ALCANCES, p.alcances || [], "checkbox", RC.I.aviao,
+        p.uf && p.uf !== "nao-informado" ? "Em relação ao seu estado (" + p.uf + ")." : "Sem estado no perfil, Estadual e Regional não se aplicam."),
+      RC.grupoPilulas("Idioma", "idioma", RC.IDIOMAS, p.idiomas || [], "checkbox", RC.I.documento),
+      el("p", { class: "areas" }, "Quer a sugestão pelo seu perfil? ", el("a", { href: "personalizar.html", texto: "Personalizar e restaurar sugestão" })),
       el("div", { class: "acoes" }, salvar));
     form.addEventListener("submit", ev => {
       ev.preventDefault();
-      RC.ocupado(salvar, () => alterar({ areas: RC.marcados(form, "area"), tipos: RC.marcados(form, "tipo") },
+      RC.ocupado(salvar, () => alterar({ areas: RC.marcados(form, "area"), tipos: RC.marcados(form, "tipo"),
+                                         alcances: RC.marcados(form, "alcance"), idiomas: RC.marcados(form, "idioma") },
                                        "Interesses salvos. A lista já usa suas escolhas.", RC.preferenciasMudaram));
     });
     return form;
+  }
+
+  async function abaAcompanhando() {
+    const caixa = el("div", { class: "form" });
+    const desenharAba = async () => {
+      let itens = [], favs = [];
+      try { [itens, favs] = await Promise.all([RC.dados().then(d => d.itens), FB.listarFavoritos(u.uid)]); }
+      catch (e) { return caixa.replaceChildren(el("p", { class: "msg", texto: FB.traduzErro(e) })); }
+      const { ul, total } = listaAcompanhando(u.uid, itens, favs, desenharAba, t => RC.mensagem(painel, t));
+      const porId = new Map(itens.map(i => [i.id, i]));
+      const outros = favs.filter(f => !f.acompanhar && porId.has(f.item_id));
+      const lista = el("ul", { class: "lista-acompanhando" }, ...outros.map(f => {
+        const i = porId.get(f.item_id);
+        const b = el("button", { type: "button", class: "botao botao-secundario", html: RC.I.olhoAberto + "Acompanhar" });
+        b.addEventListener("click", () => RC.ocupado(b, async () => {
+          try { await FB.definirAcompanhar(u.uid, f.item_id, true); } catch (e) { return RC.mensagem(painel, FB.traduzErro(e)); }
+          desenharAba();
+        }));
+        return el("li", {}, el("div", {},
+            el("a", { href: "oportunidade.html?id=" + encodeURIComponent(i.id), texto: i.titulo }),
+            el("div", { class: "areas", texto: i.fonte + " · " + RC.contagem(i.prazo) }),
+            RC.mudouDesde(i, f) ? seloMudou() : null),
+          el("div", { class: "acoes" }, b));
+      }));
+      caixa.replaceChildren(
+        titulo(RC.I.olhoAberto, "Acompanhando", "Oportunidades salvas que você quer acompanhar de perto."),
+        total ? ul : el("p", { class: "areas", texto: "Você ainda não acompanha nenhuma oportunidade. Abra uma oportunidade salva e ligue \u201cAcompanhar\u201d." }),
+        el("p", { class: "caixa-info", html: RC.I.info }, el("span", { texto:
+          "O selo \u201cMudou desde a sua última visita\u201d aparece quando o prazo mudou ou saiu retificação depois da última vez que você abriu a oportunidade." })),
+        outros.length ? el("h3", { texto: "Outros favoritos" }) : null, outros.length ? lista : null);
+    };
+    await desenharAba();
+    return caixa;
   }
 
   function abaNotificacoes() {
@@ -302,7 +348,7 @@ async function principal() {
 
   async function desenhar() {
     const f = semPerfil ? abaPrivacidade
-      : { perfil: abaPerfil, interesses: abaInteresses, notificacoes: abaNotificacoes, privacidade: abaPrivacidade, seguranca: abaSeguranca }[aba];
+      : { perfil: abaPerfil, interesses: abaInteresses, acompanhando: abaAcompanhando, notificacoes: abaNotificacoes, privacidade: abaPrivacidade, seguranca: abaSeguranca }[aba];
     painel.replaceChildren(await f());
   }
   await desenhar();
