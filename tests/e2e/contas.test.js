@@ -192,14 +192,21 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     await p.click(".dialogo-sugestao button[type=submit]");
     ok((await sugestoes()).length === 0 && await p.locator(".dialogo-sugestao .erro-campo, .dialogo-sugestao :invalid").count() > 0,
        "sugestão: sem assunto e texto não envia");
+    ok(await p.locator(".dialogo-sugestao .erro-campo", { hasText: "Escolha uma opção." }).count() === 1,
+       "sugestão: \"Escolha uma opção.\" aparece uma vez só, abaixo do grupo");
     await p.locator(".dialogo-sugestao label.chip-check", { hasText: "Ideia" }).click();
+    await p.waitForTimeout(150);
+    ok(await p.locator(".dialogo-sugestao .erro-campo", { hasText: "Escolha uma opção." }).count() === 0,
+       "sugestão: a mensagem some ao escolher uma opção");
     await p.locator(".dialogo-sugestao label.chip-check", { hasText: "4" }).click();
+    ok(await p.evaluate(() => new Set([...document.querySelectorAll(".notas .chip-check")].map(l => Math.round(l.getBoundingClientRect().top))).size === 1),
+       "sugestão: notas de 1 a 5 numa linha só no celular");
     await p.fill("#sugestao-texto", "Queria filtrar por curso de Penedo.");
     await p.click(".dialogo-sugestao button[type=submit]");
     ok(await espera(p, "Obrigado! Sua sugestão foi enviada."), "sugestão: confirma o envio");
     const [sg] = await sugestoes();
     ok(sg && valor(sg.tipo) === "ideia" && Number(sg.nota.integerValue) === 4 && valor(sg.texto) === "Queria filtrar por curso de Penedo." &&
-       valor(sg.pagina) === "index.html" && valor(sg.dispositivo) === "celular" && !!valor(sg.criado_em) &&
+       valor(sg.pagina) === "index.html" && valor(sg.dispositivo) === "computador" && !!valor(sg.criado_em) &&
        Object.keys(sg).every(k => ["tipo", "texto", "nota", "pagina", "dispositivo", "instalado", "versao", "criado_em"].includes(k)),
        "sugestão: gravada anônima (sem uid nem e-mail), com nota, página e aparelho");
     await p.click(".dialogo-sugestao button:has-text('Fechar')");
@@ -502,7 +509,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
         for (const n of await caches.keys()) for (const k of await (await caches.open(n)).keys()) r.push(new URL(k.url).pathname);
         return { nomes: await caches.keys(), r };
       });
-      ok(guardadas.nomes.includes("radar-v11"), "service worker: cache na versão radar-v11");
+      ok(guardadas.nomes.includes("radar-v12"), "service worker: cache na versão radar-v12");
       ok(!guardadas.r.some(u => /(entrar|cadastro|personalizar|conta)\.html|vendor\/|conta-index|acompanhar\.js/.test(u)) &&
          !guardadas.r.some(u => /googleapis|identitytoolkit/.test(u)),
          "service worker: nada de conta nem do Firebase no cache");

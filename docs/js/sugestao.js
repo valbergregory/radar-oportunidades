@@ -41,12 +41,13 @@
   const contador = criar("span", { class: "areas", "aria-live": "polite", texto: "0/2000" });
   const enviar = criar("button", { type: "submit", class: "botao botao-primario", texto: "Enviar sugestão" });
   const fechar = criar("button", { type: "button", class: "botao botao-secundario", texto: "Fechar" });
+  const xis = criar("button", { type: "button", class: "sugestao-fechar", "aria-label": "Fechar", texto: "\u00d7" });
   const status = criar("p", { class: "sugestao-status", role: "status", hidden: true });
   const form = criar("form", { class: "form", method: "dialog", novalidate: false },
-    criar("h2", { id: "sugestao-titulo", texto: "Sua opinião sobre o Radar" }),
+    criar("div", { class: "sugestao-topo" }, criar("h2", { id: "sugestao-titulo", texto: "Sua opinião sobre o Radar" }), xis),
     criar("p", { class: "areas", texto: "É anônimo: não guardamos sua conta, e-mail nem outro dado seu. Por isso, não escreva nome, telefone ou e-mail no texto." }),
     criar("fieldset", { class: "chips-escolha" }, criar("legend", { texto: "É sobre" }), ...opcoes("tipo", TIPOS, true)),
-    criar("fieldset", { class: "chips-escolha" }, criar("legend", { texto: "Que nota você dá ao Radar? (opcional)" }),
+    criar("fieldset", { class: "chips-escolha notas" }, criar("legend", { texto: "Que nota você dá ao Radar? (opcional)" }),
       ...opcoes("nota", { 1: "1", 2: "2", 3: "3", 4: "4", 5: "5" }, false)),
     criar("label", { class: "campo", for: "sugestao-texto" }, "Conte para a gente", texto, contador),
     status,
@@ -63,11 +64,13 @@
     form.querySelector("input[name=tipo]").focus();
   });
   fechar.addEventListener("click", () => dialogo.close());
+  xis.addEventListener("click", () => dialogo.close());
 
   function mostrar(msg, ok) {
     status.textContent = msg;
     status.className = "sugestao-status msg" + (ok ? " ok" : "");
     status.hidden = false;
+    status.scrollIntoView({ block: "nearest" });
   }
 
   form.addEventListener("submit", async ev => {
@@ -80,17 +83,24 @@
       texto: texto.value.trim(),
       nota: d.get("nota") ? Number(d.get("nota")) : null,
       pagina: location.pathname.split("/").pop() || "index.html",
-      dispositivo: matchMedia("(max-width: 899px)").matches ? "celular" : "computador",
+      // Tela de toque = celular/tablet; largura não serve (janela estreita no computador).
+      dispositivo: matchMedia("(pointer: coarse)").matches ? "celular" : "computador",
       instalado,
     };
     if (campos.texto.length < 3) { texto.focus(); return; }
     enviar.disabled = true; enviar.textContent = "Enviando…";
+    const tentar = async () => (await import(MODULO_FIREBASE)).enviarSugestao(campos);
     try {
-      const FB = await import(MODULO_FIREBASE);
-      await FB.enviarSugestao(campos);
+      try { await tentar(); }
+      catch (e) {  // uma nova tentativa, depois de um instante, antes de mostrar erro
+        console.warn("Radar: falha ao enviar sugestão; tentando de novo.", e);
+        await new Promise(r => setTimeout(r, 1500));
+        await tentar();
+      }
       form.reset(); contador.textContent = "0/2000";
       mostrar("Obrigado! Sua sugestão foi enviada.", true);
     } catch (e) {
+      console.warn("Radar: sugestão não enviada.", e);
       mostrar(navigator.onLine === false ? "Sem conexão. Tente de novo quando estiver on-line."
                                          : "Não foi possível enviar agora. Tente de novo em instantes.", false);
     } finally {

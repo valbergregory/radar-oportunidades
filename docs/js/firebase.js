@@ -12,10 +12,18 @@ export const configurado = !!(fb.apiKey && fb.projectId && fb.appId && fb.authDo
 export const VERSAO_TERMOS = cfg.versaoTermos || "1";
 
 let F = null;  // módulos e instâncias, carregados sob demanda
+let iniciando = null;  // uma só inicialização, mesmo com chamadas ao mesmo tempo
 
-export async function iniciar() {
-  if (!configurado) return null;
-  if (F) return F;
+export function iniciar() {
+  if (!configurado) return Promise.resolve(null);
+  if (F) return Promise.resolve(F);
+  if (!iniciando) {
+    iniciando = carregar().catch(e => { iniciando = null; throw e; });  // falhou: a próxima chamada tenta de novo
+  }
+  return iniciando;
+}
+
+async function carregar() {
   const [app, auth, fs] = await Promise.all([
     import(BASE + "firebase-app.js"), import(BASE + "firebase-auth.js"), import(BASE + "firebase-firestore.js")]);
   const aplicativo = app.initializeApp(fb);

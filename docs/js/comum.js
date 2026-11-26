@@ -337,6 +337,7 @@ document.addEventListener("change", ev => {
     return c.validationMessage || "Confira este campo.";
   }
   function lugarDaMensagem(c) {
+    if (c.type === "radio") return c.closest("fieldset") || c.closest("label");  // uma mensagem por grupo
     return c.closest(".senha") || (c.type === "checkbox" ? (c.closest("#grupo-vinculos") || c.closest("label")) : c);
   }
   function limpar(c) {
@@ -353,6 +354,8 @@ document.addEventListener("change", ev => {
     const c = ev.target;
     if (!(c instanceof HTMLElement) || !c.closest("form")) return;
     ev.preventDefault();  // sem o balão nativo
+    // Rádios: todos do grupo ficam inválidos juntos; a mensagem aparece uma vez só.
+    if (c.type === "radio" && c.form && [...c.form.elements].some(o => o !== c && o.name === c.name && o.dataset.erroId)) return;
     limpar(c);
     const id = "erro-" + Math.random().toString(36).slice(2, 9);
     const m = document.createElement("p");
@@ -370,6 +373,8 @@ document.addEventListener("change", ev => {
   const reconferir = c => setTimeout(() => { if (c.dataset && c.dataset.erroId && c.checkValidity()) limpar(c); }, 0);
   document.addEventListener("input", ev => reconferir(ev.target), true);
   document.addEventListener("change", ev => {
-    if (/^(checkbox|radio|select-one|select-multiple)$/.test(ev.target.type)) reconferir(ev.target);
+    const c = ev.target;
+    if (c.type === "radio" && c.form) [...c.form.elements].filter(o => o.name === c.name).forEach(reconferir);
+    else if (/^(checkbox|select-one|select-multiple)$/.test(c.type)) reconferir(c);
   }, true);
 })();
