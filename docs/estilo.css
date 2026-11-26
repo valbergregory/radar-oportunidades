@@ -456,3 +456,34 @@ fieldset.academicos legend { padding:0; margin-bottom:8px; font-weight:700; colo
 .chips-escolha.notas { flex-wrap:nowrap; }
 .chips-escolha.notas .chip-check { flex:1 1 0; justify-content:center; padding-left:8px; padding-right:8px; min-width:0; }
 .dialogo-sugestao .acoes { position:sticky; bottom:-20px; background:var(--cartao); padding:10px 0 4px; }
+
+/* Mural de ideias */
+.ideias-abas { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
+.ideias-abas button { font:inherit; font-weight:600; min-height:42px; padding:6px 14px; border-radius:999px; cursor:pointer;
+                      border:1px solid var(--borda); background:var(--cartao); color:var(--texto); }
+.ideias-abas button[aria-selected="true"] { background:var(--marca); border-color:var(--marca); color:#fff; }
+.ideias-abas button:focus-visible { outline:3px solid var(--foco); outline-offset:2px; }
+.lista-ideias { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+.ideia { border:1px solid var(--borda); border-radius:14px; padding:14px; background:var(--cartao); display:grid; gap:8px; }
+.ideia h3 { margin:0; font-size:1.05rem; }
+.ideia-topo { display:grid; gap:6px; }
+.ideia .chips { display:flex; flex-wrap:wrap; gap:6px; }
+.resumo-ideia { margin:0; font-style:italic; }
+.detalhes-ideia { margin:6px 0 0; display:grid; gap:2px; }
+.detalhes-ideia dt { font-weight:700; margin-top:6px; }
+.detalhes-ideia dd { margin:0; white-space:pre-wrap; }
+.resposta-equipe { margin:0; padding:8px 12px; border-radius:10px; background:var(--nor-fundo); color:var(--nor-texto); }
+.status-ideia.status-planejada, .status-ideia.status-em-analise { background:var(--etq-fundo); color:var(--etq-texto); }
+.status-ideia.status-feita { background:var(--nor-fundo); color:var(--nor-texto); }
+.status-ideia.status-nao-sera-feita, .status-ideia.status-duplicada { background:var(--sem-fundo); color:var(--sem-texto); }
+.etq-minha { background:var(--urg-fundo); color:var(--urg-texto); }
+.selo-admin { margin:0 0 12px; padding:8px 12px; border-radius:10px; background:var(--urg-fundo); color:var(--urg-texto); font-weight:600; }
+.moderacao { border-top:1px dashed var(--borda); padding-top:10px; }
+.moderacao textarea, #form-ideia textarea { width:100%; padding:8px 12px; border:1px solid var(--campo); border-radius:12px;
+                                            background:var(--cartao); color:var(--texto); font:inherit; font-weight:400; resize:vertical; }
+.parecidas:not(:empty) { padding:10px 12px; border-radius:12px; background:var(--realce); }
+.parecidas ul { list-style:none; margin:8px 0 0; padding:0; display:grid; gap:8px; }
+.parecidas li { display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; }
+.previa-ideia { display:grid; gap:6px; padding:10px 12px; border:1px dashed var(--marca); border-radius:12px; }
+.link-botao.perigo-texto { color:var(--urg-texto); }
+.filtros-ideias { align-items:end; }

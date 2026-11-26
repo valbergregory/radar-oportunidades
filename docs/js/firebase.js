@@ -59,6 +59,85 @@ export async function enviarSugestao(campos) {
   await f.S.addDoc(f.S.collection(f.db, "sugestoes"), doc);
 }
 
+// ---------------------------------------------------------- mural de ideias
+// Autoria e apoios ficam em registros privados do perfil (perfis/{uid}/minhas_ideias
+// e meus_apoios): no mural, ninguém vê quem escreveu nem quem apoiou.
+const refIdeias = f => f.S.collection(f.db, "ideias");
+const refMinhas = (f, uid) => f.S.collection(f.db, "perfis", uid, "minhas_ideias");
+const refMeusApoios = (f, uid) => f.S.collection(f.db, "perfis", uid, "meus_apoios");
+const CAMPOS_IDEIA = ["titulo", "problema", "como_deveria", "para_quem", "categoria", "resumo"];
+
+export async function souAdmin(uid) {
+  const f = await iniciar();
+  try { return (await f.S.getDoc(f.S.doc(f.db, "admins", uid))).exists(); } catch (e) { return false; }
+}
+export async function listarIdeias() {
+  const f = await iniciar();
+  return (await f.S.getDocs(refIdeias(f))).docs.map(d => ({ id: d.id, ...d.data() }));
+}
+const ids = async consulta => new Set((await consulta).docs.map(d => d.id));
+export async function minhasIdeias(uid) { const f = await iniciar(); return ids(f.S.getDocs(refMinhas(f, uid))); }
+export async function meusApoios(uid) { const f = await iniciar(); return ids(f.S.getDocs(refMeusApoios(f, uid))); }
+
+export async function criarIdeia(uid, campos) {
+  const f = await iniciar(), agora = f.S.serverTimestamp();
+  const ref = f.S.doc(refIdeias(f));
+  const dados = Object.fromEntries(CAMPOS_IDEIA.filter(k => campos[k] != null && campos[k] !== "").map(k => [k, campos[k]]));
+  const lote = f.S.writeBatch(f.db);
+  lote.set(ref, { ...dados, status: "recebida", apoios: 0, criado_em: agora, atualizado_em: agora });
+  lote.set(f.S.doc(refMinhas(f, uid), ref.id), { criado_em: agora });
+  await lote.commit();
+  return ref.id;
+}
+export async function editarIdeia(id, campos) {
+  const f = await iniciar();
+  const dados = Object.fromEntries(CAMPOS_IDEIA.filter(k => k in campos).map(k => [k, campos[k] === "" ? null : campos[k]]));
+  await f.S.updateDoc(f.S.doc(refIdeias(f), id), { ...dados, atualizado_em: f.S.serverTimestamp() });
+}
+export async function apagarIdeia(uid, id) {
+  const f = await iniciar(), lote = f.S.writeBatch(f.db);
+  lote.delete(f.S.doc(refIdeias(f), id));
+  lote.delete(f.S.doc(refMinhas(f, uid), id));
+  await lote.commit();
+}
+// Apoio: o apoio, o registro privado e o contador vão na mesma gravação (ver firestore.rules).
+export async function apoiar(uid, id, sim = true) {
+  const f = await iniciar(), lote = f.S.writeBatch(f.db), agora = f.S.serverTimestamp();
+  const apoio = f.S.doc(f.db, "ideias", id, "apoios", uid), meu = f.S.doc(refMeusApoios(f, uid), id);
+  if (sim) { lote.set(apoio, { criado_em: agora }); lote.set(meu, { criado_em: agora }); }
+  else { lote.delete(apoio); lote.delete(meu); }
+  lote.update(f.S.doc(refIdeias(f), id), { apoios: f.S.increment(sim ? 1 : -1) });
+  await lote.commit();
+}
+// Administração: status, resposta, duplicada de e categoria.
+export async function moderarIdeia(id, campos) {
+  const f = await iniciar(), ok = ["status", "resposta", "duplicada_de", "categoria"];
+  const dados = Object.fromEntries(ok.filter(k => k in campos).map(k => [k, campos[k] === "" ? null : campos[k]]));
+  await f.S.updateDoc(f.S.doc(refIdeias(f), id), { ...dados, atualizado_em: f.S.serverTimestamp() });
+}
+export async function moderarApagar(id) {
+  const f = await iniciar();
+  await f.S.deleteDoc(f.S.doc(refIdeias(f), id));
+}
+// Exclusão da conta: retira os apoios (o contador desce) e apaga as ideias da pessoa.
+async function apagarIdeiasEApoios(f, uid) {
+  for (const id of await meusApoios(uid)) {
+    const existe = (await f.S.getDoc(f.S.doc(refIdeias(f), id))).exists();
+    if (existe) { await apoiar(uid, id, false); continue; }
+    const lote = f.S.writeBatch(f.db);
+    lote.delete(f.S.doc(f.db, "ideias", id, "apoios", uid));
+    lote.delete(f.S.doc(refMeusApoios(f, uid), id));
+    await lote.commit();
+  }
+  for (const id of await minhasIdeias(uid)) {
+    const existe = (await f.S.getDoc(f.S.doc(refIdeias(f), id))).exists();
+    const lote = f.S.writeBatch(f.db);
+    if (existe) lote.delete(f.S.doc(refIdeias(f), id));
+    lote.delete(f.S.doc(refMinhas(f, uid), id));
+    await lote.commit();
+  }
+}
+
 // ------------------------------------------------------------------ perfil
 const refPerfil = (f, uid) => f.S.doc(f.db, "perfis", uid);
 const refFavoritos = (f, uid) => f.S.collection(f.db, "perfis", uid, "favoritos");
@@ -203,6 +282,7 @@ export async function excluirConta(senha) {
   if (!senha && !(desde < 4 * 60 * 1000)) {
     throw Object.assign(new Error("login recente necessário"), { code: "auth/requires-recent-login" });
   }
+  await apagarIdeiasEApoios(f, u.uid);
   const favs = await f.S.getDocs(refFavoritos(f, u.uid));
   for (let i = 0; i < favs.docs.length; i += 400) {
     const lote = f.S.writeBatch(f.db);
@@ -220,6 +300,15 @@ export async function exportar() {
   const perfil = await lerPerfil(u.uid);
   const favoritos = (await listarFavoritos(u.uid)).map(x => ({ item_id: x.item_id, criado_em: iso(x.criado_em),
     acompanhar: !!x.acompanhar, visto_em: iso(x.visto_em) || null }));
+  // Ideias que a pessoa escreveu (texto completo) e as que apoiou (só os ids).
+  const minhas = await minhasIdeias(u.uid);
+  const ideias = [];
+  for (const id of minhas) {
+    const d = await f.S.getDoc(f.S.doc(refIdeias(f), id));
+    ideias.push(d.exists() ? { id, ...Object.fromEntries(Object.entries(d.data()).map(([k, v]) => [k, iso(v)])) }
+                           : { id, removida: true });
+  }
+  const apoios = [...await meusApoios(u.uid)];
   let filtros = null, uf = null;
   try { filtros = JSON.parse(localStorage.getItem("radar-filtros")); } catch (e) { /* ok */ }
   try { uf = JSON.parse(localStorage.getItem("radar-uf")); } catch (e) { /* ok */ }
@@ -229,6 +318,8 @@ export async function exportar() {
              criada_em: u.metadata.creationTime, ultimo_acesso: u.metadata.lastSignInTime },
     perfil: perfil && Object.fromEntries(Object.entries(perfil).map(([k, v]) => [k, iso(v)])),
     favoritos,
+    ideias_escritas: ideias,
+    ideias_apoiadas: apoios,
     neste_aparelho: { filtros, meu_estado: uf },
   };
 }

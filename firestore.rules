@@ -7,6 +7,10 @@ rules_version = '2';
 // Modelo:
 //   perfis/{uid}                    um documento por pessoa (sem e-mail: ele fica no Authentication)
 //   perfis/{uid}/favoritos/{itemId} { criado_em, acompanhar?, visto_em? }; itemId = id do Radar (16 hex)
+//   ideias/{id}                     mural de ideias (quem tem conta lê; autoria fica PRIVADA em
+//                                   perfis/{uid}/minhas_ideias/{id}); ideias/{id}/apoios/{uid}
+//                                   um apoio por pessoa (só ela lê o próprio), com contador "apoios"
+//   admins/{uid}                    quem administra o mural (criado à mão no console; ninguém grava pelo site)
 //   sugestoes/{id}                  opinião ANÔNIMA da fase de testes: qualquer pessoa cria, ninguém lê
 //                                   pelo site (só pelo console), ninguém altera nem apaga
 //
@@ -130,6 +134,98 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    // ------------------------------------------------------------ mural de ideias
+    function logado() { return request.auth != null; }
+    function admin() {
+      return logado() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function refIdeia(id) { return /databases/$(database)/documents/ideias/$(id); }
+    function refApoio(id) { return /databases/$(database)/documents/ideias/$(id)/apoios/$(request.auth.uid); }
+    function refMinha(id) { return /databases/$(database)/documents/perfis/$(request.auth.uid)/minhas_ideias/$(id); }
+    function refMeuApoio(id) { return /databases/$(database)/documents/perfis/$(request.auth.uid)/meus_apoios/$(id); }
+    // Autor: quem tem o registro privado da ideia no próprio perfil.
+    function autor(id) { return logado() && exists(refMinha(id)); }
+
+    function camposIdeia() {
+      return ['titulo', 'problema', 'como_deveria', 'para_quem', 'categoria', 'resumo',
+              'status', 'resposta', 'duplicada_de', 'apoios', 'criado_em', 'atualizado_em'];
+    }
+    function categoriasIdeia() {
+      return ['fonte', 'filtro', 'alerta', 'aparencia', 'erro', 'conta', 'conteudo', 'outro'];
+    }
+    function statusIdeia() {
+      return ['recebida', 'em-analise', 'planejada', 'feita', 'nao-sera-feita', 'duplicada'];
+    }
+    // O que o autor escreve (o resto é do sistema ou da administração).
+    function textoIdeia(d) {
+      return d.titulo is string && d.titulo.size() >= 5 && d.titulo.size() <= 100
+        && d.problema is string && d.problema.size() >= 10 && d.problema.size() <= 1000
+        && textoOpcional(d, 'como_deveria', 1000)
+        && (d.para_quem == 'todos' || d.para_quem in vinculosValidos())
+        && d.categoria in categoriasIdeia()
+        && d.resumo is string && d.resumo.size() <= 600;
+    }
+
+    match /admins/{uid} {
+      allow get: if dono(uid);  // o site só pergunta "sou administrador?"
+      allow list, write: if false;
+    }
+
+    match /ideias/{id} {
+      allow read: if logado();
+      // Criação junto com o registro privado de autoria (mesma gravação em lote).
+      allow create: if logado()
+        && request.resource.data.keys().hasOnly(camposIdeia())
+        && request.resource.data.keys().hasAll(['titulo', 'problema', 'para_quem', 'categoria', 'resumo',
+                                                'status', 'apoios', 'criado_em', 'atualizado_em'])
+        && textoIdeia(request.resource.data)
+        && request.resource.data.status == 'recebida'
+        && request.resource.data.apoios == 0
+        && !('resposta' in request.resource.data) && !('duplicada_de' in request.resource.data)
+        && request.resource.data.criado_em == request.time
+        && request.resource.data.atualizado_em == request.time
+        && existsAfter(refMinha(id));
+      allow update: if
+        // Autor: corrige o texto enquanto a ideia não foi analisada.
+        (autor(id) && resource.data.status == 'recebida'
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['titulo', 'problema', 'como_deveria', 'para_quem', 'categoria', 'resumo', 'atualizado_em'])
+          && textoIdeia(request.resource.data)
+          && request.resource.data.atualizado_em == request.time)
+        // Administração: status, resposta, duplicada e categoria.
+        || (admin()
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['status', 'resposta', 'duplicada_de', 'categoria', 'atualizado_em'])
+          && request.resource.data.status in statusIdeia()
+          && request.resource.data.categoria in categoriasIdeia()
+          && textoOpcional(request.resource.data, 'resposta', 1000)
+          && textoOpcional(request.resource.data, 'duplicada_de', 40)
+          && request.resource.data.atualizado_em == request.time)
+        // Apoio: só o contador, +1 ou -1, junto com o próprio apoio criado ou apagado.
+        || (logado()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['apoios'])
+          && ((request.resource.data.apoios == resource.data.apoios + 1
+                && !exists(refApoio(id)) && existsAfter(refApoio(id)))
+              || (request.resource.data.apoios == resource.data.apoios - 1
+                && exists(refApoio(id)) && !existsAfter(refApoio(id)))));
+      allow delete: if autor(id) || admin();
+
+      match /apoios/{apoiador} {
+        allow get: if dono(apoiador);
+        allow list, update: if false;
+        allow create: if dono(apoiador)
+          && request.resource.data.keys().hasOnly(['criado_em'])
+          && request.resource.data.criado_em == request.time
+          && getAfter(refIdeia(id)).data.apoios == get(refIdeia(id)).data.apoios + 1
+          && existsAfter(refMeuApoio(id));
+        // Com a ideia ainda no mural, o contador desce junto; se ela já foi
+        // apagada, o apoio que sobrou pode ser removido sozinho.
+        allow delete: if dono(apoiador)
+          && (!exists(refIdeia(id))
+              || getAfter(refIdeia(id)).data.apoios == get(refIdeia(id)).data.apoios - 1);
+      }
+    }
+
     match /perfis/{uid} {
       allow get: if dono(uid);
       allow list: if false;
@@ -166,6 +262,27 @@ service cloud.firestore {
           && (!('visto_em' in request.resource.data.diff(resource.data).affectedKeys())
               || request.resource.data.visto_em == request.time);
         allow delete: if dono(uid);
+      }
+
+      // Registros privados: quais ideias a pessoa escreveu e quais apoiou.
+      // Só a própria pessoa lê; criar exige a ideia (ou o apoio) na mesma gravação.
+      match /minhas_ideias/{id} {
+        allow read, delete: if dono(uid);
+        allow update: if false;
+        allow create: if dono(uid)
+          && request.resource.data.keys().hasOnly(['criado_em'])
+          && request.resource.data.criado_em == request.time
+          // A ideia é nova: ninguém se declara autor de ideia alheia.
+          && !exists(/databases/$(database)/documents/ideias/$(id))
+          && existsAfter(/databases/$(database)/documents/ideias/$(id));
+      }
+      match /meus_apoios/{id} {
+        allow read, delete: if dono(uid);
+        allow update: if false;
+        allow create: if dono(uid)
+          && request.resource.data.keys().hasOnly(['criado_em'])
+          && request.resource.data.criado_em == request.time
+          && existsAfter(/databases/$(database)/documents/ideias/$(id)/apoios/$(uid));
       }
     }
   }

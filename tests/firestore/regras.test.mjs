@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { initializeTestEnvironment, assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp, Timestamp, deleteField }
+import { doc, getDoc, setDoc, addDoc, writeBatch, increment, updateDoc, deleteDoc, collection, getDocs, serverTimestamp, Timestamp, deleteField }
   from "firebase/firestore";
 
 const regras = readFileSync(fileURLToPath(new URL("../../firestore.rules", import.meta.url)), "utf8");
@@ -188,6 +188,90 @@ await negado("ler uma sugestão pelo id", getDoc(doc(ana, "sugestoes/qualquer"))
 await negado("apagar sugestão", deleteDoc(doc(ana, "sugestoes/qualquer")));
 await permitido("criar sugestão com id escolhido (é só uma criação)", setDoc(doc(anonimo, "sugestoes/fixa"), sug()));
 await negado("alterar sugestão já enviada", setDoc(doc(anonimo, "sugestoes/fixa"), sug({ texto: "trocado" })));
+
+// ---- mural de ideias
+const carla = env.authenticatedContext("carla").firestore();
+const chefe = env.authenticatedContext("chefe").firestore();
+await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), "admins/chefe"), { desde: "teste" }));
+const ideia = (extra = {}) => ({ titulo: "Filtro por curso", problema: "Hoje não dá para ver só o meu curso.",
+  como_deveria: "Um filtro por curso de Penedo.", para_quem: "estudante-graduacao", categoria: "filtro",
+  resumo: "Como estudante, quero filtrar por curso.", status: "recebida", apoios: 0,
+  criado_em: serverTimestamp(), atualizado_em: serverTimestamp(), ...extra });
+function criarIdeia(db, uid, id, dados = ideia()) {
+  const b = writeBatch(db);
+  b.set(doc(db, "ideias", id), dados);
+  b.set(doc(db, "perfis", uid, "minhas_ideias", id), { criado_em: serverTimestamp() });
+  return b.commit();
+}
+function apoiar(db, uid, id, delta = 1, comEspelho = true) {
+  const b = writeBatch(db);
+  if (delta > 0) {
+    b.set(doc(db, "ideias", id, "apoios", uid), { criado_em: serverTimestamp() });
+    if (comEspelho) b.set(doc(db, "perfis", uid, "meus_apoios", id), { criado_em: serverTimestamp() });
+  } else {
+    b.delete(doc(db, "ideias", id, "apoios", uid));
+    b.delete(doc(db, "perfis", uid, "meus_apoios", id));
+  }
+  b.update(doc(db, "ideias", id), { apoios: increment(delta) });
+  return b.commit();
+}
+await negado("ideia sem login", criarIdeia(anonimo, "x", "i0"));
+await negado("ideia sem o registro privado de autoria", setDoc(doc(carla, "ideias/i0"), ideia()));
+await negado("ideia já com status planejada", criarIdeia(carla, "carla", "i0", ideia({ status: "planejada" })));
+await negado("ideia já com apoios", criarIdeia(carla, "carla", "i0", ideia({ apoios: 10 })));
+await negado("ideia com resposta da administração", criarIdeia(carla, "carla", "i0", ideia({ resposta: "ok" })));
+await negado("ideia com categoria inválida", criarIdeia(carla, "carla", "i0", ideia({ categoria: "spam" })));
+await negado("ideia com título curto", criarIdeia(carla, "carla", "i0", ideia({ titulo: "oi" })));
+await negado("ideia com problema de mais de 1000 caracteres", criarIdeia(carla, "carla", "i0", ideia({ problema: "x".repeat(1001) })));
+await negado("ideia com campo de autor (uid)", criarIdeia(carla, "carla", "i0", ideia({ autor: "carla" })));
+await negado("ideia com data forjada", criarIdeia(carla, "carla", "i0", ideia({ criado_em: Timestamp.fromDate(new Date(2000, 0, 1)) })));
+await negado("registro de autoria no perfil de outra pessoa", criarIdeia(carla, "beto", "i0"));
+await permitido("criar ideia (com autoria privada)", criarIdeia(carla, "carla", "i1"));
+await negado("declarar-se autor de ideia alheia", setDoc(doc(beto, "perfis/beto/minhas_ideias/i1"), { criado_em: serverTimestamp() }));
+await permitido("quem tem conta lê o mural", getDocs(collection(beto, "ideias")));
+await negado("sem login não lê o mural", getDocs(collection(anonimo, "ideias")));
+await negado("ler a autoria de outra pessoa", getDocs(collection(beto, "perfis/carla/minhas_ideias")));
+await permitido("autora lê as próprias ideias", getDocs(collection(carla, "perfis/carla/minhas_ideias")));
+await permitido("autora corrige o texto enquanto recebida", updateDoc(doc(carla, "ideias/i1"),
+  { titulo: "Filtro por curso e campus", atualizado_em: serverTimestamp() }));
+await negado("outra pessoa altera o texto", updateDoc(doc(beto, "ideias/i1"), { titulo: "Trocado por outro", atualizado_em: serverTimestamp() }));
+await negado("autora muda o próprio status", updateDoc(doc(carla, "ideias/i1"), { status: "feita", atualizado_em: serverTimestamp() }));
+// apoios
+await permitido("apoiar (+1 com o próprio apoio)", apoiar(beto, "beto", "i1"));
+await negado("apoiar de novo", apoiar(beto, "beto", "i1"));
+await negado("apoio sem o registro privado", apoiar(ana, "ana", "i1", 1, false));
+await negado("inflar o contador sem apoio", updateDoc(doc(ana, "ideias/i1"), { apoios: increment(1) }));
+await negado("contador +2 com um apoio", (() => { const b = writeBatch(ana);
+  b.set(doc(ana, "ideias/i1/apoios/ana"), { criado_em: serverTimestamp() });
+  b.set(doc(ana, "perfis/ana/meus_apoios/i1"), { criado_em: serverTimestamp() });
+  b.update(doc(ana, "ideias/i1"), { apoios: increment(2) }); return b.commit(); })());
+await negado("apoiar em nome de outra pessoa", (() => { const b = writeBatch(ana);
+  b.set(doc(ana, "ideias/i1/apoios/carla"), { criado_em: serverTimestamp() });
+  b.update(doc(ana, "ideias/i1"), { apoios: increment(1) }); return b.commit(); })());
+await negado("ver quem apoiou (listar apoios)", getDocs(collection(carla, "ideias/i1/apoios")));
+await negado("ver o apoio de outra pessoa", getDoc(doc(carla, "ideias/i1/apoios/beto")));
+await permitido("ver o próprio apoio", getDoc(doc(beto, "ideias/i1/apoios/beto")));
+await permitido("retirar o apoio (-1)", apoiar(beto, "beto", "i1", -1));
+await negado("retirar apoio que não existe", apoiar(beto, "beto", "i1", -1));
+await permitido("apoiar de novo depois de retirar", apoiar(beto, "beto", "i1"));
+// administração
+await negado("aluna se declara administradora", setDoc(doc(carla, "admins/carla"), { desde: "x" }));
+await negado("ver quem é administrador", getDoc(doc(carla, "admins/chefe")));
+await permitido("administrador sabe que é", getDoc(doc(chefe, "admins/chefe")));
+await permitido("administrador muda status e responde", updateDoc(doc(chefe, "ideias/i1"),
+  { status: "planejada", resposta: "Vamos fazer no próximo mês.", atualizado_em: serverTimestamp() }));
+await negado("administrador com status inválido", updateDoc(doc(chefe, "ideias/i1"), { status: "talvez", atualizado_em: serverTimestamp() }));
+await negado("administrador reescreve o texto da aluna", updateDoc(doc(chefe, "ideias/i1"), { problema: "Outro problema qualquer", atualizado_em: serverTimestamp() }));
+await negado("administrador mexe no contador", updateDoc(doc(chefe, "ideias/i1"), { apoios: 99 }));
+await negado("autora corrige depois de analisada", updateDoc(doc(carla, "ideias/i1"), { titulo: "Outro título longo", atualizado_em: serverTimestamp() }));
+await permitido("criar outra ideia", criarIdeia(carla, "carla", "i2"));
+await negado("outra pessoa apaga a ideia", deleteDoc(doc(beto, "ideias/i2")));
+await permitido("administrador apaga ideia (moderação)", deleteDoc(doc(chefe, "ideias/i2")));
+await permitido("criar ideia para apagar", criarIdeia(carla, "carla", "i3"));
+await permitido("apoiar a ideia que será apagada", apoiar(beto, "beto", "i3"));
+await permitido("autora apaga a própria ideia", deleteDoc(doc(carla, "ideias/i3")));
+await permitido("apoiador remove o apoio que sobrou da ideia apagada", deleteDoc(doc(beto, "ideias/i3/apoios/beto")));
+await permitido("autora apaga o próprio registro de autoria", deleteDoc(doc(carla, "perfis/carla/minhas_ideias/i3")));
 
 await negado("escrever em outra coleção", setDoc(doc(ana, "outros/x"), { a: 1 }));
 await negado("ler outra coleção", getDoc(doc(ana, "outros/x")));
