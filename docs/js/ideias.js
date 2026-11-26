@@ -111,8 +111,8 @@ async function principal() {
     }
     if (minha) {
       const apagar = el("button", { type: "button", class: "link-botao perigo-texto", texto: "Apagar" });
-      apagar.addEventListener("click", () => {
-        if (!confirm("Apagar esta ideia do mural? Os apoios dela também deixam de contar.")) return;
+      apagar.addEventListener("click", async () => {
+        if (!await RC.confirmar("Apagar esta ideia do mural? Os apoios dela também deixam de contar.", "Apagar ideia")) return apagar.focus();
         RC.ocupado(apagar, async () => {
           try { await FB.apagarIdeia(u.uid, i.id); } catch (e) { return RC.mensagem(painel, FB.traduzErro(e)); }
           ideias = ideias.filter(x => x.id !== i.id); minhas.delete(i.id);
@@ -165,8 +165,8 @@ async function principal() {
         irPara(aba, "Ideia atualizada.", true);
       });
     });
-    remover.addEventListener("click", () => {
-      if (!confirm("Remover esta ideia do mural (moderação)?")) return;
+    remover.addEventListener("click", async () => {
+      if (!await RC.confirmar("Remover esta ideia do mural (moderação)?", "Remover do mural")) return remover.focus();
       RC.ocupado(remover, async () => {
         try { await FB.moderarApagar(i.id); } catch (e) { return RC.mensagem(painel, FB.traduzErro(e)); }
         ideias = ideias.filter(x => x.id !== i.id);

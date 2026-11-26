@@ -396,6 +396,11 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     ok(await p.inputValue("#ideia-categoria") === "filtro", "ideias: categoria sugerida pelo texto (Busca e filtros)");
     ok((await p.textContent("#previa-resumo")).startsWith("Como pessoa que usa o Radar, quero escolher meu curso"),
        "ideias: resumo padronizado \"Como …, quero …, porque …\"");
+    await p.fill("#ideia-como", ""); await p.fill("#ideia-problema", "Quero ver só os editais do meu curso.");
+    ok(await p.textContent("#previa-resumo") === "Como pessoa que usa o Radar, quero ver só os editais do meu curso.",
+       "ideias: sem \"como deveria\", o pedido do problema vira o \"quero\"");
+    await p.fill("#ideia-problema", "Hoje vejo editais de todos os cursos e perco os do meu.");
+    await p.fill("#ideia-como", "Escolher meu curso e ver só os editais dele.");
     await p.click("text=Enviar ideia");
     ok(await espera(p, "Ideia enviada!"), "ideias: confirma o envio e mostra Minhas ideias");
     const [id1] = await colecao("ideias");
@@ -407,6 +412,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
       const c2 = await contexto(navegador, { config: configJs(), largura: 1280 });
       const q = await c2.newPage(); q.on("dialog", d => d.accept());
       await q.goto(SITE + "entrar.html?voltar=" + encodeURIComponent("ideias.html?aba=nova"));
+      ok(Math.round((await q.locator(".faixa-testes").boundingBox()).height) < 50, "faixa: uma linha só no computador");
       await q.fill("#email", "colega@exemplo.invalid"); await q.fill("#senha", "colega1234"); await q.click("#botao-entrar");
       await q.waitForSelector("#ideia-titulo");
       await q.fill("#ideia-titulo", "Filtrar pelo meu curso");
@@ -438,6 +444,13 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     ok((await p.textContent(".ideia")).includes("Planejada") && (await p.textContent(".ideia")).includes("Vamos fazer no próximo mês.") &&
        await p.locator(".ideia button:has-text('Editar')").count() === 0 && (await p.textContent(".ideia .apoiar")).includes("1"),
        "ideias: a autora vê situação, resposta e apoios; sem editar depois de analisada");
+    await p.click(".ideia button:has-text('Apagar')");
+    ok(await p.isVisible(".dialogo-confirmar:has-text('Apagar esta ideia do mural?')") &&
+       await p.evaluate(() => document.activeElement.textContent) === "Cancelar",
+       "ideias: apagar pede confirmação numa janela do site, com o foco em Cancelar");
+    await p.click(".dialogo-confirmar button:has-text('Cancelar')"); await p.waitForTimeout(300);
+    ok(await p.locator(".dialogo-confirmar").count() === 0 && (await colecao("ideias")).length === 1,
+       "ideias: Cancelar fecha a janela e não apaga");
 
     // conta
     await p.goto(SITE + "conta.html"); await p.waitForSelector("input[name=nome_exibicao]");
@@ -581,7 +594,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
         for (const n of await caches.keys()) for (const k of await (await caches.open(n)).keys()) r.push(new URL(k.url).pathname);
         return { nomes: await caches.keys(), r };
       });
-      ok(guardadas.nomes.includes("radar-v13"), "service worker: cache na versão radar-v13");
+      ok(guardadas.nomes.includes("radar-v14"), "service worker: cache na versão radar-v14");
       ok(!guardadas.r.some(u => /(entrar|cadastro|personalizar|conta|ideias)\.html|vendor\/|conta-index|acompanhar\.js|ideias/.test(u)) &&
          !guardadas.r.some(u => /googleapis|identitytoolkit/.test(u)),
          "service worker: nada de conta nem do Firebase no cache");

@@ -140,6 +140,24 @@ window.RC = (() => {
     const com = new Set(((dados && dados.itens) || []).map(i => i.tipo));
     return dados && dados.itens ? new Set(Object.keys(TIPOS).filter(t => !com.has(t))) : new Set();
   }
+  // Confirmação com a cara do site (no lugar do confirm() do navegador).
+  // Resolve true (confirmou) ou false (cancelou, Esc ou fechou).
+  function confirmar(pergunta, rotuloOk = "Confirmar", perigo = true) {
+    return new Promise(resolver => {
+      const ok = el("button", { type: "button", class: "botao " + (perigo ? "botao-perigo" : "botao-primario"), texto: rotuloOk });
+      const nao = el("button", { type: "button", class: "botao botao-secundario", texto: "Cancelar" });
+      const d = el("dialog", { class: "dialogo-confirmar", "aria-labelledby": "confirmar-texto" },
+        el("p", { id: "confirmar-texto", texto: pergunta }), el("div", { class: "acoes" }, ok, nao));
+      let resposta = false;
+      ok.addEventListener("click", () => { resposta = true; d.close(); });
+      nao.addEventListener("click", () => d.close());
+      d.addEventListener("close", () => { d.remove(); resolver(resposta); });
+      document.body.append(d);
+      d.showModal();
+      nao.focus();  // o padrão seguro é não apagar
+    });
+  }
+
   function marcados(form, nome) { return [...form.querySelectorAll(`input[name="${nome}"]:checked`)].map(c => c.value); }
 
   // ---- Vínculos (mais de um) e dados acadêmicos e profissionais (opcionais)
@@ -298,7 +316,7 @@ window.RC = (() => {
     return ms !== null && Date.parse(item.alterado_em) > ms;
   }
 
-  return { config: cfg, controlador, TIPOS, VINCULOS, tiposEmBreve, TITULACOES, PERFIS_EXTERNOS, grupoVinculos, camposAcademicos,
+  return { config: cfg, controlador, TIPOS, VINCULOS, tiposEmBreve, confirmar, TITULACOES, PERFIS_EXTERNOS, grupoVinculos, camposAcademicos,
            lerAcademicos, lerVinculos, vinculosDoPerfil, normalizarOrcid, normalizarLattes, normalizarLinkedin, FREQUENCIAS, CANAIS, REGIOES, UFS, regiaoDe, ALCANCES, IDIOMAS,
            relacaoAlcance, I, el, voltarPara, destinoSeguro, mensagem, ocupado, dados, preferenciasMudaram, grupoPilulas,
            marcados, indisponivel, fmtData, dataLocal, diasAte, contagem, baixarIcs, mudouDesde };
