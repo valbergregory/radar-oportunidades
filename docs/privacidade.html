@@ -1,81 +1,132 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<!-- Gerado por radar.py a partir de modelo_privacidade.html e config/app.yaml.
-     Texto-modelo: revise com assessoria jurídica antes de ativar o cadastro. -->
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacidade e termos de uso · Radar de Oportunidades</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Política de Privacidade · Radar de Oportunidades</title>
+<meta name="description" content="Como o Radar de Oportunidades trata seus dados.">
 <meta name="theme-color" content="#0b4a8b">
-<link rel="icon" href="icones/icone.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
-<style>
-  :root { color-scheme:light; --fundo:#f4f6fa; --cartao:#fff; --texto:#14213d; --suave:#4a5568; --marca:#0b4a8b; --borda:#d9e0ea; --foco:#c2410c; }
-  @media (prefers-color-scheme: dark) {
-    :root { color-scheme:dark; --fundo:#0f1620; --cartao:#18212d; --texto:#e7edf5; --suave:#a9b4c2; --marca:#8cc4ff; --borda:#2c3746; --foco:#fdba74; }
-  }
-  * { box-sizing:border-box; }
-  body { margin:0; font:16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background:var(--fundo); color:var(--texto); }
-  :focus-visible { outline:3px solid var(--foco); outline-offset:2px; }
-  header { background:linear-gradient(135deg, #0b4a8b, #083a6e); color:#fff; padding:20px 16px; }
-  header div, main { max-width:760px; margin:0 auto; }
-  header a { color:#fff; font-weight:700; }
-  header h1 { margin:8px 0 0; font-size:1.5rem; line-height:1.2; }
-  header p { margin:4px 0 0; color:#e3ecf8; }
-  main { padding:16px 16px 48px; }
-  section { background:var(--cartao); border:1px solid var(--borda); border-radius:14px; padding:4px 18px 12px; margin:0 0 14px; }
-  h2 { font-size:1.15rem; color:var(--marca); margin:14px 0 6px; }
-  a { color:var(--marca); }
-  li { margin:4px 0; }
-  .suave { color:var(--suave); font-size:.92rem; }
-</style>
+<link rel="icon" href="icones/icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icones/icone-192.png">
+<link rel="stylesheet" href="estilo.css">
 </head>
-<body>
-<header>
-  <div>
-    <a href="./">← Voltar ao Radar de Oportunidades</a>
-    <h1>Privacidade e termos de uso</h1>
-    <p>Versão 2026-11-25</p>
+<body class="com-abas">
+<a class="pular" href="#conteudo">Ir para o conteúdo</a>
+<header class="topo">
+  <div class="topo-dentro">
+    <a class="marca-link" href="./">
+      <svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round">
+        <circle cx="24" cy="24" r="20" stroke-opacity=".55"/><circle cx="24" cy="24" r="12" stroke-opacity=".8"/>
+        <path d="M24 24 L37 11"/><circle cx="24" cy="24" r="3" fill="#fff" stroke="none"/>
+      </svg>
+      <span><strong>Radar de Oportunidades</strong><span>Editais, bolsas, seleções, eventos e vagas em um só lugar</span></span>
+    </a>
+    <div class="acoes-topo">
+      <a class="botao-instalar" id="acao-conta" href="entrar.html" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+        <span id="acao-conta-rotulo">Entrar</span>
+      </a>
+    </div>
   </div>
 </header>
-<main>
-  <section>
-    <h2>Resumo</h2>
-    <ul>
-      <li>Você pode usar o Radar <strong>sem cadastro</strong>. Nesse caso, nenhum dado pessoal é coletado por nós.</li>
-      <li>Os prazos mostrados são estimados automaticamente. <strong>Confira sempre o edital original.</strong></li>
-    </ul>
-  </section>
 
-  <section>
-    <h2>Quem é o responsável</h2>
-    <p>O cadastro ainda não está disponível. Enquanto isso, o Radar não coleta dados pessoais.</p>
-  </section>
+<main id="conteudo" class="vista" tabindex="-1">
+<div class="pagina-estreita">
+<article class="painel texto-legal">
+  <h1 id="titulo" tabindex="-1">Política de Privacidade</h1>
+  <p class="areas">Versão 2026-11-25. Escrita em linguagem simples, conforme a Lei Geral de Proteção de Dados (Lei nº 13.709/2018, LGPD).</p>
 
-  <section>
-    <h2>Uso sem cadastro</h2>
-    <ul>
-      <li>Os filtros, a ordenação, as oportunidades que você salvar e a escolha de dispensar o convite de instalação ficam guardados <strong>só no seu aparelho</strong> (armazenamento local do navegador). Não são enviados a ninguém. Para apagar, limpe os dados do site no navegador.</li>
-      <li>O aplicativo guarda uma cópia das páginas e das oportunidades no aparelho para funcionar sem internet.</li>
-      <li>O site é hospedado pelo GitHub Pages, que registra dados técnicos de acesso (como o endereço IP) para segurança e funcionamento, conforme a <a href="https://docs.github.com/pt/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">declaração de privacidade do GitHub</a>.</li>
-      <li>Ao abrir um edital, você vai para o site do órgão que o publicou, que tem as próprias regras de privacidade.</li>
-    </ul>
-  </section>
+  <h2>Resumo</h2>
+  <ul>
+    <li>Você pode usar o Radar <strong>sem conta</strong>. Nesse caso, não coletamos dados pessoais.</li>
+    <li>A conta é <strong>opcional</strong>. Só o <strong>e-mail</strong> (e a senha) são obrigatórios.</li>
+    <li>Newsletter e alertas só com sua <strong>autorização separada</strong>, que você pode retirar a qualquer momento. O envio ainda não começou.</li>
+    <li>Você pode <strong>baixar</strong> e <strong>excluir</strong> seus dados sozinho(a), em Minha conta.</li>
+    <li>Os dados da conta ficam no <strong>Firebase (Google)</strong>; o banco de dados fica em <strong>São Paulo</strong>.</li>
+  </ul>
 
-  <section>
-    <h2>Termos de uso</h2>
-    <ul>
-      <li>O Radar reúne automaticamente links para editais, bolsas, seleções, eventos e vagas publicados por terceiros. <strong>Não somos responsáveis pelos editais</strong> nem pelas seleções.</li>
-      <li>Prazos, áreas e tipos são <strong>estimados por um programa</strong> e podem estar errados ou desatualizados. Antes de qualquer decisão, confira o edital original no site do órgão.</li>
-      <li>O serviço é gratuito, oferecido como está, e pode mudar ou sair do ar sem aviso.</li>
-    </ul>
-  </section>
+  <h2>Quem é o responsável</h2>
+  <p>O controlador dos dados é <strong data-controlador="nome">o responsável pelo Radar</strong>. Para qualquer pedido sobre seus dados, escreva para <a data-controlador="email" href="#">o e-mail de contato indicado aqui</a>.</p>
+  <p data-sem-contas hidden><strong>As contas ainda não estão ativas.</strong> Enquanto isso, o Radar não coleta dados pessoais.</p>
 
-  <section>
-    <h2>Mudanças neste documento</h2>
-    <p>Quando este texto mudar, a versão acima também muda. Se você tiver conta, pediremos que aceite a nova versão na próxima vez que entrar.</p>
-    <p class="suave">Versão 2026-11-25.</p>
-  </section>
+  <h2>Sem conta</h2>
+  <ul>
+    <li>Seus filtros e escolhas ficam guardados <strong>só no seu aparelho</strong> (no navegador). Para apagar, limpe os dados do site.</li>
+    <li>O aplicativo guarda uma cópia das páginas e das oportunidades para funcionar sem internet.</li>
+    <li>O site é hospedado no GitHub Pages, que registra dados técnicos de acesso (como o endereço IP) por segurança, conforme a <a href="https://docs.github.com/pt/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">declaração de privacidade do GitHub</a>.</li>
+    <li>Ao abrir um edital, você vai para o site do órgão que o publicou, com regras próprias.</li>
+  </ul>
+
+  <h2>Com conta: o que guardamos</h2>
+  <ul>
+    <li><strong>E-mail e senha</strong>, para você entrar. Ficam no serviço de login do Firebase (Authentication). A senha é guardada de forma protegida pelo próprio Firebase; nós não a vemos.</li>
+    <li><strong>Opcionais</strong>: nome de exibição, vínculo (por exemplo, estudante ou docente) e curso ou área.</li>
+    <li><strong>Preferências</strong>: áreas e tipos de interesse, frequência e canais de alerta.</li>
+    <li><strong>Favoritos</strong>: as oportunidades que você salvar e a data em que salvou.</li>
+    <li><strong>Datas dos aceites</strong>: quando você aceitou os Termos e a Política (e qual versão) e quando autorizou a newsletter.</li>
+  </ul>
+  <p>Seu e-mail <strong>não</strong> é copiado para o banco de dados: ele fica só no serviço de login. Não coletamos dados sensíveis (como origem racial, religião, saúde ou opinião política) nem documentos como CPF.</p>
+
+  <h2>Para que usamos</h2>
+  <ul>
+    <li><strong>Manter sua conta</strong>, guardar preferências e favoritos e mostrá-los em qualquer aparelho. É o serviço que você pediu ao criar a conta (LGPD, art. 7º, V).</li>
+    <li><strong>Newsletter e alertas por e-mail</strong>: só se você marcar essa opção, separada do aceite dos termos (consentimento, art. 7º, I). <strong>O envio ainda não começou</strong>: por enquanto guardamos só a sua escolha.</li>
+    <li><strong>Comprovar os aceites</strong>, pelas datas registradas (art. 8º, § 2º).</li>
+  </ul>
+  <p>Não usamos seus dados para publicidade nem os vendemos.</p>
+
+  <h2>Onde ficam e com quem compartilhamos</h2>
+  <ul>
+    <li>Usamos o <strong>Firebase, do Google</strong>, no plano gratuito.</li>
+    <li>O <strong>banco de dados</strong> (Cloud Firestore), com seu perfil e seus favoritos, fica em <strong>São Paulo</strong> (região southamerica-east1).</li>
+    <li>O <strong>serviço de login</strong> (Firebase Authentication), com seu e-mail e sua senha, é operado pelo Google em infraestrutura global e pode envolver transferência internacional de dados, com as garantias contratuais do Google (LGPD, art. 33). Esse serviço também envia os e-mails de verificação, de entrada por link e de troca de senha.</li>
+    <li>Só entregamos dados a autoridades quando a lei obrigar.</li>
+  </ul>
+
+  <h2>Por quanto tempo</h2>
+  <p>Enquanto a conta existir. Ao <strong>excluir a conta</strong> em Minha conta, apagamos na hora seus favoritos, seu perfil e sua conta de login. O Radar não mantém nenhuma cópia desses dados. O Google, que opera o Firebase, pode guardar cópias de segurança dos seus sistemas por um prazo próprio, definido nas políticas dele, até descartá-las; essas cópias não ficam acessíveis no Radar.</p>
+
+  <h2>Seus direitos</h2>
+  <ul>
+    <li><strong>Ver e baixar</strong> seus dados: Minha conta → Privacidade e dados → Baixar meus dados (arquivo JSON).</li>
+    <li><strong>Corrigir</strong>: Minha conta → Perfil, Interesses ou Notificações.</li>
+    <li><strong>Retirar a autorização da newsletter</strong>: Minha conta → Notificações ou Privacidade e dados.</li>
+    <li><strong>Excluir</strong>: Minha conta → Privacidade e dados → Excluir minha conta.</li>
+    <li>Para outros pedidos, escreva para <a data-controlador="email" href="#">o e-mail de contato indicado aqui</a>. Você também pode reclamar à <a href="https://www.gov.br/anpd/pt-br" target="_blank" rel="noopener noreferrer">ANPD</a>.</li>
+  </ul>
+
+  <h2>Segurança</h2>
+  <ul>
+    <li>Tudo trafega criptografado (HTTPS).</li>
+    <li>Regras no banco de dados garantem que cada pessoa só leia e altere os próprios dados; sem login, nada é lido.</li>
+    <li>Ações sensíveis, como excluir a conta e trocar a senha, pedem a senha de novo.</li>
+  </ul>
+
+  <h2>Menores de idade</h2>
+  <p>A conta é para maiores de 18 anos. Menores podem usar o Radar normalmente, sem conta.</p>
+
+  <h2>Mudanças</h2>
+  <p>Se esta política mudar, a versão acima muda e, se você tiver conta, pediremos um novo aceite na próxima vez que entrar.</p>
+</article>
+</div>
 </main>
+
+<footer class="rodape">
+  <div class="rodape-dentro">
+    <p><a href="./">Oportunidades</a> · <a href="privacidade.html">Privacidade</a> · <a href="termos.html">Termos de uso</a></p>
+    <p>O Radar só reúne e divulga oportunidades. A inscrição é feita no edital original.</p>
+  </div>
+</footer>
+
+<nav class="abas" aria-label="Navegação principal">
+  <a href="./"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>Início</a>
+  <a href="./#busca"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Buscar</a>
+  <a href="prazos.ics" type="text/calendar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>Calendário</a>
+  <a href="entrar.html" id="aba-salvos" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Salvos</a>
+  <a href="entrar.html" id="aba-perfil" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Perfil</a>
+</nav>
+<script src="conta-config.js"></script>
+<script src="js/legal.js"></script>
 </body>
 </html>
