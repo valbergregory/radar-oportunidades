@@ -103,6 +103,7 @@ import * as FB from "./firebase.js";
     botao.setAttribute("aria-pressed", String(!!fav));
     botao.innerHTML = RC.I.estrela + (fav ? "Salvo nos favoritos" : "Salvar nos favoritos");
     acompanhar.checked = !!(fav && fav.acompanhar);
+    acompanhar.setAttribute("aria-checked", String(acompanhar.checked));
   };
   try { fav = (await FB.listarFavoritos(u.uid)).find(f => f.item_id === id) || null; } catch (e) { /* sem rede: começa desmarcado */ }
   // Selo antes de registrar a visita; depois a visita vira a nova referência.

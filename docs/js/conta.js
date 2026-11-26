@@ -33,7 +33,7 @@ async function principal() {
   const quando = ts => ts && ts.toDate ? ts.toDate().toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "";
   const interruptor = (nome, marcado, icone, t, d) => el("label", { class: "linha-interruptor" }, el("span", { html: icone }),
     el("span", {}, el("strong", { texto: t }), el("span", { class: "desc", texto: d })),
-    el("input", { type: "checkbox", class: "interruptor", role: "switch", name: nome, checked: marcado }));
+    el("input", { type: "checkbox", class: "interruptor", role: "switch", name: nome, checked: marcado, "aria-checked": String(!!marcado) }));
   const AVISO_ENVIO = () => el("p", { class: "caixa-info", html: RC.I.info },
     el("span", { texto: "O envio de alertas e da newsletter começa em breve. Por enquanto, guardamos sua preferência." }));
 
@@ -75,7 +75,7 @@ async function principal() {
 
   // ---------------------------------------------------------------- abas
   function abaPerfil() {
-    const uf = el("select", { name: "uf" }, el("option", { value: "", texto: "Selecione" }),
+    const uf = el("select", { name: "uf", required: true }, el("option", { value: "", texto: "Selecione" }),
       ...RC.UFS.map(v => el("option", { value: v, texto: v, selected: p.uf === v })),
       el("option", { value: "nao-informado", texto: "Prefiro não informar", selected: p.uf === "nao-informado" }));
     const opcional = t => el("span", {}, t + " ", el("span", { class: "opcional", texto: "Opcional" }));
@@ -87,7 +87,7 @@ async function principal() {
       el("div", { class: "grade-campos" },
         el("label", { class: "campo" }, opcional("Nome de exibição"),
            el("input", { name: "nome_exibicao", value: p.nome_exibicao || "", maxlength: "120", autocomplete: "nickname" })),
-        el("label", { class: "campo" }, opcional("Seu estado"), uf),
+        el("label", { class: "campo" }, el("span", {}, "Seu estado ", el("span", { class: "obrigatorio", "aria-hidden": "true", texto: "*" })), uf),
         el("label", { class: "campo" }, opcional("Curso ou área"),
            el("input", { name: "curso_area", value: p.curso_area || "", maxlength: "120" }))),
       RC.grupoVinculos(RC.vinculosDoPerfil(p), false),
@@ -117,13 +117,13 @@ async function principal() {
   }
 
   async function abaInteresses() {
-    let areas = {};
-    try { areas = (await RC.dados()).areas || {}; } catch (e) { /* segue com o que houver */ }
+    let areas = {}, emBreve = new Set();
+    try { const d = await RC.dados(); areas = d.areas || {}; emBreve = RC.tiposEmBreve(d); } catch (e) { /* segue com o que houver */ }
     const salvar = el("button", { type: "submit", class: "botao botao-primario", html: RC.I.check + "Salvar interesses" });
     const form = el("form", { class: "form" },
       titulo(RC.I.alvo, "Interesses", "Áreas, tipos, alcance e idioma viram os filtros da lista de oportunidades."),
       RC.grupoPilulas("Áreas de interesse", "area", areas, p.areas, "checkbox", RC.I.camadas),
-      RC.grupoPilulas("Tipos de oportunidades", "tipo", RC.TIPOS, p.tipos, "checkbox", RC.I.maleta),
+      RC.grupoPilulas("Tipos de oportunidades", "tipo", RC.TIPOS, p.tipos, "checkbox", RC.I.maleta, null, emBreve),
       RC.grupoPilulas("Alcance", "alcance", RC.ALCANCES, p.alcances || [], "checkbox", RC.I.aviao,
         p.uf && p.uf !== "nao-informado" ? "Em relação ao seu estado (" + p.uf + ")." : "Sem estado no perfil, Estadual e Regional não se aplicam."),
       RC.grupoPilulas("Idioma", "idioma", RC.IDIOMAS, p.idiomas || [], "checkbox", RC.I.documento),
@@ -160,12 +160,13 @@ async function principal() {
             RC.mudouDesde(i, f) ? seloMudou() : null),
           el("div", { class: "acoes" }, b));
       }));
-      caixa.replaceChildren(
+      caixa.replaceChildren(...[
         titulo(RC.I.olhoAberto, "Acompanhando", "Oportunidades salvas que você quer acompanhar de perto."),
         total ? ul : el("p", { class: "areas", texto: "Você ainda não acompanha nenhuma oportunidade. Abra uma oportunidade salva e ligue \u201cAcompanhar\u201d." }),
         el("p", { class: "caixa-info", html: RC.I.info }, el("span", { texto:
           "O selo \u201cMudou desde a sua última visita\u201d aparece quando o prazo mudou ou saiu retificação depois da última vez que você abriu a oportunidade." })),
-        outros.length ? el("h3", { texto: "Outros favoritos" }) : null, outros.length ? lista : null);
+        outros.length ? el("h3", { texto: "Outros favoritos" }) : null, outros.length ? lista : null,
+      ].filter(Boolean));  // replaceChildren escreveria null como o texto "null"
     };
     await desenharAba();
     return caixa;
