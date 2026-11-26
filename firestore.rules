@@ -6,7 +6,7 @@ rules_version = '2';
 //
 // Modelo:
 //   perfis/{uid}                    um documento por pessoa (sem e-mail: ele fica no Authentication)
-//   perfis/{uid}/favoritos/{itemId} só { criado_em }
+//   perfis/{uid}/favoritos/{itemId} só { criado_em }; itemId = id do Radar (16 hex)
 //
 // Tudo o que não está liberado abaixo é negado: leitura sem login, listagem
 // da coleção perfis, documentos de outras pessoas e qualquer outra coleção.
@@ -38,6 +38,12 @@ service cloud.firestore {
             || d.vinculo in ['estudante-graduacao', 'estudante-pos', 'estudante-medio-tecnico', 'docente',
                              'tecnico-administrativo', 'pesquisador', 'egresso', 'comunidade', 'outro'])
         && d.areas is list && d.areas.size() <= 20
+        // Só textos curtos. join() nega objetos e listas, mas converte números
+        // e booleanos em texto; por isso a lista também precisa voltar igual
+        // depois de juntar e separar (um 42 volta como "42" e a comparação falha).
+        // Os nomes de área (config/areas.yaml) não têm vírgula.
+        && d.areas.join(',').size() <= 800
+        && (d.areas.size() == 0 || d.areas.join(',').split(',') == d.areas)
         && d.tipos is list && d.tipos.size() <= 20
         && d.tipos.hasOnly(['fomento', 'bolsa', 'pos-graduacao', 'evento', 'concurso-vaga'])
         && d.frequencia in ['diario', 'semanal', 'urgentes']
@@ -82,7 +88,8 @@ service cloud.firestore {
       match /favoritos/{itemId} {
         allow read: if dono(uid);
         allow create: if dono(uid)
-          && itemId.size() <= 64
+          // Só ids no formato do Radar (16 caracteres hexadecimais, ver dados.json).
+          && itemId.matches('^[0-9a-f]{16}$')
           && request.resource.data.keys().hasOnly(['criado_em'])
           && request.resource.data.keys().hasAll(['criado_em'])
           && request.resource.data.criado_em == request.time;

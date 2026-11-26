@@ -37,6 +37,12 @@ await negado("criar perfil de outra pessoa", setDoc(doc(beto, "perfis/ana"), per
 await negado("campo fora da lista (email)", setDoc(doc(ana, "perfis/ana"), perfilNovo({ email: "a@b.c" })));
 await negado("texto com mais de 120 caracteres", setDoc(doc(ana, "perfis/ana"), perfilNovo({ nome_exibicao: "x".repeat(121) })));
 await negado("lista com mais de 20 itens", setDoc(doc(ana, "perfis/ana"), perfilNovo({ areas: Array(21).fill("a") })));
+await negado("área que não é texto (número)", setDoc(doc(ana, "perfis/ana"), perfilNovo({ areas: ["economia", 42] })));
+await negado("área que não é texto (booleano)", setDoc(doc(ana, "perfis/ana"), perfilNovo({ areas: [true] })));
+await negado("área que não é texto (nulo)", setDoc(doc(ana, "perfis/ana"), perfilNovo({ areas: ["economia", null] })));
+await negado("área com vírgula", setDoc(doc(ana, "perfis/ana"), perfilNovo({ areas: ["economia,direito"] })));
+await negado("área que não é texto (objeto)", setDoc(doc(ana, "perfis/ana"), perfilNovo({ areas: [{ a: 1 }] })));
+await negado("áreas somando mais de 800 caracteres", setDoc(doc(ana, "perfis/ana"), perfilNovo({ areas: Array(5).fill("x".repeat(200)) })));
 await negado("tipo inválido", setDoc(doc(ana, "perfis/ana"), perfilNovo({ tipos: ["estagio"] })));
 await negado("frequência inválida", setDoc(doc(ana, "perfis/ana"), perfilNovo({ frequencia: "horaria" })));
 await negado("canal inválido (telegram)", setDoc(doc(ana, "perfis/ana"), perfilNovo({ canais: ["telegram"] })));
@@ -60,6 +66,12 @@ await negado("listar perfis sem login", getDocs(collection(anonimo, "perfis")));
 // ---- alterações
 await permitido("alterar preferências", updateDoc(doc(ana, "perfis/ana"),
   { areas: ["economia", "direito"], frequencia: "diario", atualizado_em: serverTimestamp() }));
+await permitido("20 áreas de até 30 caracteres (620 no total)", updateDoc(doc(ana, "perfis/ana"),
+  { areas: Array.from({ length: 20 }, (_, i) => String(i).padStart(30, "a")), atualizado_em: serverTimestamp() }));
+await negado("alterar áreas para mais de 800 caracteres", updateDoc(doc(ana, "perfis/ana"),
+  { areas: Array(20).fill("b".repeat(41)), atualizado_em: serverTimestamp() }));
+await negado("alterar áreas com item que não é texto", updateDoc(doc(ana, "perfis/ana"),
+  { areas: ["economia", true], atualizado_em: serverTimestamp() }));
 await negado("alterar sem atualizado_em do servidor", updateDoc(doc(ana, "perfis/ana"), { areas: ["direito"] }));
 await negado("alterar perfil de outra pessoa", updateDoc(doc(beto, "perfis/ana"), { areas: [], atualizado_em: serverTimestamp() }));
 await negado("autorizar newsletter sem data do servidor", updateDoc(doc(ana, "perfis/ana"),
@@ -83,10 +95,14 @@ await negado("remover campo obrigatório", updateDoc(doc(ana, "perfis/ana"),
 
 // ---- favoritos
 await permitido("criar favorito próprio", setDoc(doc(ana, "perfis/ana/favoritos/c931541578c0f7f4"), { criado_em: serverTimestamp() }));
-await negado("favorito com campo extra", setDoc(doc(ana, "perfis/ana/favoritos/abc"), { criado_em: serverTimestamp(), titulo: "x" }));
-await negado("favorito com data forjada", setDoc(doc(ana, "perfis/ana/favoritos/abc"), { criado_em: Timestamp.now() }));
-await negado("favorito com id de 65 caracteres", setDoc(doc(ana, "perfis/ana/favoritos/" + "a".repeat(65)), { criado_em: serverTimestamp() }));
-await permitido("favorito com id de 64 caracteres", setDoc(doc(ana, "perfis/ana/favoritos/" + "a".repeat(64)), { criado_em: serverTimestamp() }));
+await negado("favorito com campo extra", setDoc(doc(ana, "perfis/ana/favoritos/0123456789abcdef"), { criado_em: serverTimestamp(), titulo: "x" }));
+await negado("favorito com data forjada", setDoc(doc(ana, "perfis/ana/favoritos/0123456789abcdef"), { criado_em: Timestamp.now() }));
+for (const [nome, id] of [["id curto", "abc"], ["id com 17 caracteres", "0123456789abcdef0"], ["id com 15 caracteres", "0123456789abcde"],
+                          ["id com maiúsculas", "0123456789ABCDEF"], ["id com letra fora do hexadecimal", "0123456789abcdeg"],
+                          ["id de 64 caracteres", "a".repeat(64)], ["id com símbolos", "0123456789abc%3C"]]) {
+  await negado("favorito com " + nome, setDoc(doc(ana, "perfis/ana/favoritos/" + id), { criado_em: serverTimestamp() }));
+}
+await permitido("favorito com id do Radar (16 hexadecimais)", setDoc(doc(ana, "perfis/ana/favoritos/0123456789abcdef"), { criado_em: serverTimestamp() }));
 await negado("alterar favorito existente", setDoc(doc(ana, "perfis/ana/favoritos/c931541578c0f7f4"), { criado_em: serverTimestamp() }));
 await negado("criar favorito para outra pessoa", setDoc(doc(beto, "perfis/ana/favoritos/xyz"), { criado_em: serverTimestamp() }));
 await permitido("listar os próprios favoritos", getDocs(collection(ana, "perfis/ana/favoritos")));

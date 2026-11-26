@@ -30,7 +30,8 @@ estiver vazia** (ou se o arquivo não existir). Nesse caso não aparece
   autorização da newsletter, nula sem ela), `termos_versao`,
   `consentimento_em` (data do aceite) e `atualizado_em`. As datas são sempre
   do servidor: as regras recusam datas enviadas pelo navegador.
-- `perfis/{uid}/favoritos/{itemId}`: só `criado_em`.
+- `perfis/{uid}/favoritos/{itemId}`: só `criado_em`; `itemId` é o id do Radar
+  (16 caracteres hexadecimais, o mesmo de `dados.json`).
 - O **e-mail não é gravado no Firestore**: ele fica só no Authentication.
 
 ## Passos no console do Firebase
