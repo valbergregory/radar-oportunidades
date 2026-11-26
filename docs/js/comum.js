@@ -329,7 +329,8 @@ document.addEventListener("change", ev => {
   let focado = null;
   function mensagemDoCampo(c) {
     const v = c.validity;
-    if (v.valueMissing) return c.type === "checkbox" ? "Marque esta opção para continuar." : "Preencha este campo.";
+    if (v.valueMissing) return c.type === "checkbox" ? "Marque esta opção para continuar."
+                             : c.type === "radio" ? "Escolha uma opção." : "Preencha este campo.";
     if (v.typeMismatch && c.type === "email") return "Digite um e-mail válido, como nome@exemplo.com.";
     if (v.tooShort) return `Use pelo menos ${c.minLength} caracteres.`;
     if (v.patternMismatch) return "Confira o formato do que foi digitado.";

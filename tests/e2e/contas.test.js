@@ -18,7 +18,7 @@ const DONO = { Authorization: "Bearer owner" };  // emulador: acesso de administ
 let falhas = 0;
 const ok = (cond, msg) => { console.log((cond ? "ok   - " : "FALHA - ") + msg); if (!cond) falhas++; };
 
-const configJs = (versao = "2026-11-26.2") => `window.RADAR_CONTA = {
+const configJs = (versao = "2026-11-26.3") => `window.RADAR_CONTA = {
   firebase: { apiKey: "chave-de-teste", authDomain: "${PROJETO}.firebaseapp.com", projectId: "${PROJETO}",
               storageBucket: "", messagingSenderId: "1", appId: "1:1:web:1" },
   controlador: { nome: "Pessoa Responsável", email: "contato@exemplo.invalid" },
@@ -50,6 +50,10 @@ async function favoritos(uid) {
 async function favorito(uid, id) {
   const r = await api(`${DOCS_FS}/perfis/${uid}/favoritos/${id}`);
   return r.status === 200 ? r.json.fields : null;
+}
+async function sugestoes() {
+  const r = await api(`${DOCS_FS}/sugestoes`);
+  return (r.json && r.json.documents || []).map(d => d.fields);
 }
 async function codigos(tipo, email) {
   const r = await api(`${AUTH}/emulator/v1/projects/${PROJETO}/oobCodes`);
@@ -108,6 +112,10 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
       ok(await espera(p, "Contas ainda não disponíveis"), "sem configuração: cadastro.html também");
       await p.goto(SITE + "oportunidade.html?id=" + umId); await p.waitForSelector("#op-titulo"); await p.waitForTimeout(300);
       ok(await p.locator("#lugar-favorito *").count() === 0, "sem configuração: oportunidade sem favoritar");
+      await p.goto(SITE); await p.click(".faixa-botao");
+      ok(await p.isVisible(".dialogo-sugestao") && await p.isDisabled(".dialogo-sugestao button[type=submit]") &&
+         await p.isVisible("text=O envio de sugestões ainda não está disponível."), "sem configuração: sugestão avisa que o envio não está disponível");
+      await p.click(".dialogo-sugestao button:has-text('Fechar')");
       ok(sdk.length === 0, "sem configuração: o SDK do Firebase nunca é baixado " + JSON.stringify(sdk));
       await p.goto(SITE + "privacidade.html");
       ok(await p.isVisible("text=As contas ainda não estão ativas."), "sem configuração: política avisa que não há coleta");
@@ -178,6 +186,24 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     await p.goto(SITE); await p.waitForSelector("#acao-conta:not([hidden])");
     ok(await p.textContent("#acao-conta-rotulo") === "Entrar", "com configuração: index mostra Entrar");
 
+    // sugestão anônima (fase de testes), sem conta
+    ok(await p.isVisible(".faixa-testes:has-text('Versão de testes')"), "faixa: \"Versão de testes\" no topo");
+    await p.click(".faixa-botao");
+    await p.click(".dialogo-sugestao button[type=submit]");
+    ok((await sugestoes()).length === 0 && await p.locator(".dialogo-sugestao .erro-campo, .dialogo-sugestao :invalid").count() > 0,
+       "sugestão: sem assunto e texto não envia");
+    await p.locator(".dialogo-sugestao label.chip-check", { hasText: "Ideia" }).click();
+    await p.locator(".dialogo-sugestao label.chip-check", { hasText: "4" }).click();
+    await p.fill("#sugestao-texto", "Queria filtrar por curso de Penedo.");
+    await p.click(".dialogo-sugestao button[type=submit]");
+    ok(await espera(p, "Obrigado! Sua sugestão foi enviada."), "sugestão: confirma o envio");
+    const [sg] = await sugestoes();
+    ok(sg && valor(sg.tipo) === "ideia" && Number(sg.nota.integerValue) === 4 && valor(sg.texto) === "Queria filtrar por curso de Penedo." &&
+       valor(sg.pagina) === "index.html" && valor(sg.dispositivo) === "celular" && !!valor(sg.criado_em) &&
+       Object.keys(sg).every(k => ["tipo", "texto", "nota", "pagina", "dispositivo", "instalado", "versao", "criado_em"].includes(k)),
+       "sugestão: gravada anônima (sem uid nem e-mail), com nota, página e aparelho");
+    await p.click(".dialogo-sugestao button:has-text('Fechar')");
+
     // entrar: asterisco na mesma linha do rótulo e validação sem balão do navegador
     await p.goto(SITE + "entrar.html"); await p.waitForSelector("#email");
     ok(await p.evaluate(() => [...document.querySelectorAll("label.campo > span:first-child")].slice(0, 2).every(s =>
@@ -237,7 +263,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
        valor(pf.lattes) === "1234567890123456" && valor(pf.linkedin) === "pessoa-teste",
        "cadastro: vínculos, titulação, instituição e identificadores ORCID/Lattes/LinkedIn normalizados");
     ok(pf && valor(pf.vinculo) === "estudante-pos" && valor(pf.uf) === "AL" && valor(pf.areas).join() === "economia" && valor(pf.tipos).join() === "bolsa" &&
-       valor(pf.quer_newsletter) === false && valor(pf.newsletter_em) === null && valor(pf.termos_versao) === "2026-11-26.2" &&
+       valor(pf.quer_newsletter) === false && valor(pf.newsletter_em) === null && valor(pf.termos_versao) === "2026-11-26.3" &&
        !!valor(pf.consentimento_em), "cadastro: perfil gravado com aceite datado e newsletter desligada");
     ok(!JSON.stringify(pf).includes("exemplo.invalid"), "cadastro: e-mail não vai para o Firestore");
     ok((await codigos("VERIFY_EMAIL", "pessoa@exemplo.invalid")).length === 1, "cadastro: e-mail de verificação enviado");
@@ -476,7 +502,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
         for (const n of await caches.keys()) for (const k of await (await caches.open(n)).keys()) r.push(new URL(k.url).pathname);
         return { nomes: await caches.keys(), r };
       });
-      ok(guardadas.nomes.includes("radar-v10"), "service worker: cache na versão radar-v10");
+      ok(guardadas.nomes.includes("radar-v11"), "service worker: cache na versão radar-v11");
       ok(!guardadas.r.some(u => /(entrar|cadastro|personalizar|conta)\.html|vendor\/|conta-index|acompanhar\.js/.test(u)) &&
          !guardadas.r.some(u => /googleapis|identitytoolkit/.test(u)),
          "service worker: nada de conta nem do Firebase no cache");

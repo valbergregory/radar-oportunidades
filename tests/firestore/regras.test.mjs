@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { initializeTestEnvironment, assertSucceeds, assertFails } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp, Timestamp, deleteField }
+import { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, serverTimestamp, Timestamp, deleteField }
   from "firebase/firestore";
 
 const regras = readFileSync(fileURLToPath(new URL("../../firestore.rules", import.meta.url)), "utf8");
@@ -166,6 +166,29 @@ await negado("apagar favorito de outra pessoa", deleteDoc(doc(beto, "perfis/ana/
 await permitido("apagar o próprio favorito", deleteDoc(doc(ana, "perfis/ana/favoritos/c931541578c0f7f4")));
 
 // ---- outras coleções e exclusão
+// ---- sugestões (anônimas, só escrita)
+const sug = (extra = {}) => ({ tipo: "ideia", texto: "Mostrar bolsas por curso", nota: 5, pagina: "index.html",
+  dispositivo: "celular", instalado: true, versao: "web", criado_em: serverTimestamp(), ...extra });
+await permitido("sugestão sem login", addDoc(collection(anonimo, "sugestoes"), sug()));
+await permitido("sugestão com login", addDoc(collection(ana, "sugestoes"), sug()));
+await permitido("sugestão mínima (tipo, texto, data)", addDoc(collection(anonimo, "sugestoes"),
+  { tipo: "problema", texto: "abc", criado_em: serverTimestamp() }));
+await permitido("sugestão com nota nula", addDoc(collection(anonimo, "sugestoes"), sug({ nota: null })));
+await negado("sugestão com uid ou e-mail (campo fora da lista)", addDoc(collection(ana, "sugestoes"), sug({ uid: "ana" })));
+await negado("sugestão com tipo inválido", addDoc(collection(anonimo, "sugestoes"), sug({ tipo: "spam" })));
+await negado("sugestão com texto curto", addDoc(collection(anonimo, "sugestoes"), sug({ texto: "ok" })));
+await negado("sugestão com mais de 2000 caracteres", addDoc(collection(anonimo, "sugestoes"), sug({ texto: "x".repeat(2001) })));
+await negado("sugestão com nota 6", addDoc(collection(anonimo, "sugestoes"), sug({ nota: 6 })));
+await negado("sugestão com nota em texto", addDoc(collection(anonimo, "sugestoes"), sug({ nota: "5" })));
+await negado("sugestão com data forjada", addDoc(collection(anonimo, "sugestoes"), sug({ criado_em: Timestamp.fromDate(new Date(2000, 0, 1)) })));
+await negado("sugestão com dispositivo inválido", addDoc(collection(anonimo, "sugestoes"), sug({ dispositivo: "tv" })));
+await negado("ler sugestões (sem login)", getDocs(collection(anonimo, "sugestoes")));
+await negado("ler sugestões (com login)", getDocs(collection(ana, "sugestoes")));
+await negado("ler uma sugestão pelo id", getDoc(doc(ana, "sugestoes/qualquer")));
+await negado("apagar sugestão", deleteDoc(doc(ana, "sugestoes/qualquer")));
+await permitido("criar sugestão com id escolhido (é só uma criação)", setDoc(doc(anonimo, "sugestoes/fixa"), sug()));
+await negado("alterar sugestão já enviada", setDoc(doc(anonimo, "sugestoes/fixa"), sug({ texto: "trocado" })));
+
 await negado("escrever em outra coleção", setDoc(doc(ana, "outros/x"), { a: 1 }));
 await negado("ler outra coleção", getDoc(doc(ana, "outros/x")));
 await negado("apagar perfil de outra pessoa", deleteDoc(doc(beto, "perfis/ana")));

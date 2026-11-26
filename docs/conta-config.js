@@ -20,5 +20,5 @@ window.RADAR_CONTA = {
   controlador: { nome: "Valber Gregory Barbosa Costa Bezerra Santos", email: "valber.gregory@gmail.com" },
   // Mude quando alterar termos.html ou privacidade.html: quem tem conta será
   // convidado a aceitar a nova versão.
-  versaoTermos: "2026-11-26.2",
+  versaoTermos: "2026-11-26.3",
 };

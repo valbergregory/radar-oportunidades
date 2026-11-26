@@ -39,6 +39,18 @@ export async function usuario() {
   return f.auth.currentUser;
 }
 
+// --------------------------------------------------------------- sugestões
+// Anônima: sem uid, e-mail ou qualquer identificador (ver firestore.rules).
+export async function enviarSugestao(campos) {
+  const f = await iniciar();
+  if (!f) throw new Error("contas desligadas");
+  const ok = ["tipo", "texto", "nota", "pagina", "dispositivo", "instalado"];
+  const doc = Object.fromEntries(ok.filter(k => k in campos).map(k => [k, campos[k]]));
+  doc.versao = "web";
+  doc.criado_em = f.S.serverTimestamp();
+  await f.S.addDoc(f.S.collection(f.db, "sugestoes"), doc);
+}
+
 // ------------------------------------------------------------------ perfil
 const refPerfil = (f, uid) => f.S.doc(f.db, "perfis", uid);
 const refFavoritos = (f, uid) => f.S.collection(f.db, "perfis", uid, "favoritos");
