@@ -1,0 +1,96 @@
+# Classificação de alcance e idioma dos itens (usada por radar.py).
+# Os termos são comparados sem acento e sem diferenciar maiúsculas, como
+# palavras inteiras (ou início de palavra, quando terminam em "*").
+
+# Um item vira "internacional" quando o título ou o texto lido trazem um destes
+# termos, qualquer que seja o alcance da fonte (ex.: bolsa DAAD divulgada pela
+# FAPEAL). Inclua países, blocos e agências estrangeiras conforme aparecerem.
+internacional:
+  termos:
+    # palavras gerais
+    - internacional
+    - internacionais
+    - internacionalizacao
+    - exterior
+    - estrangeir*
+    - bilateral
+    - transnacional
+    - sanduiche
+    - mobilidade internacional
+    - cooperacao internacional
+    - call for papers
+    # países e blocos
+    - alemanha
+    - franca
+    - italia
+    - portugal
+    - espanha
+    - reino unido
+    - inglaterra
+    - irlanda
+    - holanda
+    - paises baixos
+    - belgica
+    - suica
+    - austria
+    - suecia
+    - noruega
+    - finlandia
+    - dinamarca
+    - estados unidos
+    - eua
+    - canada
+    - mexico
+    - argentina
+    - chile
+    - colombia
+    - uruguai
+    - paraguai
+    - peru
+    - japao
+    - china
+    - coreia
+    - india
+    - australia
+    - africa do sul
+    - mocambique
+    - angola
+    - cabo verde
+    - europa
+    - europeia
+    - uniao europeia
+    - america latina
+    # agências e programas estrangeiros
+    - daad
+    - fulbright
+    - humboldt
+    - erasmus
+    - horizon
+    - horizonte europa
+    - marie curie
+    - erc
+    - anr
+    - cnrs
+    - nsf
+    - newton fund
+    - british council
+    - campus france
+    - jsps
+    - biodiversa
+    - belmont forum
+    - confap italy
+    - capes-print
+
+# Idioma do item: padrão da fonte (campo "idioma" em fontes.yaml, "pt" se
+# ausente), trocado quando o texto tem clara maioria de palavras comuns de
+# outro idioma. "outro" vale para itens que a fonte marca assim.
+idiomas:
+  minimo_palavras: 4     # abaixo disso (ex.: só o título), fica o padrão da fonte
+  vantagem: 1.5          # o idioma vencedor precisa ter 1,5 vez mais palavras que o segundo
+  palavras:
+    pt: [de, da, do, das, dos, para, com, os, as, em, "no", na, uma, um, nao, sao,
+         pelo, pela, sobre, entre, ate, inscricoes, edital, chamada, programa]
+    en: [the, of, and, for, with, to, in, "on", is, are, by, from, call, deadline,
+         applications, research, program, programme, grant, fellowship]
+    es: [el, los, las, del, la, para, con, por, una, convocatoria, plazo,
+         investigacion, becas, inscripciones, ano]

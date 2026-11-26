@@ -70,7 +70,7 @@ ANO = re.compile(r"\b(20\d{2})\b")
 DOC_EDITAL = re.compile(r"edital|chamada|retifica|prorroga|errata|cronograma|alterac")
 DOC_ENCERRADO = re.compile(r"resultado|homologac|encerrament|classificac|convocac|"
                            r"recursos esgotados")
-VERSAO_LEITURA = 3  # suba quando a leitura ou a classificação melhorar: tudo é relido
+VERSAO_LEITURA = 4  # suba quando a leitura ou a classificação melhorar: tudo é relido
 RELER_APOS_DIAS = 7  # itens sem prazo são relidos (pode surgir prorrogação ou resultado)
 
 # Usado quando a fonte não define "padrao_link": o texto do link precisa
@@ -88,12 +88,17 @@ TIPOS = [  # a ordem importa, vale o primeiro que casar
     ("evento", r"congresso|simposio|seminario|workshop|call for papers|"
                r"submissao de (trabalhos|artigos)|jornada|\bencontro\b|"
                r"comunicacao oral|poster"),
-    ("concurso-vaga", r"concurso|professor substituto|\bvagas?\b|estagio|trainee|"
-                      r"remocao|redistribuicao|processo seletivo interno"),
+    ("estagio", r"\bestagi|\btrainee|jovem aprendiz|menor aprendiz|programa de aprendiz"),
+    ("concurso-vaga", r"concurso|professor substituto|remocao|redistribuicao|"
+                      r"processo seletivo interno"),
     ("pos-graduacao", r"mestrado|doutorado|pos-graduacao|aluno (regular|especial)"),
     ("bolsa", r"\bbolsas?\b|bolsista|\bmonitor(es|a|as|ia)?\b|\binstrutor|\btutor"),
+    ("emprego", r"\bempregos?\b|contratac|\bclt\b|\bvagas?\b|oportunidade de trabalho|"
+                r"processo seletivo para (analista|assistente|tecnico|desenvolvedor)"),
     ("fomento", r"edital|chamada|fomento|auxilio|subvencao"),
 ]
+ALCANCES = ("local", "estadual", "nacional", "internacional")
+IDIOMAS = ("pt", "en", "es", "outro")
 
 
 def norm(texto):
@@ -345,6 +350,51 @@ def antigo(titulo, prazo, link=""):
     return not prazo and bool(anos) and max(anos) < HOJE.year
 
 
+def carregar_classificacao():
+    """config/classificacao.yaml: termos de "internacional" e palavras por idioma."""
+    cfg = yaml.safe_load((RAIZ / "config" / "classificacao.yaml").read_text(encoding="utf-8"))
+    partes = []
+    for termo in cfg["internacional"]["termos"]:
+        t = re.escape(norm(str(termo)))
+        partes.append(t[:-2] + r"\w*" if t.endswith(r"\*") else t + r"\b")
+    idiomas = cfg.get("idiomas", {})
+    return {
+        "internacional": re.compile(r"\b(" + "|".join(partes) + ")"),
+        # str(): no YAML, palavras como no/on viram booleanos se não estiverem entre aspas
+        "palavras": {k: {norm(str(p)) for p in v} for k, v in idiomas.get("palavras", {}).items()},
+        "minimo": int(idiomas.get("minimo_palavras", 4)),
+        "vantagem": float(idiomas.get("vantagem", 1.5)),
+    }
+
+
+def alcance_do_item(texto, fonte, classif):
+    """Alcance da fonte; vira "internacional" se o texto (já normalizado) indicar."""
+    base = fonte.get("alcance") if fonte.get("alcance") in ALCANCES else "nacional"
+    return "internacional" if classif["internacional"].search(texto) else base
+
+
+def detectar_idioma(texto, padrao, classif):
+    """Conta palavras comuns de cada idioma no texto normalizado. Sem maioria
+    clara (ou com pouco texto), fica o idioma padrão da fonte."""
+    padrao = padrao if padrao in IDIOMAS else "pt"
+    palavras = re.findall(r"[a-z]+", texto)
+    contagem = sorted(((sum(1 for p in palavras if p in conj), lang)
+                       for lang, conj in classif["palavras"].items()), reverse=True)
+    if not contagem or contagem[0][0] < classif["minimo"]:
+        return padrao
+    (n1, l1), n2 = contagem[0], (contagem[1][0] if len(contagem) > 1 else 0)
+    return l1 if n1 >= classif["vantagem"] * max(n2, 1) else padrao
+
+
+def agora_utc():
+    return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+
+
+def chave_edital(fonte, titulo):
+    """Mesmo edital: mesma fonte e mesmo título sem "- Retificação", "- Alteração" etc."""
+    return (fonte, SUFIXO.sub("", norm(titulo)).strip())
+
+
 def classificar_tipo(texto, padrao_fonte=None):
     for tipo, regex in TIPOS:
         if re.search(regex, texto):
@@ -380,7 +430,10 @@ def abrir_db():
     # detalhe: versão da leitura da página do edital (ver enriquecer);
     # encerrado: 1 quando a página já traz resultado ou encerramento e não há prazo;
     # lido_em: data da última leitura da página.
-    for nome, tipo in [("detalhe", "INTEGER"), ("encerrado", "INTEGER"), ("lido_em", "TEXT")]:
+    # uf, alcance, idioma: ver fontes.yaml e classificacao.yaml;
+    # alterado_em: data e hora (UTC) em que o prazo mudou ou surgiu retificação.
+    for nome, tipo in [("detalhe", "INTEGER"), ("encerrado", "INTEGER"), ("lido_em", "TEXT"),
+                       ("uf", "TEXT"), ("alcance", "TEXT"), ("idioma", "TEXT"), ("alterado_em", "TEXT")]:
         if nome not in colunas:
             con.execute(f"ALTER TABLE oportunidades ADD COLUMN {nome} {tipo}")
     con.execute("CREATE TABLE IF NOT EXISTS fontes (nome TEXT PRIMARY KEY, falhas INTEGER)")
@@ -395,13 +448,15 @@ def registrar(con, nome, deu_certo):
     return falhas
 
 
-def enriquecer(con, areas, hosts_plone=(), limite=60):
+def enriquecer(con, areas, cfg_fontes=(), limite=60):
     """Abre a página de cada edital para achar prazo, área e se já encerrou. Se a
     página não traz o prazo, lê os PDFs de edital e retificação anexos.
     Coluna detalhe: VERSAO_LEITURA = lida pela versão atual; valores menores
     (inclusive 0 a -4, falhas) são lidos de novo. Itens abertos sem prazo são
     relidos a cada RELER_APOS_DIAS dias."""
     reler = (HOJE - dt.timedelta(days=RELER_APOS_DIAS)).isoformat()
+    plone, fontes = hosts_plone(cfg_fontes), {f["nome"]: f for f in cfg_fontes}
+    classif = carregar_classificacao()
     linhas = con.execute(
         "SELECT * FROM oportunidades WHERE (encerrado IS NULL OR encerrado = 0) "
         "AND (prazo IS NULL OR prazo >= ?) "
@@ -414,7 +469,7 @@ def enriquecer(con, areas, hosts_plone=(), limite=60):
         site = urlparse(l["link"]).netloc
         if fora.get(site, 0) >= 2:  # site recusando conexão: fica para a próxima
             continue
-        pagina = detalhar(l["link"], plone=site in hosts_plone)
+        pagina = detalhar(l["link"], plone=site in plone)
         if pagina is None:
             fora[site] = fora.get(site, 0) + 1
             con.execute("UPDATE oportunidades SET detalhe=? WHERE id=?",
@@ -432,16 +487,54 @@ def enriquecer(con, areas, hosts_plone=(), limite=60):
         novas = classificar_areas(resumo, areas)
         if novas == ["geral"]:  # a releitura não rebaixa uma área já conhecida (ex.: area_padrao)
             novas = json.loads(l["areas"]) or novas
+        fonte = fontes.get(l["fonte"], {})
+        alcance = alcance_do_item(norm(l["titulo"] + " " + l["contexto"] + " " + pagina["texto"][:1500]),
+                                  fonte, classif)
+        idioma = detectar_idioma(norm(l["titulo"] + " " + l["contexto"] + " " + pagina["texto"][:3000]),
+                                 fonte.get("idioma"), classif)
+        # "Mudou": o prazo mudou numa releitura da MESMA versão do leitor (uma
+        # versão nova do leitor relê tudo e não deve marcar mudança para todos).
+        mudou = (l["detalhe"] == VERSAO_LEITURA and l["lido_em"] and prazo and prazo != l["prazo"])
         con.execute(
             "UPDATE oportunidades SET prazo=?, areas=?, tipo=?, detalhe=?, encerrado=?, "
-            "lido_em=? WHERE id=?",
+            "lido_em=?, alcance=?, idioma=?, alterado_em=? WHERE id=?",
             (prazo, json.dumps(novas),
              classificar_tipo(norm(l["titulo"]), l["tipo"]), VERSAO_LEITURA, encerrado,
-             HOJE.isoformat(), l["id"]))
+             HOJE.isoformat(), alcance, idioma, agora_utc() if mudou else l["alterado_em"], l["id"]))
         con.commit()  # uma página por vez: uma interrupção não perde o que já foi lido
         time.sleep(0.5)
     print(f"detalhes: {lidas} páginas lidas de {len(linhas)} pendentes "
           f"({com_prazo} com prazo, {encerradas} já encerradas)")
+
+
+def marcar_retificacao(con, novo):
+    """Um item novo com o mesmo título de outro da mesma fonte (ex.: "Edital X -
+    Retificação") marca todo o grupo como alterado agora."""
+    chave = chave_edital(novo["fonte"], novo["titulo"])
+    irmaos = [l["id"] for l in con.execute("SELECT id, titulo FROM oportunidades WHERE fonte=?", (novo["fonte"],))
+              if chave_edital(novo["fonte"], l["titulo"]) == chave]
+    if len(irmaos) > 1:
+        quando = agora_utc()
+        con.executemany("UPDATE oportunidades SET alterado_em=? WHERE id=?", [(quando, i) for i in irmaos])
+
+
+def atualizar_metadados(con, cfg_fontes):
+    """Preenche uf, alcance e idioma de itens antigos (migração) e segue as
+    mudanças de uf/alcance em fontes.yaml. Um item já marcado como internacional
+    (inclusive pela página lida) continua internacional."""
+    classif, fontes = carregar_classificacao(), {f["nome"]: f for f in cfg_fontes}
+    mudancas = []
+    for l in con.execute("SELECT id, fonte, titulo, contexto, uf, alcance, idioma FROM oportunidades"):
+        fonte = fontes.get(l["fonte"], {})
+        texto = norm(l["titulo"] + " " + (l["contexto"] or ""))
+        uf = fonte.get("uf") or None
+        alcance = "internacional" if l["alcance"] == "internacional" else alcance_do_item(texto, fonte, classif)
+        idioma = l["idioma"] or detectar_idioma(texto, fonte.get("idioma"), classif)
+        if (uf, alcance, idioma) != (l["uf"], l["alcance"], l["idioma"]):
+            mudancas.append((uf, alcance, idioma, l["id"]))
+    con.executemany("UPDATE oportunidades SET uf=?, alcance=?, idioma=? WHERE id=?", mudancas)
+    con.commit()
+    return len(mudancas)
 
 
 def hosts_plone(cfg_fontes):
@@ -450,6 +543,7 @@ def hosts_plone(cfg_fontes):
 
 def coletar(cfg_fontes, areas):
     con, novos, falhas, persistentes = abrir_db(), [], [], []
+    classif = carregar_classificacao()
     for fonte in cfg_fontes:
         if not fonte.get("ativa", True):
             continue
@@ -482,18 +576,23 @@ def coletar(cfg_fontes, areas):
                 "areas": json.dumps(areas_do_item(texto, areas, fonte)),
                 "prazo": extrair_prazo(item["contexto"]),
                 "coletado_em": HOJE.isoformat(),
+                "uf": fonte.get("uf") or None,
+                "alcance": alcance_do_item(texto, fonte, classif),
+                "idioma": detectar_idioma(texto, fonte.get("idioma"), classif),
             }
             if antigo(reg["titulo"], reg["prazo"], reg["link"]):
                 continue
             cur = con.execute(
                 "INSERT OR IGNORE INTO oportunidades "
-                "(id,fonte,titulo,link,contexto,tipo,areas,prazo,coletado_em) VALUES "
-                "(:id,:fonte,:titulo,:link,:contexto,:tipo,:areas,:prazo,:coletado_em)", reg)
+                "(id,fonte,titulo,link,contexto,tipo,areas,prazo,coletado_em,uf,alcance,idioma) VALUES "
+                "(:id,:fonte,:titulo,:link,:contexto,:tipo,:areas,:prazo,:coletado_em,:uf,:alcance,:idioma)",
+                reg)
             if cur.rowcount:
                 novos.append(reg)
+                marcar_retificacao(con, reg)
         print(f"ok   {fonte['nome']}: {len(itens)} itens")
     con.commit()
-    enriquecer(con, areas, hosts_plone(cfg_fontes))
+    enriquecer(con, areas, cfg_fontes)
     for f in falhas:
         print(f"FALHA {f}", file=sys.stderr)
     SAIDA.mkdir(exist_ok=True)
@@ -510,14 +609,17 @@ def abertas(con):
         "SELECT * FROM oportunidades WHERE (prazo IS NULL OR prazo >= ?) "
         "AND (encerrado IS NULL OR encerrado = 0) "
         "ORDER BY prazo IS NULL, prazo, coletado_em DESC", (HOJE.isoformat(),))
-    unicos = {}  # retificações ("... - Alteração") contam como o mesmo edital
+    unicos, alterado = {}, {}  # retificações ("... - Alteração") contam como o mesmo edital
     for l in linhas:
         if antigo(l["titulo"], l["prazo"], l["link"]):
             continue
-        chave = (l["fonte"], SUFIXO.sub("", norm(l["titulo"])).strip())
+        chave = chave_edital(l["fonte"], l["titulo"])
         if chave not in unicos or len(l["titulo"]) < len(unicos[chave]["titulo"]):
             unicos[chave] = l
-    return [dict(l, areas=json.loads(l["areas"])) for l in unicos.values()]
+        if l["alterado_em"] and l["alterado_em"] > (alterado.get(chave) or ""):
+            alterado[chave] = l["alterado_em"]
+    return [dict(l, areas=json.loads(l["areas"]), alterado_em=alterado.get(k))
+            for k, l in unicos.items()]
 
 
 # ----------------------------------------------------------------- saídas
@@ -582,7 +684,8 @@ def gerar_site(itens, areas):
     DOCS.mkdir(exist_ok=True)
     # "id" é estável (hash do link, a chave do banco): usado pelos favoritos e
     # por oportunidade.html?id=...
-    campos = ("id", "titulo", "link", "fonte", "tipo", "areas", "prazo", "coletado_em")
+    campos = ("id", "titulo", "link", "fonte", "tipo", "areas", "prazo", "coletado_em",
+              "uf", "alcance", "idioma", "alterado_em")
     dados = json.dumps({
         "atualizado": HOJE.strftime("%d/%m/%Y"),
         "areas": {s: a["nome"] for s, a in areas.items()},
@@ -667,13 +770,15 @@ def main():
     falhas = []
     if args.comando == "detalhar":
         fontes = yaml.safe_load((RAIZ / args.fontes).read_text(encoding="utf-8"))["fontes"]
-        enriquecer(abrir_db(), areas, hosts_plone(fontes), args.limite)
+        enriquecer(abrir_db(), areas, fontes, args.limite)
     if args.comando in ("coletar", "tudo"):
         fontes = yaml.safe_load((RAIZ / args.fontes).read_text(encoding="utf-8"))["fontes"]
         novos, falhas = coletar(fontes, areas)
         avisar_telegram(novos)
     if args.comando in ("gerar", "tudo"):
-        itens = abertas(abrir_db())
+        con = abrir_db()
+        atualizar_metadados(con, yaml.safe_load((RAIZ / args.fontes).read_text(encoding="utf-8"))["fontes"])
+        itens = abertas(con)
         gerar_site(itens, areas)
         gerar_newsletter(itens, areas, args.perfil, escolhidas)
     # Falha passageira não gera aviso. Só termina com erro (e o GitHub avisa por
