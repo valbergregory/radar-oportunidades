@@ -447,3 +447,11 @@ fieldset.academicos legend { padding:0; margin-bottom:8px; font-weight:700; colo
 .dialogo-sugestao textarea { width:100%; padding:8px 12px; border:1px solid var(--campo); border-radius:12px;
                              background:var(--cartao); color:var(--texto); font:inherit; font-weight:400; resize:vertical; }
 .sugestao-status { margin:0; }
+.sugestao-topo { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.sugestao-fechar { flex:none; width:40px; height:40px; border:0; border-radius:999px; background:var(--sem-fundo);
+                   color:var(--texto); font-size:1.5rem; line-height:1; cursor:pointer; }
+.sugestao-fechar:focus-visible { outline:3px solid var(--foco); outline-offset:2px; }
+/* Notas 1 a 5 numa linha só, também no celular */
+.chips-escolha.notas { flex-wrap:nowrap; }
+.chips-escolha.notas .chip-check { flex:1 1 0; justify-content:center; padding-left:8px; padding-right:8px; min-width:0; }
+.dialogo-sugestao .acoes { position:sticky; bottom:-20px; background:var(--cartao); padding:10px 0 4px; }
