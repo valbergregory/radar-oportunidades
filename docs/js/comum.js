@@ -108,10 +108,17 @@ window.RC = (() => {
     try { return await tarefa(); } finally { botao.disabled = false; }
   }
 
-  async function dados() {
-    const r = await fetch("dados.json", { cache: "no-cache" });
-    if (!r.ok) throw new Error("dados.json: HTTP " + r.status);
-    return r.json();
+  // Uma única leitura por página: as abas e a lista reaproveitam a mesma (só leitura).
+  let dadosPendente = null;
+  function dados() {
+    if (!dadosPendente) {
+      dadosPendente = fetch("dados.json", { cache: "no-cache" }).then(r => {
+        if (!r.ok) throw new Error("dados.json: HTTP " + r.status);
+        return r.json();
+      });
+      dadosPendente.catch(() => { dadosPendente = null; });  // falhou: a próxima chamada tenta de novo
+    }
+    return dadosPendente;
   }
 
   // O index aplica as preferências da conta aos filtros quando elas mudam.
@@ -214,7 +221,7 @@ window.RC = (() => {
                        texto: "Opcionais. Ajudam a entender quem usa o Radar e a sugerir oportunidades melhores." })))),
       el("div", { class: "grade-campos" },
         el("label", { class: "campo" }, opc("Maior titulação"), tit),
-        el("label", { class: "campo" }, opc("Instituição a que é vinculado(a)"),
+        el("label", { class: "campo" }, opc("Instituição de vínculo"),
            el("input", { name: "instituicao", value: p.instituicao || "", maxlength: "120", autocomplete: "organization",
                          placeholder: "Ex.: Universidade Federal de Alagoas" }))),
       el("div", { class: "grade-campos" }, ...externos));

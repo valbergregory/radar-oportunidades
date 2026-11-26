@@ -325,6 +325,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     await p.reload(); await p.waitForSelector("#acompanhar"); await p.waitForTimeout(400);
     ok(await p.locator(".selo-mudou").count() === 0, "oportunidade: depois de visto, o selo some");
     await p.goto(SITE + "conta.html?aba=acompanhando"); await p.waitForSelector(".lista-acompanhando li");
+    ok(await p.getAttribute("#painel .form", "aria-busy") === null, "conta/acompanhando: sai do estado \"carregando\" quando a lista chega");
     ok(!/\bnull\b/.test(await p.textContent("#painel")), "conta/acompanhando: nenhum texto \"null\" solto");
     ok(await p.isVisible("text=Outros favoritos") && await p.locator("button:has-text('Adicionar à agenda')").count() === 1,
        "conta/acompanhando: lista com agenda e outros favoritos");
@@ -341,6 +342,12 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     ok(await p.inputValue("select[name=uf]") === "AL" && await p.inputValue("#campo-lattes") === "http://lattes.cnpq.br/1234567890123456" &&
        await p.getAttribute("#dica-orcid a", "href") === "https://orcid.org/0000-0002-1825-0097",
        "conta/perfil: mostra estado e perfis acadêmicos, com link para abrir");
+    ok(await p.evaluate(() => {
+      const h = [...document.querySelectorAll("#painel select, #painel input[name=nome_exibicao], #painel input[name=instituicao]")]
+        .map(e => Math.round(e.getBoundingClientRect().height));
+      const t = document.querySelector("#titulacao").getBoundingClientRect(), i = document.querySelector("input[name=instituicao]").getBoundingClientRect();
+      return new Set(h).size === 1 && (innerWidth < 900 || Math.abs(t.top - i.top) < 2);
+    }), "conta/perfil: seletores e caixas com a mesma altura, colunas alinhadas");
     await p.fill("#campo-linkedin", ""); await p.selectOption("#titulacao", "doutorado");
     await p.locator("#grupo-vinculos label.chip-check", { hasText: "Pesquisador(a)" }).click();
     await p.click("text=Salvar alterações"); await espera(p, "Dados salvos.");
@@ -469,7 +476,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
         for (const n of await caches.keys()) for (const k of await (await caches.open(n)).keys()) r.push(new URL(k.url).pathname);
         return { nomes: await caches.keys(), r };
       });
-      ok(guardadas.nomes.includes("radar-v9"), "service worker: cache na versão radar-v9");
+      ok(guardadas.nomes.includes("radar-v10"), "service worker: cache na versão radar-v10");
       ok(!guardadas.r.some(u => /(entrar|cadastro|personalizar|conta)\.html|vendor\/|conta-index|acompanhar\.js/.test(u)) &&
          !guardadas.r.some(u => /googleapis|identitytoolkit/.test(u)),
          "service worker: nada de conta nem do Firebase no cache");
