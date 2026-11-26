@@ -55,8 +55,9 @@ consentimento separado e datado. A pessoa baixa os próprios dados (JSON) e
 exclui a conta sozinha, na hora. Perfis e favoritos ficam no Cloud Firestore,
 em São Paulo, protegidos por `firestore.rules`.
 
-As contas vêm **desligadas** enquanto a `apiKey` de `docs/conta-config.js`
-estiver vazia. O passo a passo para ativar está em `CONTAS.md`. As páginas de
+As contas estão ligadas (`apiKey` preenchida em `docs/conta-config.js`). Com a
+`apiKey` vazia, elas se desligam e o site funciona sem contas. A configuração do
+Firebase e a rotina estão em `CONTAS.md`. As páginas de
 conta, `docs/privacidade.html` e `docs/termos.html` são estáticas; só
 `index.html`, `dados.json` e `prazos.ics` são gerados pelo `radar.py`.
 

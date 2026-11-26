@@ -4,9 +4,10 @@ O site é aberto a todos. As contas usam **Firebase Authentication** (e-mail e
 senha, ou link por e-mail) e **Cloud Firestore** (perfil e favoritos), no plano
 gratuito (Spark), sem Analytics, Hosting nem Cloud Functions.
 
-As contas ficam **desligadas enquanto a `apiKey` de `docs/conta-config.js`
-estiver vazia** (ou se o arquivo não existir). Nesse caso não aparece
-"Entrar", o SDK do Firebase nem é baixado e nenhum dado pessoal é coletado.
+As contas estão **ligadas**. Elas ficam desligadas sempre que a `apiKey` de
+`docs/conta-config.js` estiver vazia (ou se o arquivo não existir): nesse caso
+não aparece "Entrar", o SDK do Firebase nem é baixado e nenhum dado pessoal é
+coletado.
 
 ## Arquivos
 
@@ -34,40 +35,59 @@ estiver vazia** (ou se o arquivo não existir). Nesse caso não aparece
   (16 caracteres hexadecimais, o mesmo de `dados.json`).
 - O **e-mail não é gravado no Firestore**: ele fica só no Authentication.
 
-## Passos no console do Firebase
+## Estado da configuração (projeto `radar-oportunidades-88442`, novembro de 2026)
 
-1. **Regras** (depois de revisar `firestore.rules`): *Firestore Database →
-   Regras*. Cole todo o conteúdo do arquivo e clique em **Publicar**. Antes
-   disso o banco nega tudo, e as contas não conseguem gravar o perfil.
-2. **Ligar as contas no site:** cole a `apiKey` na **linha 11** de
-   `docs/conta-config.js` e preencha `controlador` (seu nome e um e-mail de
-   contato, que aparecem na política). Faça commit.
-3. **Modelos de e-mail:** em *Authentication → Templates*, ajuste o idioma para
-   português e revise o texto de *Verificação de endereço de e-mail*,
-   *Redefinição de senha* e *Login por link de e-mail*, se essa opção aparecer.
-   O remetente padrão é `noreply@radar-oportunidades-88442.firebaseapp.com`.
-4. **Política de senha:** em *Authentication → Configurações → Política de
-   senha*, exija no mínimo **8 caracteres** com letras e números (o site já
-   confere isso, e o servidor passa a conferir também).
-5. **Proteção contra enumeração de e-mail:** em *Authentication →
-   Configurações → Ações do usuário*, deixe ligada. O site já dá a mesma
-   resposta para e-mails com e sem conta no link e na recuperação de senha.
-6. **Domínios autorizados:** confira em *Authentication → Configurações →
-   Domínios autorizados* que `valbergregory.github.io` está na lista.
-7. **Restringir a chave da API (recomendado):** no Google Cloud Console, em
-   *APIs e serviços → Credenciais → Browser key*, limite os referenciadores
-   HTTP a `https://valbergregory.github.io/*`. A chave da Web é pública por
-   natureza, mas isso evita uso dela fora do site.
-8. **Revisar a política:** leia `docs/privacidade.html` e `docs/termos.html`.
-   O texto é um modelo: revise com quem entende de LGPD antes de divulgar. Ao
-   mudar esses textos, aumente `versaoTermos` em `conta-config.js`: quem já tem
-   conta terá de aceitar a nova versão.
+| Item | Onde | Estado |
+|---|---|---|
+| Regras do Firestore | *Firestore Database → Regras* | **Publicadas**, iguais a `firestore.rules` |
+| Contas no site | `docs/conta-config.js` | **Ligadas**: `apiKey` e `controlador` preenchidos |
+| Modelos de e-mail | *Authentication → Templates* | **Em português** (verificação, redefinição de senha e login por link) |
+| Política de senha | *Authentication → Configurações → Política de senha* | Mínimo de **8 caracteres** e **número obrigatório**, em modo **aplicação exigida** (ver nota abaixo) |
+| Proteção contra enumeração de e-mail | *Authentication → Configurações → Ações do usuário* | **Ligada** |
+| Domínios autorizados | *Authentication → Configurações → Domínios autorizados* | Inclui `valbergregory.github.io` |
+| Restrição da chave da Web | Google Cloud Console → *APIs e serviços → Credenciais* → chave do navegador | Referenciadores HTTP: `https://valbergregory.github.io/*` e `https://radar-oportunidades-88442.firebaseapp.com/*` |
+
+**Nota sobre a senha:** o console não permite exigir "qualquer letra" (só
+maiúsculas ou minúsculas separadamente). Por isso a regra "letras e números"
+fica dividida:
+- o **servidor** (Firebase) exige 8 caracteres e pelo menos um número, e
+  recusa senhas fora disso mesmo que alguém pule o site;
+- o **site** (`cadastro.html` e a troca de senha em `conta.html`) exige também
+  pelo menos uma letra. Uma senha só com números passaria pelo servidor se
+  alguém chamasse a API diretamente, sem o site.
+
+**Por que dois referenciadores na chave:** `valbergregory.github.io` é o site.
+`radar-oportunidades-88442.firebaseapp.com` é o domínio de autenticação do
+Firebase (`authDomain`), que hospeda as páginas de ação dos e-mails
+(verificação, redefinição de senha e login por link) e usa a mesma chave.
+Sem ele, esses links deixam de funcionar.
+
+### Se precisar refazer ou mudar algo
+
+- **Regras:** altere `firestore.rules` por pull request, rode
+  `npm run regras` (abaixo) e só depois cole o arquivo em *Firestore Database →
+  Regras → Publicar*. O console não lê o repositório: publicar é sempre manual.
+- **Desligar as contas** (por exemplo, numa emergência): deixe `apiKey: ""`
+  na linha 11 de `docs/conta-config.js` e faça commit. O site volta a funcionar
+  sem contas; os dados já gravados continuam no Firebase.
+- **Novo domínio para o site:** acrescente-o em *Domínios autorizados* e nos
+  referenciadores da chave.
+- **Textos legais:** ao mudar `docs/privacidade.html` ou `docs/termos.html`,
+  aumente `versaoTermos` em `conta-config.js`: quem já tem conta terá de aceitar
+  a nova versão. O texto é um modelo; revise com quem entende de LGPD.
 
 Nunca coloque no repositório chaves de conta de serviço (arquivos JSON com
 `private_key`). O site não precisa delas, e o teste `tests/test_site.py`
 falha se encontrar uma em `conta-config.js`.
 
 ## Rotina
+
+- **Coleta local (`rodar-local.bat`):** só regrava `docs/index.html`,
+  `docs/dados.json` e `docs/prazos.ics` (além de `dados/` e `saida/`). Os
+  arquivos das contas (`conta-config.js`, páginas de conta, `js/`, `vendor/`,
+  `sw.js`) não são tocados. Atenção: o `.bat` faz `git add -A docs`, então
+  qualquer edição local que você tenha feito em `docs/` também vai no commit
+  "Radar: coleta local".
 
 - **Pedidos por e-mail:** quase tudo o titular faz sozinho em *Minha conta*
   (baixar dados, corrigir, retirar a newsletter, excluir). Se alguém pedir por
