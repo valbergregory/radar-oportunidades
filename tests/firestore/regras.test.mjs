@@ -43,7 +43,7 @@ await negado("área que não é texto (nulo)", setDoc(doc(ana, "perfis/ana"), pe
 await negado("área com vírgula", setDoc(doc(ana, "perfis/ana"), perfilNovo({ areas: ["economia,direito"] })));
 await negado("área que não é texto (objeto)", setDoc(doc(ana, "perfis/ana"), perfilNovo({ areas: [{ a: 1 }] })));
 await negado("áreas somando mais de 800 caracteres", setDoc(doc(ana, "perfis/ana"), perfilNovo({ areas: Array(5).fill("x".repeat(200)) })));
-await negado("tipo inválido", setDoc(doc(ana, "perfis/ana"), perfilNovo({ tipos: ["estagio"] })));
+await negado("tipo inválido", setDoc(doc(ana, "perfis/ana"), perfilNovo({ tipos: ["freelance"] })));
 await negado("frequência inválida", setDoc(doc(ana, "perfis/ana"), perfilNovo({ frequencia: "horaria" })));
 await negado("canal inválido (telegram)", setDoc(doc(ana, "perfis/ana"), perfilNovo({ canais: ["telegram"] })));
 await negado("vínculo inválido", setDoc(doc(ana, "perfis/ana"), perfilNovo({ vinculo: "chefe" })));
@@ -68,6 +68,26 @@ await permitido("alterar preferências", updateDoc(doc(ana, "perfis/ana"),
   { areas: ["economia", "direito"], frequencia: "diario", atualizado_em: serverTimestamp() }));
 await permitido("tipo novo: competições e prêmios", updateDoc(doc(ana, "perfis/ana"),
   { tipos: ["competicao", "evento"], atualizado_em: serverTimestamp() }));
+// ---- campos novos do perfil (o perfil de ana foi criado no formato antigo, sem eles)
+await permitido("perfil antigo (sem campos novos) continua alterável", updateDoc(doc(ana, "perfis/ana"),
+  { nome_exibicao: "Ana Maria", atualizado_em: serverTimestamp() }));
+await permitido("tipos estágio e emprego", updateDoc(doc(ana, "perfis/ana"),
+  { tipos: ["estagio", "emprego"], atualizado_em: serverTimestamp() }));
+await permitido("uf, alcances, idiomas e sugestão", updateDoc(doc(ana, "perfis/ana"),
+  { uf: "AL", alcances: ["estadual", "regional", "nacional"], idiomas: ["pt", "en"], sugestao_aplicada: "1",
+    atualizado_em: serverTimestamp() }));
+await permitido("uf e vínculo 'prefiro não informar'", updateDoc(doc(ana, "perfis/ana"),
+  { uf: "nao-informado", vinculo: "nao-informado", atualizado_em: serverTimestamp() }));
+await negado("uf inválida", updateDoc(doc(ana, "perfis/ana"), { uf: "XX", atualizado_em: serverTimestamp() }));
+await negado("uf minúscula", updateDoc(doc(ana, "perfis/ana"), { uf: "al", atualizado_em: serverTimestamp() }));
+await negado("alcance inválido", updateDoc(doc(ana, "perfis/ana"), { alcances: ["mundial"], atualizado_em: serverTimestamp() }));
+await negado("mais de 4 alcances", updateDoc(doc(ana, "perfis/ana"),
+  { alcances: ["estadual", "regional", "nacional", "internacional", "estadual"], atualizado_em: serverTimestamp() }));
+await negado("idioma inválido", updateDoc(doc(ana, "perfis/ana"), { idiomas: ["fr"], atualizado_em: serverTimestamp() }));
+await negado("idiomas que não são lista", updateDoc(doc(ana, "perfis/ana"), { idiomas: "pt", atualizado_em: serverTimestamp() }));
+await negado("sugestão com mais de 20 caracteres", updateDoc(doc(ana, "perfis/ana"),
+  { sugestao_aplicada: "x".repeat(21), atualizado_em: serverTimestamp() }));
+await negado("tipo fora da lista", updateDoc(doc(ana, "perfis/ana"), { tipos: ["freelance"], atualizado_em: serverTimestamp() }));
 await permitido("20 áreas de até 30 caracteres (620 no total)", updateDoc(doc(ana, "perfis/ana"),
   { areas: Array.from({ length: 20 }, (_, i) => String(i).padStart(30, "a")), atualizado_em: serverTimestamp() }));
 await negado("alterar áreas para mais de 800 caracteres", updateDoc(doc(ana, "perfis/ana"),
@@ -105,7 +125,18 @@ for (const [nome, id] of [["id curto", "abc"], ["id com 17 caracteres", "0123456
   await negado("favorito com " + nome, setDoc(doc(ana, "perfis/ana/favoritos/" + id), { criado_em: serverTimestamp() }));
 }
 await permitido("favorito com id do Radar (16 hexadecimais)", setDoc(doc(ana, "perfis/ana/favoritos/0123456789abcdef"), { criado_em: serverTimestamp() }));
-await negado("alterar favorito existente", setDoc(doc(ana, "perfis/ana/favoritos/c931541578c0f7f4"), { criado_em: serverTimestamp() }));
+await negado("trocar criado_em de um favorito", updateDoc(doc(ana, "perfis/ana/favoritos/c931541578c0f7f4"), { criado_em: serverTimestamp() }));
+// ---- acompanhar
+await permitido("ligar acompanhar", updateDoc(doc(ana, "perfis/ana/favoritos/c931541578c0f7f4"), { acompanhar: true }));
+await permitido("registrar visto_em do servidor", updateDoc(doc(ana, "perfis/ana/favoritos/c931541578c0f7f4"), { visto_em: serverTimestamp() }));
+await negado("visto_em forjado", updateDoc(doc(ana, "perfis/ana/favoritos/c931541578c0f7f4"), { visto_em: Timestamp.fromDate(new Date(2030, 0, 1)) }));
+await negado("acompanhar que não é booleano", updateDoc(doc(ana, "perfis/ana/favoritos/c931541578c0f7f4"), { acompanhar: "sim" }));
+await negado("campo extra no favorito ao alterar", updateDoc(doc(ana, "perfis/ana/favoritos/c931541578c0f7f4"), { nota: "x" }));
+await negado("outra pessoa ligar acompanhar", updateDoc(doc(beto, "perfis/ana/favoritos/c931541578c0f7f4"), { acompanhar: false }));
+await permitido("criar favorito já acompanhado e visto", setDoc(doc(ana, "perfis/ana/favoritos/fedcba9876543210"),
+  { criado_em: serverTimestamp(), acompanhar: true, visto_em: serverTimestamp() }));
+await negado("criar favorito com visto_em forjado", setDoc(doc(ana, "perfis/ana/favoritos/0000000000000001"),
+  { criado_em: serverTimestamp(), visto_em: Timestamp.now() }));
 await negado("criar favorito para outra pessoa", setDoc(doc(beto, "perfis/ana/favoritos/xyz"), { criado_em: serverTimestamp() }));
 await permitido("listar os próprios favoritos", getDocs(collection(ana, "perfis/ana/favoritos")));
 await negado("listar favoritos de outra pessoa", getDocs(collection(beto, "perfis/ana/favoritos")));
