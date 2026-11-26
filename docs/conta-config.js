@@ -8,7 +8,7 @@
 // NUNCA coloque aqui chaves de conta de serviço (arquivos JSON com private_key).
 window.RADAR_CONTA = {
   firebase: {
-    apiKey: "",
+    apiKey: "AIzaSyCwQuDFZc5sVkcAZZVYH8LHC-CAk5Ow3_I",
     authDomain: "radar-oportunidades-88442.firebaseapp.com",
     projectId: "radar-oportunidades-88442",
     storageBucket: "radar-oportunidades-88442.firebasestorage.app",
@@ -17,7 +17,7 @@ window.RADAR_CONTA = {
   },
   // Controlador dos dados (LGPD): quem responde pelos pedidos dos titulares.
   // Aparece na política de privacidade. Recomendado preencher antes de divulgar.
-  controlador: { nome: "", email: "" },
+  controlador: { nome: "Valber Gregory Barbosa Costa Bezerra Santos", email: "valber.gregory@gmail.com" },
   // Mude quando alterar termos.html ou privacidade.html: quem tem conta será
   // convidado a aceitar a nova versão.
   versaoTermos: "2026-11-25",
