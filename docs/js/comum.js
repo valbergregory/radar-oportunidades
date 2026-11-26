@@ -128,3 +128,54 @@ document.addEventListener("click", ev => {
   b.setAttribute("aria-label", mostrar ? "Esconder senha" : "Mostrar senha");
   b.innerHTML = mostrar ? window.RC.I.olhoFechado : window.RC.I.olho;
 });
+
+// Validação acessível: em vez do balão do navegador (que some e não é lido por
+// todos os leitores de tela), mostra a mensagem fixa abaixo do campo, liga-a ao
+// campo (aria-describedby, aria-invalid) e põe o foco no primeiro campo com erro.
+(() => {
+  let focado = null;
+  function mensagemDoCampo(c) {
+    const v = c.validity;
+    if (v.valueMissing) return c.type === "checkbox" ? "Marque esta opção para continuar." : "Preencha este campo.";
+    if (v.typeMismatch && c.type === "email") return "Digite um e-mail válido, como nome@exemplo.com.";
+    if (v.tooShort) return `Use pelo menos ${c.minLength} caracteres.`;
+    if (v.patternMismatch) return "Confira o formato do que foi digitado.";
+    return c.validationMessage || "Confira este campo.";
+  }
+  function lugarDaMensagem(c) {
+    return c.closest(".senha") || (c.type === "checkbox" ? c.closest("label") : c);
+  }
+  function limpar(c) {
+    c.removeAttribute("aria-invalid");
+    const id = c.dataset.erroId, m = id && document.getElementById(id);
+    if (m) m.remove();
+    if (id) {
+      c.setAttribute("aria-describedby", (c.getAttribute("aria-describedby") || "").replace(id, "").trim());
+      if (!c.getAttribute("aria-describedby")) c.removeAttribute("aria-describedby");
+      delete c.dataset.erroId;
+    }
+  }
+  document.addEventListener("invalid", ev => {
+    const c = ev.target;
+    if (!(c instanceof HTMLElement) || !c.closest("form")) return;
+    ev.preventDefault();  // sem o balão nativo
+    limpar(c);
+    const id = "erro-" + Math.random().toString(36).slice(2, 9);
+    const m = document.createElement("p");
+    m.className = "erro-campo"; m.id = id; m.textContent = mensagemDoCampo(c);
+    lugarDaMensagem(c).after(m);
+    c.setAttribute("aria-invalid", "true");
+    c.dataset.erroId = id;
+    c.setAttribute("aria-describedby", ((c.getAttribute("aria-describedby") || "") + " " + id).trim());
+    if (!focado) { focado = c; c.focus(); setTimeout(() => { focado = null; }, 0); }
+  }, true);
+  // Reconfere logo depois de cada tecla, quando as regras da página (ex.: "as
+  // senhas não conferem") já foram atualizadas: a mensagem some enquanto a pessoa
+  // digita. Esperar o "change" (ao sair do campo) faria a página pular no meio do
+  // clique seguinte, que cairia no lugar errado.
+  const reconferir = c => setTimeout(() => { if (c.dataset && c.dataset.erroId && c.checkValidity()) limpar(c); }, 0);
+  document.addEventListener("input", ev => reconferir(ev.target), true);
+  document.addEventListener("change", ev => {
+    if (/^(checkbox|radio|select-one|select-multiple)$/.test(ev.target.type)) reconferir(ev.target);
+  }, true);
+})();

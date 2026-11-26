@@ -7,10 +7,10 @@
 //   Sem internet, essas páginas mostram um aviso.
 // - Chamadas ao Firebase (googleapis.com e afins), editais e prazos.ics: outros
 //   domínios ou arquivos não interceptados, logo nunca vão para o cache.
-const VERSAO = "radar-v5";
+const VERSAO = "radar-v6";
 const APP = ["./", "./index.html", "./dados.json", "./manifest.webmanifest", "./estilo.css",
-             "./oportunidade.html", "./privacidade.html", "./termos.html", "./conta-config.js",
-             "./js/comum.js", "./js/firebase.js", "./js/oportunidade.js", "./js/legal.js",
+             "./oportunidade.html", "./calendario.html", "./privacidade.html", "./termos.html", "./conta-config.js",
+             "./js/comum.js", "./js/firebase.js", "./js/oportunidade.js", "./js/calendario.js", "./js/legal.js",
              "./icones/icone.svg", "./icones/icone-192.png", "./icones/icone-512.png"];
 const SO_REDE = /\/(entrar|cadastro|personalizar|conta)\.html$|\/js\/(entrar|cadastro|personalizar|conta|conta-index)\.js$|\/vendor\//;
 
