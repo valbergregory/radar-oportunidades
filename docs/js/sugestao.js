@@ -30,7 +30,7 @@
   // ---- faixa no topo
   const abrir = criar("button", { type: "button", class: "faixa-botao", "aria-haspopup": "dialog", texto: "Dar sugestão" });
   const faixa = criar("div", { class: "faixa-testes", role: "region", "aria-label": "Versão de testes" },
-    criar("span", { texto: "Versão de testes: sua opinião ajuda a melhorar o Radar." }), abrir);
+    criar("span", { texto: "Versão de testes (nome provisório). Novas fontes toda semana. Sua opinião ajuda a melhorar o Radar." }), abrir);
   document.body.prepend(faixa);
 
   // ---- formulário (diálogo)
