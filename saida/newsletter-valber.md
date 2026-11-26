@@ -1,4 +1,4 @@
-# Radar de Oportunidades, edição de 25/11/2026
+# Radar de Oportunidades, edição de 26/11/2026
 
 Áreas desta edição: Administração pública, Economia, Direito, Sistemas de informação.
 
@@ -36,8 +36,6 @@
   https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-31-2026/chamada-publica-cnpq-N-31-2026
 - **Chamada Pública para Envio de Proposta de Curso Novo - Edital nº 20/2026** (CAPES, 18/12/2026)  
   https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2844920.pdf/@@display-file/file
-- **Chamada Pública CNPq/MCTI N° 36/2026 - Apoio a cursos de curta duração em biodiversidade, no âmbito do Centro Franco-Brasileiro de Biodiversidade Amazônica (CFBBA)** (CNPq, 12/02/2027)  
-  https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-36-2026/chamada-publica-cnpq-N-36-2026
 - **Chamada CNPq/MIR Nº 23/2026 - Programa Lélia Gonzalez de fomento a pesquisas sobre desigualdades étnico-raciais na ciência, na educação e na sociedade brasileiras** (CNPq, 01/03/2027)  
   https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-23-2026/chamada-publica-cnpq-N-23-2026
 - **Chamada Pública MCTI/CNPq/CISB/SAAB AB Nº 37/2026 - Cooperação Brasil-Suécia** (CNPq, 12/03/2027)  
@@ -64,3 +62,28 @@
 
 - **Chamada Pública CNPq/CAPES Nº 30/2026 – Programa de Mestrado e Doutorado Acadêmico para Inovação – MAI/DAI** (CNPq, 11/12/2026)  
   https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-30-2026/chamada-publica-cnpq-N-30-2026
+- **PPGE-FEARP/USP - Processo seletivo de doutorado direto - turma 2027 Confira o edital** (ANPEC, prazo não identificado)  
+  https://www.fearp.usp.br/images/academico/ppge/ppge_editalprocessoseletivodd_2027_doe.pdf
+- **PPGE-FEARP/USP - Processo seletivo de doutorado - turma 2027 Confira o edital** (ANPEC, prazo não identificado)  
+  https://www.fearp.usp.br/images/academico/ppge/ppge_editalprocessoseletivodo_2027_doe.pdf
+
+## Congressos e eventos (novidades)
+
+- **65º Congresso da SOBER será realizado em Viçosa (MG), de 25 a 29 de julho de 2027** (SOBER, 01/02/2027)  
+  https://sober.org.br/noticias/65o-congresso-da-sober-sera-realizado-em-vicosa-mg-de-25-a-29-de-julho-de-2027/
+- **54° Encontro Nacional de Economia** (ANPEC (encontros), prazo não identificado)  
+  https://en.anpec.org.br
+- **XXIX Encontro de Economia da Região Sul** (ANPEC (encontros), prazo não identificado)  
+  https://www.anpec.org.br/novosite/br/xxix-encontro-de-economia-da-regiao-sul
+- **XXXI Encontro Regional de Economia** (ANPEC (encontros), prazo não identificado)  
+  https://www.anpec.org.br/novosite/br/xxxi-encontro-regional-de-economia
+
+## Concursos e vagas (novidades)
+
+- **DAE/FCE/UERJ - Processo Seletivo Simplificado – Professor Substituto Confira o edital** (ANPEC, prazo não identificado)  
+  https://sites.google.com/view/concursodocentedaefce/edital
+
+## Competições e prêmios (novidades)
+
+- **Prêmio CAPES de Tese** (CAPES, prazo não identificado)  
+  https://www.gov.br/capes/pt-br/assuntos/premios/premio-capes-de-tese
