@@ -1,4 +1,5 @@
-// cadastro.html: cria a conta (só e-mail e senha obrigatórios), grava o perfil
+// cadastro.html: cria a conta (obrigatórios: e-mail, senha, "Você é" e estado, com
+// "Prefiro não informar" nos dois últimos), grava o perfil
 // com o aceite e envia o e-mail de verificação.
 import * as FB from "./firebase.js";
 const RC = window.RC, $ = id => document.getElementById(id);

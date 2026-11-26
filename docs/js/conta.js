@@ -240,7 +240,8 @@ async function principal() {
     if (precisaAceitar) partes.push(blocoAceite());
     partes.push(el("p", { class: "caixa-info", html: RC.I.escudo },
       el("span", {}, "Seguimos o princípio da ", el("strong", { texto: "minimização de dados" }),
-         ": só o e-mail é obrigatório. Os dados da conta ficam no Firebase (Google), com o banco de dados em São Paulo.")));
+         ": são obrigatórios só o e-mail, o que você é e seu estado, e nos dois últimos vale \u201cPrefiro não informar\u201d. " +
+         "Os dados da conta ficam no Firebase (Google), com o banco de dados em São Paulo.")));
     if (p) {
       const salvar = el("button", { type: "submit", class: "botao botao-primario", html: RC.I.check + "Atualizar consentimentos" });
       const consent = el("form", { class: "form" },
