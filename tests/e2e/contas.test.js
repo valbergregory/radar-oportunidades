@@ -18,7 +18,7 @@ const DONO = { Authorization: "Bearer owner" };  // emulador: acesso de administ
 let falhas = 0;
 const ok = (cond, msg) => { console.log((cond ? "ok   - " : "FALHA - ") + msg); if (!cond) falhas++; };
 
-const configJs = (versao = "2026-11-26") => `window.RADAR_CONTA = {
+const configJs = (versao = "2026-11-26.2") => `window.RADAR_CONTA = {
   firebase: { apiKey: "chave-de-teste", authDomain: "${PROJETO}.firebaseapp.com", projectId: "${PROJETO}",
               storageBucket: "", messagingSenderId: "1", appId: "1:1:web:1" },
   controlador: { nome: "Pessoa Responsável", email: "contato@exemplo.invalid" },
@@ -199,12 +199,31 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     await p.locator("label.chip-check", { hasText: "Bolsas" }).click();
     await p.check("input[name=termos]");
     await p.click("#botao-criar"); await p.waitForTimeout(400);
-    ok((await usuarios()).length === 0 && await p.getAttribute("#vinculo", "aria-invalid") === "true",
-       "cadastro: \"Você é\" e \"Seu estado\" são obrigatórios");
-    ok((await p.$$eval("#vinculo option, #uf option", l => l.map(o => o.textContent))).filter(t => t === "Prefiro não informar").length === 2,
+    ok((await usuarios()).length === 0 && await p.getAttribute("#grupo-vinculos input", "aria-invalid") === "true" &&
+       (await p.textContent("#grupo-vinculos + .erro-campo")).includes("Escolha ao menos uma opção") &&
+       await p.getAttribute("#uf", "aria-invalid") === "true",
+       "cadastro: \"Você é\" e \"Seu estado\" são obrigatórios, com aviso abaixo do grupo");
+    ok(await p.locator("#grupo-vinculos label", { hasText: "Prefiro não informar" }).count() === 1 &&
+       await p.locator("#uf option", { hasText: "Prefiro não informar" }).count() === 1,
        "cadastro: os dois têm \"Prefiro não informar\"");
-    await p.selectOption("#vinculo", "docente");
+    // mais de uma opção; "Prefiro não informar" desmarca as outras e vice-versa
+    const vinc = t => p.locator("#grupo-vinculos label.chip-check", { hasText: t });
+    await vinc("Prefiro não informar").click(); await vinc("Docente").click();
+    ok(!(await p.isChecked("#grupo-vinculos input[value=nao-informado]")), "cadastro: marcar um vínculo desmarca \"Prefiro não informar\"");
+    await vinc("Estudante de pós-graduação").click();
+    ok((await p.$$eval("#grupo-vinculos input:checked", l => l.map(c => c.value))).join() === "estudante-pos,docente" &&
+       await p.locator("#grupo-vinculos + .erro-campo").count() === 0, "cadastro: dá para ser mais de uma coisa (pós e docente)");
     await p.selectOption("#uf", "AL");
+    // formação e perfis acadêmicos (opcionais), aceitando endereço ou identificador
+    await p.selectOption("#titulacao", "mestrado");
+    await p.fill("input[name=instituicao]", "Universidade Federal de Alagoas");
+    await p.fill("#campo-orcid", "0000-0002-1825-0098");
+    await p.click("#botao-criar"); await p.waitForTimeout(400);
+    ok((await usuarios()).length === 0 && (await p.textContent("#campo-orcid ~ .erro-campo, .erro-campo")).includes("ORCID inválido"),
+       "cadastro: ORCID com dígito verificador errado é recusado");
+    await p.fill("#campo-orcid", "https://orcid.org/0000-0002-1825-0097");
+    await p.fill("#campo-lattes", "http://lattes.cnpq.br/1234567890123456");
+    await p.fill("#campo-linkedin", "https://www.linkedin.com/in/pessoa-teste/");
     await p.fill("input[name=nome_exibicao]", "Pessoa");
     await p.check("input[name=termos]");
     await p.click("#botao-criar");
@@ -213,8 +232,12 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     ok(user && user.email === "pessoa@exemplo.invalid", "cadastro: conta criada no Authentication");
     const uid = user.localId;
     let pf = await perfil(uid);
-    ok(pf && valor(pf.vinculo) === "docente" && valor(pf.uf) === "AL" && valor(pf.areas).join() === "economia" && valor(pf.tipos).join() === "bolsa" &&
-       valor(pf.quer_newsletter) === false && valor(pf.newsletter_em) === null && valor(pf.termos_versao) === "2026-11-26" &&
+    ok(valor(pf.vinculos).join() === "estudante-pos,docente" && valor(pf.titulacao) === "mestrado" &&
+       valor(pf.instituicao) === "Universidade Federal de Alagoas" && valor(pf.orcid) === "0000-0002-1825-0097" &&
+       valor(pf.lattes) === "1234567890123456" && valor(pf.linkedin) === "pessoa-teste",
+       "cadastro: vínculos, titulação, instituição e identificadores ORCID/Lattes/LinkedIn normalizados");
+    ok(pf && valor(pf.vinculo) === "estudante-pos" && valor(pf.uf) === "AL" && valor(pf.areas).join() === "economia" && valor(pf.tipos).join() === "bolsa" &&
+       valor(pf.quer_newsletter) === false && valor(pf.newsletter_em) === null && valor(pf.termos_versao) === "2026-11-26.2" &&
        !!valor(pf.consentimento_em), "cadastro: perfil gravado com aceite datado e newsletter desligada");
     ok(!JSON.stringify(pf).includes("exemplo.invalid"), "cadastro: e-mail não vai para o Firestore");
     ok((await codigos("VERIFY_EMAIL", "pessoa@exemplo.invalid")).length === 1, "cadastro: e-mail de verificação enviado");
@@ -230,7 +253,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     await p.locator("label.chip-check", { hasText: "Inglês" }).click();
     ok(await marcadosEm("idioma") === "pt", "personalizar: dá para alterar a sugestão");
     await p.click("#restaurar-sugestao");
-    ok(await marcadosEm("idioma") === "pt,en" && await marcadosEm("tipo") === "fomento,bolsa,evento",
+    ok(await marcadosEm("idioma") === "pt,en" && await marcadosEm("tipo") === "fomento,bolsa,pos-graduacao,evento,competicao",
        "personalizar: Restaurar sugestão volta tipos, alcance e idioma sugeridos");
     await p.locator("label.chip-check", { hasText: "Direito" }).click();
     await p.locator("label.chip-check", { hasText: "Resumo diário" }).click();
@@ -241,8 +264,8 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
     pf = await perfil(uid);
     ok(valor(pf.areas).join() === "economia,direito" && valor(pf.frequencia) === "diario" && valor(pf.canais).join() === "email",
        "personalizar: preferências gravadas no Firestore");
-    ok(valor(pf.tipos).join() === "fomento,bolsa,evento" && valor(pf.alcances).length === 4 && valor(pf.idiomas).join() === "pt,en" &&
-       valor(pf.sugestao_aplicada) === "1", "personalizar: alcance, idioma e versão da sugestão gravados");
+    ok(valor(pf.tipos).join() === "fomento,bolsa,pos-graduacao,evento,competicao" && valor(pf.alcances).length === 4 &&
+       valor(pf.idiomas).join() === "pt,en" && valor(pf.sugestao_aplicada) === "2", "personalizar: alcance, idioma e versão da sugestão gravados");
     await p.reload(); await p.waitForSelector("input[name=frequencia]");
     await p.locator("label.chip-check", { hasText: "Espanhol" }).click(); await p.click("text=Salvar preferências");
     await espera(p, "Preferências salvas");
@@ -310,7 +333,15 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
 
     // conta
     await p.goto(SITE + "conta.html"); await p.waitForSelector("input[name=nome_exibicao]");
-    ok(await p.inputValue("select[name=uf]") === "AL", "conta/perfil: mostra o estado");
+    ok(await p.inputValue("select[name=uf]") === "AL" && await p.inputValue("#campo-lattes") === "http://lattes.cnpq.br/1234567890123456" &&
+       await p.getAttribute("#dica-orcid a", "href") === "https://orcid.org/0000-0002-1825-0097",
+       "conta/perfil: mostra estado e perfis acadêmicos, com link para abrir");
+    await p.fill("#campo-linkedin", ""); await p.selectOption("#titulacao", "doutorado");
+    await p.locator("#grupo-vinculos label.chip-check", { hasText: "Pesquisador(a)" }).click();
+    await p.click("text=Salvar alterações"); await espera(p, "Dados salvos.");
+    pf = await perfil(uid);
+    ok(valor(pf.linkedin) === null && valor(pf.titulacao) === "doutorado" && valor(pf.vinculos).join() === "estudante-pos,docente,pesquisador",
+       "conta/perfil: altera titulação e vínculos e apaga o LinkedIn");
     ok(await p.isVisible("text=ainda não foi confirmado"), "conta: avisa que o e-mail não foi confirmado");
     await p.fill("input[name=nome_exibicao]", "Pessoa Teste"); await p.click("text=Salvar alterações");
     ok(await espera(p, "Dados salvos."), "conta/perfil: salvo");
@@ -433,7 +464,7 @@ const espera = (p, texto) => p.waitForSelector(`text=${texto}`, { timeout: 10000
         for (const n of await caches.keys()) for (const k of await (await caches.open(n)).keys()) r.push(new URL(k.url).pathname);
         return { nomes: await caches.keys(), r };
       });
-      ok(guardadas.nomes.includes("radar-v7"), "service worker: cache na versão radar-v7");
+      ok(guardadas.nomes.includes("radar-v8"), "service worker: cache na versão radar-v8");
       ok(!guardadas.r.some(u => /(entrar|cadastro|personalizar|conta)\.html|vendor\/|conta-index|acompanhar\.js/.test(u)) &&
          !guardadas.r.some(u => /googleapis|identitytoolkit/.test(u)),
          "service worker: nada de conta nem do Firebase no cache");

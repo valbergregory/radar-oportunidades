@@ -21,7 +21,18 @@ service cloud.firestore {
     function camposPerfil() {
       return ['nome_exibicao', 'vinculo', 'curso_area', 'areas', 'tipos', 'frequencia', 'canais',
               'quer_newsletter', 'newsletter_em', 'termos_versao', 'consentimento_em', 'atualizado_em',
-              'uf', 'alcances', 'idiomas', 'sugestao_aplicada'];
+              'uf', 'alcances', 'idiomas', 'sugestao_aplicada',
+              'vinculos', 'titulacao', 'instituicao', 'orcid', 'lattes', 'linkedin'];
+    }
+
+    function vinculosValidos() {
+      return ['estudante-graduacao', 'estudante-pos', 'estudante-medio-tecnico', 'docente',
+              'tecnico-administrativo', 'pesquisador', 'egresso', 'comunidade', 'outro', 'nao-informado'];
+    }
+
+    // Identificador opcional: ausente, nulo ou texto no formato `formato`.
+    function idOpcional(d, campo, formato) {
+      return !(campo in d) || d[campo] == null || (d[campo] is string && d[campo].matches(formato));
     }
 
     function ufsValidas() {
@@ -46,10 +57,17 @@ service cloud.firestore {
                             'termos_versao', 'consentimento_em', 'atualizado_em'])
         && textoOpcional(d, 'nome_exibicao', 120)
         && textoOpcional(d, 'curso_area', 120)
-        && (!('vinculo' in d) || d.vinculo == null
-            || d.vinculo in ['estudante-graduacao', 'estudante-pos', 'estudante-medio-tecnico', 'docente',
-                             'tecnico-administrativo', 'pesquisador', 'egresso', 'comunidade', 'outro',
-                             'nao-informado'])
+        && (!('vinculo' in d) || d.vinculo == null || d.vinculo in vinculosValidos())
+        // Mais de um vínculo (ex.: estudante de pós e docente); 'vinculo' guarda o primeiro.
+        && listaOpcional(d, 'vinculos', 10, vinculosValidos())
+        && (!('titulacao' in d) || d.titulacao == null
+            || d.titulacao in ['ensino-medio', 'tecnico', 'graduacao', 'especializacao', 'mestrado', 'doutorado',
+                               'pos-doutorado', 'livre-docencia', 'nao-informado'])
+        && textoOpcional(d, 'instituicao', 120)
+        // Só os identificadores, já normalizados pelo site (nunca endereços livres).
+        && idOpcional(d, 'orcid', '^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$')
+        && idOpcional(d, 'lattes', '^[0-9]{16}$')
+        && idOpcional(d, 'linkedin', '^[A-Za-z0-9_%-]{3,100}$')
         && (!('uf' in d) || d.uf == null || d.uf in ufsValidas())
         && listaOpcional(d, 'alcances', 4, ['estadual', 'regional', 'nacional', 'internacional'])
         && listaOpcional(d, 'idiomas', 4, ['pt', 'en', 'es', 'outro'])

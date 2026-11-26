@@ -75,8 +75,6 @@ async function principal() {
 
   // ---------------------------------------------------------------- abas
   function abaPerfil() {
-    const vinc = el("select", { name: "vinculo" }, el("option", { value: "", texto: "Selecione" }),
-      ...Object.entries(RC.VINCULOS).map(([v, r]) => el("option", { value: v, texto: r, selected: p.vinculo === v })));
     const uf = el("select", { name: "uf" }, el("option", { value: "", texto: "Selecione" }),
       ...RC.UFS.map(v => el("option", { value: v, texto: v, selected: p.uf === v })),
       el("option", { value: "nao-informado", texto: "Prefiro não informar", selected: p.uf === "nao-informado" }));
@@ -89,18 +87,21 @@ async function principal() {
       el("div", { class: "grade-campos" },
         el("label", { class: "campo" }, opcional("Nome de exibição"),
            el("input", { name: "nome_exibicao", value: p.nome_exibicao || "", maxlength: "120", autocomplete: "nickname" })),
-        el("label", { class: "campo" }, opcional("Você é"), vinc),
         el("label", { class: "campo" }, opcional("Seu estado"), uf),
         el("label", { class: "campo" }, opcional("Curso ou área"),
            el("input", { name: "curso_area", value: p.curso_area || "", maxlength: "120" }))),
+      RC.grupoVinculos(RC.vinculosDoPerfil(p), false),
+      RC.camposAcademicos(p),
       el("p", { class: "caixa-info", html: RC.I.info },
          el("span", {}, el("strong", { texto: "Somente o e-mail é essencial para identificar a conta." }),
-            " Os demais campos são opcionais. Vínculo e estado servem para sugerir filtros e para o alcance (Estadual, Regional)." )),
+            " Os demais campos são opcionais. O que você é e seu estado servem para sugerir filtros e para o alcance (Estadual, Regional)." )),
       el("div", { class: "acoes" }, salvar, el("button", { type: "reset", class: "botao botao-secundario", texto: "Cancelar" })));
     form.addEventListener("submit", ev => {
       ev.preventDefault();
+      if (!form.reportValidity()) return;
       const d = new FormData(form), t = n => (d.get(n) || "").toString().trim() || null;
-      RC.ocupado(salvar, () => alterar({ nome_exibicao: t("nome_exibicao"), vinculo: t("vinculo"), uf: t("uf"), curso_area: t("curso_area") },
+      RC.ocupado(salvar, () => alterar({ nome_exibicao: t("nome_exibicao"), ...RC.lerVinculos(form), uf: t("uf"),
+                                         curso_area: t("curso_area"), ...RC.lerAcademicos(form) },
                                          "Dados salvos.", RC.preferenciasMudaram));
     });
     return form;

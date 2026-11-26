@@ -18,7 +18,7 @@ async function principal() {
   }
   if (!p || p.termos_versao !== FB.VERSAO_TERMOS) return location.replace("conta.html?aba=privacidade&aceitar=1");
 
-  const S = window.RADAR_SUGESTOES, sugestao = S.calcular(p.vinculo, p.uf);
+  const S = window.RADAR_SUGESTOES, sugestao = S.calcular(RC.vinculosDoPerfil(p), p.uf);
   // Um campo "já foi escolhido" quando tem itens ou quando a sugestão já foi aplicada
   // antes (aí vazio é escolha da pessoa: "todos").
   const escolhido = campo => (Array.isArray(p[campo]) && p[campo].length > 0) || !!p.sugestao_aplicada;

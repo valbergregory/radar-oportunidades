@@ -7,7 +7,8 @@ async function principal() {
   if (await FB.usuario()) return location.replace("conta.html");
   await FB.montarTopo();
   const painel = $("painel"), form = $("form-cadastro");
-  for (const [v, r] of Object.entries(RC.VINCULOS)) $("vinculo").append(RC.el("option", { value: v, texto: r }));
+  $("lugar-vinculos").replaceWith(RC.grupoVinculos([], true));
+  $("lugar-academicos").replaceWith(RC.camposAcademicos());
   for (const v of RC.UFS) $("uf").append(RC.el("option", { value: v, texto: v }));
   $("uf").append(RC.el("option", { value: "nao-informado", texto: "Prefiro não informar" }));
   let areas = {};
@@ -35,12 +36,17 @@ async function principal() {
       catch (e) { return RC.mensagem(painel, FB.traduzErro(e)); }
       try {
         await FB.criarPerfil(user.uid, {
-          nome_exibicao: t("nome_exibicao"), vinculo: t("vinculo") || null, uf: t("uf") || null, curso_area: t("curso_area"),
+          nome_exibicao: t("nome_exibicao"), ...RC.lerVinculos(form), uf: t("uf") || null, curso_area: t("curso_area"),
+          ...RC.lerAcademicos(form),
           areas: RC.marcados(form, "area"), tipos: RC.marcados(form, "tipo"), quer_newsletter: !!d.get("quer_newsletter"),
         });
       } catch (e) {
-        // A conta existe, mas o perfil não: o aceite será pedido de novo em conta.html.
-        return location.replace("conta.html?aba=privacidade&aceitar=1");
+        // A conta existe, mas o perfil não. Antes o site seguia em silêncio para o
+        // aceite (que grava um perfil mínimo); agora mostra o motivo e o caminho.
+        RC.mensagem(painel, "Sua conta foi criada, mas não conseguimos salvar seu perfil. " + FB.traduzErro(e));
+        painel.querySelector(".msg").append(" ",
+          RC.el("a", { href: "conta.html?aba=privacidade&aceitar=1", texto: "Continuar mesmo assim" }));
+        return;
       }
       await FB.enviarVerificacao(user).catch(() => {});
       RC.preferenciasMudaram();

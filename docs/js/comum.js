@@ -128,6 +128,104 @@ window.RC = (() => {
   }
   function marcados(form, nome) { return [...form.querySelectorAll(`input[name="${nome}"]:checked`)].map(c => c.value); }
 
+  // ---- Vínculos (mais de um) e dados acadêmicos e profissionais (opcionais)
+  const TITULACOES = { "ensino-medio": "Ensino médio", "tecnico": "Técnico", "graduacao": "Graduação",
+    "especializacao": "Especialização", "mestrado": "Mestrado", "doutorado": "Doutorado",
+    "pos-doutorado": "Pós-doutorado", "livre-docencia": "Livre-docência", "nao-informado": "Prefiro não informar" };
+
+  // "Você é": várias opções; "Prefiro não informar" exclui as demais. obrigatorio:
+  // pelo menos uma (o aviso aparece abaixo do grupo, pela validação acessível).
+  function grupoVinculos(marcadas, obrigatorio) {
+    const g = grupoPilulas("Você é", "vinculos", VINCULOS, marcadas, "checkbox", I.pessoa,
+      "Marque todas as que se aplicam (por exemplo, estudante de pós e docente).");
+    g.id = "grupo-vinculos";
+    if (obrigatorio) g.querySelector("legend .secao-titulo > span:last-child > span").append(" ", el("span", { class: "obrigatorio", "aria-hidden": "true", texto: "*" }));
+    const caixas = [...g.querySelectorAll("input")], nao = caixas.find(c => c.value === "nao-informado");
+    const conferir = () => caixas[0].setCustomValidity(obrigatorio && !caixas.some(c => c.checked)
+      ? "Escolha ao menos uma opção (ou \u201cPrefiro não informar\u201d)." : "");
+    g.addEventListener("change", ev => {
+      if (ev.target === nao && nao.checked) caixas.forEach(c => { if (c !== nao) c.checked = false; });
+      else if (ev.target !== nao && ev.target.checked) nao.checked = false;
+      conferir();
+      if (!caixas[0].validationMessage) caixas[0].dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    conferir();
+    return g;
+  }
+
+  // ORCID: 0000-0000-0000-000X com dígito verificador (ISO 7064 11,2).
+  function normalizarOrcid(t) {
+    const m = String(t || "").toUpperCase().match(/(\d{4})-?(\d{4})-?(\d{4})-?(\d{3}[\dX])/);
+    if (!m) return null;
+    const d = m.slice(1).join("");
+    let total = 0;
+    for (const c of d.slice(0, 15)) total = (total + Number(c)) * 2;
+    const r = (12 - total % 11) % 11, verif = r === 10 ? "X" : String(r);
+    return verif === d[15] ? m.slice(1).join("-") : null;
+  }
+  // Lattes: o número de 16 dígitos (de "http://lattes.cnpq.br/1234567890123456" ou só o número).
+  function normalizarLattes(t) {
+    const m = String(t || "").match(/(?:^|lattes\.cnpq\.br\/|\D)(\d{16})(?!\d)/);
+    return m ? m[1] : null;
+  }
+  // LinkedIn: o identificador do perfil (de "linkedin.com/in/fulano" ou só "fulano").
+  function normalizarLinkedin(t) {
+    const s = String(t || "").trim().replace(/[?#].*$/, "").replace(/\/+$/, "");
+    const m = s.match(/linkedin\.com\/in\/([^/\s]+)$/i) || (!/[/\s.]/.test(s) && s.match(/^@?(.+)$/));
+    const id = m && m[1];
+    return id && /^[A-Za-z0-9_%-]{3,100}$/.test(id) ? id : null;
+  }
+  const PERFIS_EXTERNOS = {
+    orcid: { rotulo: "ORCID", dica: "Ex.: 0000-0002-1825-0097 ou https://orcid.org/…", normalizar: normalizarOrcid,
+             erro: "ORCID inválido. Confira os 16 caracteres (o último pode ser X).", url: v => "https://orcid.org/" + v },
+    lattes: { rotulo: "Currículo Lattes", dica: "Endereço do currículo, ex.: http://lattes.cnpq.br/1234567890123456",
+              normalizar: normalizarLattes, erro: "Use o endereço do currículo (com os 16 números) ou só os números.",
+              url: v => "http://lattes.cnpq.br/" + v },
+    linkedin: { rotulo: "LinkedIn", dica: "Endereço do perfil, ex.: https://www.linkedin.com/in/seu-nome",
+                normalizar: normalizarLinkedin, erro: "Use o endereço do perfil (linkedin.com/in/…).",
+                url: v => "https://www.linkedin.com/in/" + v },
+  };
+
+  // Titulação, instituição, ORCID, Lattes e LinkedIn (todos opcionais).
+  function camposAcademicos(p = {}) {
+    const opc = t => el("span", {}, t + " ", el("span", { class: "opcional", texto: "Opcional" }));
+    const tit = el("select", { name: "titulacao", id: "titulacao" }, el("option", { value: "", texto: "Selecione" }),
+      ...Object.entries(TITULACOES).map(([v, r]) => el("option", { value: v, texto: r, selected: p.titulacao === v })));
+    const externos = Object.entries(PERFIS_EXTERNOS).map(([nome, c]) => {
+      const atual = p[nome] ? c.url(p[nome]) : "";
+      const campo = el("input", { name: nome, id: "campo-" + nome, value: atual, maxlength: "200", inputmode: "url",
+                                  autocomplete: "off", spellcheck: "false", "aria-describedby": "dica-" + nome });
+      campo.addEventListener("input", () => campo.setCustomValidity(campo.value.trim() && !c.normalizar(campo.value) ? c.erro : ""));
+      return el("label", { class: "campo" }, opc(c.rotulo), campo,
+        el("span", { class: "areas", id: "dica-" + nome }, c.dica,
+           atual ? el("span", {}, " · ", el("a", { href: atual, target: "_blank", rel: "noopener noreferrer", texto: "abrir" })) : null));
+    });
+    return el("fieldset", { class: "form academicos" },
+      el("legend", {}, el("span", { class: "secao-titulo" }, el("span", { class: "ico", html: I.documento }),
+        el("span", {}, el("span", { texto: "Formação e perfis acadêmicos", style: "display:block" }),
+          el("span", { class: "areas", style: "display:block;font-weight:400",
+                       texto: "Opcionais. Ajudam a entender quem usa o Radar e a sugerir oportunidades melhores." })))),
+      el("div", { class: "grade-campos" },
+        el("label", { class: "campo" }, opc("Maior titulação"), tit),
+        el("label", { class: "campo" }, opc("Instituição a que é vinculado(a)"),
+           el("input", { name: "instituicao", value: p.instituicao || "", maxlength: "120", autocomplete: "organization",
+                         placeholder: "Ex.: Universidade Federal de Alagoas" }))),
+      el("div", { class: "grade-campos" }, ...externos));
+  }
+  // Lê os campos acima já normalizados (vazio = null).
+  function lerAcademicos(form) {
+    const t = n => (form.elements[n] && form.elements[n].value || "").trim();
+    const r = { titulacao: t("titulacao") || null, instituicao: t("instituicao") || null };
+    for (const [nome, c] of Object.entries(PERFIS_EXTERNOS)) r[nome] = t(nome) ? c.normalizar(t(nome)) : null;
+    return r;
+  }
+  // Vínculos marcados; "vinculo" (campo antigo) guarda o primeiro, para perfis e telas antigas.
+  function lerVinculos(form) {
+    const v = marcados(form, "vinculos");
+    return { vinculos: v, vinculo: v[0] || null };
+  }
+  const vinculosDoPerfil = p => (p && Array.isArray(p.vinculos) && p.vinculos.length) ? p.vinculos : (p && p.vinculo ? [p.vinculo] : []);
+
   // Página de conta aberta sem contas configuradas: explica e oferece voltar.
   function indisponivel(onde) {
     onde.replaceChildren(el("section", { class: "painel" },
@@ -186,7 +284,8 @@ window.RC = (() => {
     return ms !== null && Date.parse(item.alterado_em) > ms;
   }
 
-  return { config: cfg, controlador, TIPOS, VINCULOS, FREQUENCIAS, CANAIS, REGIOES, UFS, regiaoDe, ALCANCES, IDIOMAS,
+  return { config: cfg, controlador, TIPOS, VINCULOS, TITULACOES, PERFIS_EXTERNOS, grupoVinculos, camposAcademicos,
+           lerAcademicos, lerVinculos, vinculosDoPerfil, normalizarOrcid, normalizarLattes, normalizarLinkedin, FREQUENCIAS, CANAIS, REGIOES, UFS, regiaoDe, ALCANCES, IDIOMAS,
            relacaoAlcance, I, el, voltarPara, destinoSeguro, mensagem, ocupado, dados, preferenciasMudaram, grupoPilulas,
            marcados, indisponivel, fmtData, dataLocal, diasAte, contagem, baixarIcs, mudouDesde };
 })();
@@ -217,7 +316,7 @@ document.addEventListener("click", ev => {
     return c.validationMessage || "Confira este campo.";
   }
   function lugarDaMensagem(c) {
-    return c.closest(".senha") || (c.type === "checkbox" ? c.closest("label") : c);
+    return c.closest(".senha") || (c.type === "checkbox" ? (c.closest("#grupo-vinculos") || c.closest("label")) : c);
   }
   function limpar(c) {
     c.removeAttribute("aria-invalid");

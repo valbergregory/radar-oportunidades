@@ -51,7 +51,7 @@
       <p class="caixa-info"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>A conta é opcional: o Radar funciona sem ela.</span></p>
     </div>
   </section>
-    <p class="alerta-laranja"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16h.01"/></svg><span>Somente e-mail e senha são obrigatórios.</span></p>
+    <p class="alerta-laranja"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16h.01"/></svg><span>Obrigatórios (*): e-mail, senha, o que você é e seu estado. Nos dois últimos há &ldquo;Prefiro não informar&rdquo;. O resto é opcional.</span></p>
   </div>
   <section class="painel" id="painel" aria-labelledby="titulo">
     <form class="form" id="form-cadastro" novalidate>
@@ -67,14 +67,14 @@
       <div class="grade-campos">
         <label class="campo"><span>Nome de exibição <span class="opcional">Opcional</span></span>
           <input name="nome_exibicao" maxlength="80" autocomplete="nickname" placeholder="Como você quer ser chamado(a)"></label>
-        <label class="campo"><span>Você é <span class="obrigatorio" aria-hidden="true">*</span></span>
-          <select name="vinculo" id="vinculo" required aria-describedby="dica-perfil"><option value="">Selecione</option></select></label>
         <label class="campo"><span>Seu estado <span class="obrigatorio" aria-hidden="true">*</span></span>
           <select name="uf" id="uf" required aria-describedby="dica-perfil"><option value="">Selecione</option></select></label>
         <label class="campo"><span>Curso ou área <span class="opcional">Opcional</span></span>
           <input name="curso_area" maxlength="120" placeholder="Ex.: Sistemas de Informação"></label>
       </div>
-      <p class="areas" id="dica-perfil">Usamos vínculo e estado só para sugerir filtros (tipos, alcance e idioma), que você pode mudar depois. Se preferir, escolha "Prefiro não informar".</p>
+      <div id="lugar-vinculos"></div>
+      <p class="areas" id="dica-perfil">Usamos o que você é e seu estado para sugerir filtros (tipos, alcance e idioma), que você pode mudar depois. Se preferir, escolha "Prefiro não informar".</p>
+      <div id="lugar-academicos"></div>
       <div id="preferencias" class="form"></div>
       <div class="caixa-info"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
         <div class="form">
