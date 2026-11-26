@@ -75,7 +75,8 @@ export async function alterarPerfil(uid, campos, antes) {
 // Só os campos que o perfil aceita; textos vazios viram null.
 function limpar(c) {
   const ok = ["nome_exibicao", "vinculo", "curso_area", "areas", "tipos", "frequencia", "canais",
-              "quer_newsletter", "termos_versao", "uf", "alcances", "idiomas", "sugestao_aplicada"];
+              "quer_newsletter", "termos_versao", "uf", "alcances", "idiomas", "sugestao_aplicada",
+              "vinculos", "titulacao", "instituicao", "orcid", "lattes", "linkedin"];
   const r = {};
   for (const k of ok) if (k in c) r[k] = typeof c[k] === "string" ? (c[k].trim().slice(0, 120) || null) : c[k];
   return r;
@@ -230,7 +231,9 @@ export function traduzErro(e) {
     "auth/expired-action-code": "Este link expirou. Peça um novo.",
     "auth/user-disabled": "Esta conta está desativada.",
     "auth/operation-not-allowed": "Este modo de entrada não está ativado.",
-    "permission-denied": "Ação não permitida. Saia e entre de novo.",
+    // Sessão vencida ou regras do banco diferentes das do site (publicação fora de ordem).
+    "permission-denied": "O banco de dados recusou esta gravação. Saia e entre de novo; se continuar, " +
+      "avise quem cuida do Radar (as regras do banco podem estar desatualizadas).",
     "unavailable": "Sem conexão com o banco de dados. Tente de novo em instantes.",
   };
   return m[c] || "Não foi possível concluir agora. Tente de novo em instantes.";

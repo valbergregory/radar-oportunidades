@@ -28,7 +28,11 @@ coletado.
 
 ## Dados no Firestore
 
-- `perfis/{uid}`: `nome_exibicao`, `vinculo` (inclui `nao-informado`), `uf`
+- `perfis/{uid}`: `nome_exibicao`, `vinculos` (lista: pode ser mais de um, ex.
+  estudante de pós e docente), `vinculo` (o primeiro da lista, para perfis
+  antigos; inclui `nao-informado`), `titulacao`, `instituicao` e os
+  identificadores `orcid` (0000-0000-0000-000X), `lattes` (16 dígitos) e
+  `linkedin` (o que vem depois de linkedin.com/in/), todos opcionais; `uf`
   (sigla, `nao-informado` ou nulo), `curso_area`, `areas`, `tipos`, `alcances`
   (estadual, regional, nacional, internacional), `idiomas` (pt, en, es, outro),
   `sugestao_aplicada` (versão de `sugestoes.js` usada, ou nula),

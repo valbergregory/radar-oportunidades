@@ -87,6 +87,27 @@ await negado("idioma inválido", updateDoc(doc(ana, "perfis/ana"), { idiomas: ["
 await negado("idiomas que não são lista", updateDoc(doc(ana, "perfis/ana"), { idiomas: "pt", atualizado_em: serverTimestamp() }));
 await negado("sugestão com mais de 20 caracteres", updateDoc(doc(ana, "perfis/ana"),
   { sugestao_aplicada: "x".repeat(21), atualizado_em: serverTimestamp() }));
+
+// ---- vários vínculos, titulação, instituição, ORCID, Lattes e LinkedIn
+const at = c => ({ ...c, atualizado_em: serverTimestamp() });
+await permitido("vários vínculos + titulação + instituição + ORCID/Lattes/LinkedIn", updateDoc(doc(ana, "perfis/ana"), at({
+  vinculos: ["estudante-pos", "docente"], vinculo: "estudante-pos", titulacao: "mestrado",
+  instituicao: "Universidade Federal de Alagoas", orcid: "0000-0002-1825-0097", lattes: "1234567890123456",
+  linkedin: "pessoa-teste" })));
+await permitido("ORCID com X no fim", updateDoc(doc(ana, "perfis/ana"), at({ orcid: "0000-0002-1694-233X" })));
+await permitido("apagar ORCID, Lattes e LinkedIn (nulos)", updateDoc(doc(ana, "perfis/ana"), at({ orcid: null, lattes: null, linkedin: null, titulacao: null, instituicao: null })));
+await negado("vínculo inválido na lista", updateDoc(doc(ana, "perfis/ana"), at({ vinculos: ["docente", "chefe"] })));
+await negado("mais de 10 vínculos", updateDoc(doc(ana, "perfis/ana"), at({ vinculos: Array(11).fill("docente") })));
+await negado("vínculos que não são lista", updateDoc(doc(ana, "perfis/ana"), at({ vinculos: "docente" })));
+await negado("titulação inválida", updateDoc(doc(ana, "perfis/ana"), at({ titulacao: "phd" })));
+await negado("instituição com mais de 120 caracteres", updateDoc(doc(ana, "perfis/ana"), at({ instituicao: "x".repeat(121) })));
+await negado("ORCID em formato errado", updateDoc(doc(ana, "perfis/ana"), at({ orcid: "0000-0002-1825" })));
+await negado("ORCID como endereço (só o identificador)", updateDoc(doc(ana, "perfis/ana"), at({ orcid: "https://orcid.org/0000-0002-1825-0097" })));
+await negado("Lattes com letras", updateDoc(doc(ana, "perfis/ana"), at({ lattes: "12345678901234AB" })));
+await negado("Lattes como endereço", updateDoc(doc(ana, "perfis/ana"), at({ lattes: "http://lattes.cnpq.br/1234567890123456" })));
+await negado("LinkedIn como endereço", updateDoc(doc(ana, "perfis/ana"), at({ linkedin: "https://www.linkedin.com/in/pessoa" })));
+await negado("LinkedIn com script", updateDoc(doc(ana, "perfis/ana"), at({ linkedin: "<script>" })));
+await negado("ORCID que não é texto", updateDoc(doc(ana, "perfis/ana"), at({ orcid: 123 })));
 await negado("tipo fora da lista", updateDoc(doc(ana, "perfis/ana"), { tipos: ["freelance"], atualizado_em: serverTimestamp() }));
 await permitido("20 áreas de até 30 caracteres (620 no total)", updateDoc(doc(ana, "perfis/ana"),
   { areas: Array.from({ length: 20 }, (_, i) => String(i).padStart(30, "a")), atualizado_em: serverTimestamp() }));

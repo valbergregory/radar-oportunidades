@@ -7,7 +7,7 @@
 //   Sem internet, essas páginas mostram um aviso.
 // - Chamadas ao Firebase (googleapis.com e afins), editais e prazos.ics: outros
 //   domínios ou arquivos não interceptados, logo nunca vão para o cache.
-const VERSAO = "radar-v7";
+const VERSAO = "radar-v8";
 const APP = ["./", "./index.html", "./dados.json", "./manifest.webmanifest", "./estilo.css",
              "./oportunidade.html", "./calendario.html", "./privacidade.html", "./termos.html", "./conta-config.js",
              "./js/comum.js", "./js/sugestoes.js", "./js/firebase.js", "./js/oportunidade.js", "./js/calendario.js", "./js/legal.js",
