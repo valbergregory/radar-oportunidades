@@ -7,6 +7,8 @@ rules_version = '2';
 // Modelo:
 //   perfis/{uid}                    um documento por pessoa (sem e-mail: ele fica no Authentication)
 //   perfis/{uid}/favoritos/{itemId} { criado_em, acompanhar?, visto_em? }; itemId = id do Radar (16 hex)
+//   sugestoes/{id}                  opinião ANÔNIMA da fase de testes: qualquer pessoa cria, ninguém lê
+//                                   pelo site (só pelo console), ninguém altera nem apaga
 //
 // Tudo o que não está liberado abaixo é negado: leitura sem login, listagem
 // da coleção perfis, documentos de outras pessoas e qualquer outra coleção.
@@ -107,6 +109,25 @@ service cloud.firestore {
     function termosNaAlteracao(d, antes) {
       return (d.termos_versao == antes.termos_versao && d.consentimento_em == antes.consentimento_em)
           || (d.termos_versao != antes.termos_versao && d.consentimento_em == request.time);
+    }
+
+    // Sugestão da fase de testes: anônima (sem uid nem e-mail), campos e tamanhos fechados.
+    function sugestaoValida(d) {
+      return d.keys().hasOnly(['tipo', 'texto', 'nota', 'pagina', 'dispositivo', 'instalado', 'versao', 'criado_em'])
+        && d.keys().hasAll(['tipo', 'texto', 'criado_em'])
+        && d.tipo in ['ideia', 'problema', 'elogio', 'outro']
+        && d.texto is string && d.texto.size() >= 3 && d.texto.size() <= 2000
+        && (!('nota' in d) || d.nota == null || (d.nota is int && d.nota >= 1 && d.nota <= 5))
+        && textoOpcional(d, 'pagina', 100)
+        && (!('dispositivo' in d) || d.dispositivo in ['celular', 'computador'])
+        && (!('instalado' in d) || d.instalado is bool)
+        && textoOpcional(d, 'versao', 20)
+        && d.criado_em == request.time;
+    }
+
+    match /sugestoes/{id} {
+      allow create: if sugestaoValida(request.resource.data);
+      allow read, update, delete: if false;
     }
 
     match /perfis/{uid} {

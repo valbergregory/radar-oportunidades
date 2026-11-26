@@ -433,3 +433,17 @@ fieldset.academicos legend { padding:0; margin-bottom:8px; font-weight:700; colo
   }
 }
 #grupo-vinculos + .erro-campo { margin-top:-4px; }
+
+/* Fase de testes: faixa no topo e formulário de sugestão */
+.faixa-testes { display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; justify-content:center;
+                padding:6px 16px; background:var(--etq-fundo); color:var(--etq-texto); font-size:.88rem; text-align:center; }
+.faixa-botao { font:inherit; font-weight:700; color:var(--etq-texto); background:none; border:1px solid currentColor;
+               border-radius:999px; padding:2px 12px; min-height:32px; cursor:pointer; }
+.faixa-botao:focus-visible { outline:3px solid var(--foco); outline-offset:2px; }
+.dialogo-sugestao { width:min(560px, calc(100vw - 32px)); max-height:calc(100vh - 32px); border:0; border-radius:16px;
+                    padding:20px; background:var(--cartao); color:var(--texto); }
+.dialogo-sugestao::backdrop { background:rgb(0 0 0 / .45); }
+.dialogo-sugestao h2 { margin:0; font-size:1.2rem; color:var(--marca); }
+.dialogo-sugestao textarea { width:100%; padding:8px 12px; border:1px solid var(--campo); border-radius:12px;
+                             background:var(--cartao); color:var(--texto); font:inherit; font-weight:400; resize:vertical; }
+.sugestao-status { margin:0; }
