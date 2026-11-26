@@ -70,7 +70,7 @@ ANO = re.compile(r"\b(20\d{2})\b")
 DOC_EDITAL = re.compile(r"edital|chamada|retifica|prorroga|errata|cronograma|alterac")
 DOC_ENCERRADO = re.compile(r"resultado|homologac|encerrament|classificac|convocac|"
                            r"recursos esgotados")
-VERSAO_LEITURA = 4  # suba quando a leitura ou a classificação melhorar: tudo é relido
+VERSAO_LEITURA = 5  # suba quando a leitura ou a classificação melhorar: tudo é relido
 RELER_APOS_DIAS = 7  # itens sem prazo são relidos (pode surgir prorrogação ou resultado)
 
 # Usado quando a fonte não define "padrao_link": o texto do link precisa
@@ -357,9 +357,14 @@ def carregar_classificacao():
     for termo in cfg["internacional"]["termos"]:
         t = re.escape(norm(str(termo)))
         partes.append(t[:-2] + r"\w*" if t.endswith(r"\*") else t + r"\b")
+    # Trechos que citam "internacional"/"exterior" sem tornar o item internacional
+    # (ex.: "eventos de abrangência internacional ou nacional", menus do gov.br).
+    ignorar = [r"\s+".join(re.escape(p) for p in norm(str(t)).split())
+               for t in cfg["internacional"].get("ignorar") or []]
     idiomas = cfg.get("idiomas", {})
     return {
         "internacional": re.compile(r"\b(" + "|".join(partes) + ")"),
+        "ignorar": re.compile("|".join(ignorar)) if ignorar else None,
         # str(): no YAML, palavras como no/on viram booleanos se não estiverem entre aspas
         "palavras": {k: {norm(str(p)) for p in v} for k, v in idiomas.get("palavras", {}).items()},
         "minimo": int(idiomas.get("minimo_palavras", 4)),
@@ -370,6 +375,8 @@ def carregar_classificacao():
 def alcance_do_item(texto, fonte, classif):
     """Alcance da fonte; vira "internacional" se o texto (já normalizado) indicar."""
     base = fonte.get("alcance") if fonte.get("alcance") in ALCANCES else "nacional"
+    if classif.get("ignorar"):
+        texto = classif["ignorar"].sub(" ", texto)
     return "internacional" if classif["internacional"].search(texto) else base
 
 

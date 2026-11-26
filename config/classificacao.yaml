@@ -81,6 +81,24 @@ internacional:
     - confap italy
     - capes-print
 
+  # Trechos ignorados antes de procurar os termos acima: citam "internacional"
+  # ou "exterior" sem que o item seja internacional. Comparados sem acento,
+  # sem diferenciar maiúsculas e com qualquer espaço entre as palavras.
+  ignorar:
+    # "eventos de abrangência internacional ou nacional" (ex.: Chamada CNPq ARC)
+    - internacional ou nacional
+    - nacional ou internacional
+    - nacionais ou internacionais
+    - internacionais ou nacionais
+    - nacional e internacional
+    - nacionais e internacionais
+    - abrangencia mundial
+    # menus e cabeçalhos dos sites (gov.br do CNPq e da CAPES)
+    - bolsas no pais e no exterior
+    - cartao bolsista no exterior
+    - bolsistas egressos (exterior)
+    - cooperacao institucional, internacional e inovacao
+
 # Idioma do item: padrão da fonte (campo "idioma" em fontes.yaml, "pt" se
 # ausente), trocado quando o texto tem clara maioria de palavras comuns de
 # outro idioma. "outro" vale para itens que a fonte marca assim.

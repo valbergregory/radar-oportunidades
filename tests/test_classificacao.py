@@ -34,6 +34,16 @@ class Alcance(unittest.TestCase):
         # palavra dentro de outra não conta ("eua" em "museuana", "india" em "indiano" conta só como início)
         self.assertEqual(self.alc("Museu de arte e cultura"), "nacional")
 
+    def test_trechos_ignorados_nao_tornam_internacional(self):
+        # Chamada CNPq ARC: eventos realizados no Brasil, de qualquer abrangência
+        arc = ("Apoiar a realização no Brasil de eventos de grande porte, de abrangência mundial, "
+               "internacional ou nacional, relacionados a ciência")
+        self.assertEqual(self.alc(arc), "nacional")
+        # menu do gov.br, com quebras de linha e espaços entre as palavras
+        self.assertEqual(self.alc("Bolsas no País e no\n   Exterior  Cartão Bolsista no Exterior"), "nacional")
+        # o resto do texto ainda conta
+        self.assertEqual(self.alc(arc + ". Cooperação com a França"), "internacional")
+
 
 class Idioma(unittest.TestCase):
     def test_ingles_espanhol_e_padrao(self):
