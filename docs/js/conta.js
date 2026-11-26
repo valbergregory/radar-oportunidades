@@ -6,10 +6,16 @@ const RC = window.RC, $ = id => document.getElementById(id), el = RC.el;
 async function principal() {
   const u = await FB.exigirLogin();
   if (!u) return;
-  await FB.montarTopo();
   const painel = $("painel"), params = new URLSearchParams(location.search);
+  // Tudo o que a página vai precisar sai junto, em vez de uma consulta depois da
+  // outra: perfil, topo, lista de oportunidades e (na aba Acompanhando) favoritos.
+  const perfilPendente = FB.lerPerfil(u.uid);
+  let favoritosPendente = params.get("aba") === "acompanhando" ? FB.listarFavoritos(u.uid) : null;
+  if (favoritosPendente) favoritosPendente.catch(() => {});
+  RC.dados().catch(() => {});
+  await FB.montarTopo();
   let p;
-  try { p = await FB.lerPerfil(u.uid); } catch (e) { return RC.mensagem(painel, FB.traduzErro(e)); }
+  try { p = await perfilPendente; } catch (e) { return RC.mensagem(painel, FB.traduzErro(e)); }
   const semPerfil = !p, precisaAceitar = !p || p.termos_versao !== FB.VERSAO_TERMOS;
 
   const ABAS = [
@@ -87,13 +93,14 @@ async function principal() {
       el("div", { class: "grade-campos" },
         el("label", { class: "campo" }, opcional("Nome de exibição"),
            el("input", { name: "nome_exibicao", value: p.nome_exibicao || "", maxlength: "120", autocomplete: "nickname" })),
-        el("label", { class: "campo" }, el("span", {}, "Seu estado ", el("span", { class: "obrigatorio", "aria-hidden": "true", texto: "*" })), uf),
         el("label", { class: "campo" }, opcional("Curso ou área"),
            el("input", { name: "curso_area", value: p.curso_area || "", maxlength: "120" }))),
       RC.grupoVinculos(RC.vinculosDoPerfil(p), false),
+      el("div", { class: "grade-campos" },
+        el("label", { class: "campo" }, el("span", {}, "Seu estado ", el("span", { class: "obrigatorio", "aria-hidden": "true", texto: "*" })), uf)),
       RC.camposAcademicos(p),
       el("p", { class: "caixa-info", html: RC.I.info },
-         el("span", {}, el("strong", { texto: "Somente o e-mail é essencial para identificar a conta." }),
+         el("span", {}, el("strong", { texto: "Obrigatórios: e-mail e seu estado (vale \u201cPrefiro não informar\u201d)." }),
             " Os demais campos são opcionais. O que você é e seu estado servem para sugerir filtros e para o alcance (Estadual, Regional)." )),
       el("div", { class: "acoes" }, salvar, el("button", { type: "reset", class: "botao botao-secundario", texto: "Cancelar" })));
     form.addEventListener("submit", ev => {
@@ -138,11 +145,16 @@ async function principal() {
     return form;
   }
 
-  async function abaAcompanhando() {
-    const caixa = el("div", { class: "form" });
+  function abaAcompanhando() {
+    const cabecalho = () => titulo(RC.I.olhoAberto, "Acompanhando", "Oportunidades salvas que você quer acompanhar de perto.");
+    // A aba aparece na hora; a lista entra quando os favoritos chegarem.
+    const caixa = el("div", { class: "form", "aria-busy": "true" }, cabecalho(),
+      el("p", { class: "areas", role: "status", texto: "Carregando suas oportunidades acompanhadas…" }));
     const desenharAba = async () => {
       let itens = [], favs = [];
-      try { [itens, favs] = await Promise.all([RC.dados().then(d => d.itens), FB.listarFavoritos(u.uid)]); }
+      const favsPendente = favoritosPendente || FB.listarFavoritos(u.uid);
+      favoritosPendente = null;  // depois da primeira vez, sempre lê de novo
+      try { [itens, favs] = await Promise.all([RC.dados().then(d => d.itens), favsPendente]); }
       catch (e) { return caixa.replaceChildren(el("p", { class: "msg", texto: FB.traduzErro(e) })); }
       const { ul, total } = listaAcompanhando(u.uid, itens, favs, desenharAba, t => RC.mensagem(painel, t));
       const porId = new Map(itens.map(i => [i.id, i]));
@@ -160,15 +172,16 @@ async function principal() {
             RC.mudouDesde(i, f) ? seloMudou() : null),
           el("div", { class: "acoes" }, b));
       }));
+      caixa.removeAttribute("aria-busy");
       caixa.replaceChildren(...[
-        titulo(RC.I.olhoAberto, "Acompanhando", "Oportunidades salvas que você quer acompanhar de perto."),
+        cabecalho(),
         total ? ul : el("p", { class: "areas", texto: "Você ainda não acompanha nenhuma oportunidade. Abra uma oportunidade salva e ligue \u201cAcompanhar\u201d." }),
         el("p", { class: "caixa-info", html: RC.I.info }, el("span", { texto:
           "O selo \u201cMudou desde a sua última visita\u201d aparece quando o prazo mudou ou saiu retificação depois da última vez que você abriu a oportunidade." })),
         outros.length ? el("h3", { texto: "Outros favoritos" }) : null, outros.length ? lista : null,
       ].filter(Boolean));  // replaceChildren escreveria null como o texto "null"
     };
-    await desenharAba();
+    desenharAba();
     return caixa;
   }
 

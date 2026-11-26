@@ -420,5 +420,16 @@ a.botao-instalar { text-decoration:none; }
 
 /* Cadastro e perfil: formação e perfis acadêmicos */
 fieldset.academicos { border:0; padding:0; margin:0; min-width:0; }
-fieldset.academicos legend { padding:0; margin-bottom:8px; }
+fieldset.academicos legend { padding:0; margin-bottom:8px; font-weight:700; color:var(--marca); font-size:1.05rem; }
+/* Seletores com a mesma altura das caixas de texto */
+.form select { height:46px; padding-top:0; padding-bottom:0; }
+/* Duas colunas: rótulo, campo e dica de cada coluna ficam na mesma linha
+   (subgrid), mesmo quando um rótulo quebra em duas linhas. */
+@media (min-width:900px) {
+  @supports (grid-template-rows:subgrid) {
+    .form .grade-campos > .campo { grid-row:span 3; grid-template-rows:subgrid; gap:4px; align-content:start; }
+    .form .grade-campos { row-gap:0; column-gap:12px; }
+    .form .grade-campos > .campo { margin-bottom:12px; }
+  }
+}
 #grupo-vinculos + .erro-campo { margin-top:-4px; }
