@@ -4,7 +4,7 @@ PRODID:-//Radar de Oportunidades//PT-BR
 X-WR-CALNAME:Radar de Oportunidades (prazos)
 BEGIN:VEVENT
 UID:7ced3082bdb9dc72@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20261128
 DTEND;VALUE=DATE:20261129
 SUMMARY:Prazo: Processo Seletivo de Estudantes para atuação no Programa Nacional de Apoio à permanência\, diversidade e visibilidade para discentes na área da Saúde - AfirmaSUS\, no âmbito da UFA
@@ -12,7 +12,7 @@ URL:https://editais.ufal.br/extensao/processo-seletivo-de-estudantes-para-atuaca
 END:VEVENT
 BEGIN:VEVENT
 UID:93655335db0eb0e5@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20261129
 DTEND;VALUE=DATE:20261130
 SUMMARY:Prazo: Seleção de Monitores para o Programa Esporte na Ufal
@@ -20,7 +20,7 @@ URL:https://editais.ufal.br/assistencia-estudantil/selecao-de-monitores-para-o-p
 END:VEVENT
 BEGIN:VEVENT
 UID:846220215d9be0e2@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20261130
 DTEND;VALUE=DATE:20261201
 SUMMARY:Prazo: Seleção de mentores(as) científicos(as) voluntários(as) para o LabMent/Sinpete
@@ -28,7 +28,7 @@ URL:https://editais.ufal.br/outros/selecao-de-mentores-as-cientificos-as-volunta
 END:VEVENT
 BEGIN:VEVENT
 UID:8d07e5bc97196c67@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20261204
 DTEND;VALUE=DATE:20261205
 SUMMARY:Prazo: Edital Nº 06/2026 – PNAGEI Centelha 3 Alagoas – Fapeal/Secti-AL/Sebrae-AL
@@ -36,7 +36,7 @@ URL:https://www.fapeal.br/2026/11/edital-centelha-3-al/
 END:VEVENT
 BEGIN:VEVENT
 UID:e70547b72e81b3de@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20261204
 DTEND;VALUE=DATE:20261205
 SUMMARY:Prazo: Chamada CNPq Nº 34/2026 - Auxílio à Promoção de Eventos Científicos\, Tecnológicos e/ou de Inovação - ARC
@@ -44,7 +44,7 @@ URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chama
 END:VEVENT
 BEGIN:VEVENT
 UID:95de50d98c1ab8f9@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20261208
 DTEND;VALUE=DATE:20261209
 SUMMARY:Prazo: Chamada Pública CNPq/Petrobras N° 31/2026 - Projeto InspirAÇÃO
@@ -52,7 +52,7 @@ URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chama
 END:VEVENT
 BEGIN:VEVENT
 UID:24e2accdfe608744@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20261211
 DTEND;VALUE=DATE:20261212
 SUMMARY:Prazo: Chamada Pública CNPq/CAPES Nº 30/2026 – Programa de Mestrado e Doutorado Acadêmico para Inovação – MAI/DAI
@@ -60,7 +60,7 @@ URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chama
 END:VEVENT
 BEGIN:VEVENT
 UID:96edb845023c1e95@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20261218
 DTEND;VALUE=DATE:20261219
 SUMMARY:Prazo: Chamada Pública para Envio de Proposta de Curso Novo - Edital nº 20/2026
@@ -68,7 +68,7 @@ URL:https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2844920.p
 END:VEVENT
 BEGIN:VEVENT
 UID:73b044dd548b072e@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20270107
 DTEND;VALUE=DATE:20270108
 SUMMARY:Prazo: Chamada CNPq nº 33/2026 - Bolsas de Produtividade do CNPq
@@ -76,7 +76,7 @@ URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chama
 END:VEVENT
 BEGIN:VEVENT
 UID:035b22270c2c6224@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20270201
 DTEND;VALUE=DATE:20270202
 SUMMARY:Prazo: 65º Congresso da SOBER será realizado em Viçosa (MG)\, de 25 a 29 de julho de 2027
@@ -84,7 +84,7 @@ URL:https://sober.org.br/noticias/65o-congresso-da-sober-sera-realizado-em-vicos
 END:VEVENT
 BEGIN:VEVENT
 UID:20a236aa695fb18a@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20270212
 DTEND;VALUE=DATE:20270213
 SUMMARY:Prazo: Chamada Pública CNPq/MCTI N° 36/2026 - Apoio a cursos de curta duração em biodiversidade\, no âmbito do Centro Franco-Brasileiro de Biodiversidade Amazônica (CFBBA)
@@ -92,7 +92,7 @@ URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chama
 END:VEVENT
 BEGIN:VEVENT
 UID:4543466c0a28c815@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20270301
 DTEND;VALUE=DATE:20270302
 SUMMARY:Prazo: Chamada CNPq/MIR Nº 23/2026 - Programa Lélia Gonzalez de fomento a pesquisas sobre desigualdades étnico-raciais na ciência\, na educação e na sociedade brasileiras
@@ -100,7 +100,7 @@ URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chama
 END:VEVENT
 BEGIN:VEVENT
 UID:c931541578c0f7f4@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20270312
 DTEND;VALUE=DATE:20270313
 SUMMARY:Prazo: Chamada Pública MCTI/CNPq/CISB/SAAB AB Nº 37/2026 - Cooperação Brasil-Suécia
@@ -108,7 +108,7 @@ URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chama
 END:VEVENT
 BEGIN:VEVENT
 UID:363e01ec6c92de7a@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20270331
 DTEND;VALUE=DATE:20270401
 SUMMARY:Prazo: Chamada Pública MCTI/CNPq/ANR N° 32/2026
@@ -116,7 +116,7 @@ URL:https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chama
 END:VEVENT
 BEGIN:VEVENT
 UID:f79e34127c28027f@radar-oportunidades
-DTSTAMP:20261126T000000Z
+DTSTAMP:20261127T000000Z
 DTSTART;VALUE=DATE:20270715
 DTEND;VALUE=DATE:20270716
 SUMMARY:Prazo: Estudo de Ingressantes das Licenciaturas - Edital CAPES/INEP nº 26/2026

@@ -1,4 +1,4 @@
-# Radar de Oportunidades, edição de 26/11/2026
+# Radar de Oportunidades, edição de 27/11/2026
 
 Áreas desta edição: Administração pública, Economia, Direito, Sistemas de informação.
 
@@ -21,6 +21,8 @@
   https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-31-2026/chamada-publica-cnpq-N-31-2026
 - **Chamada Pública CNPq/CAPES Nº 30/2026 – Programa de Mestrado e Doutorado Acadêmico para Inovação – MAI/DAI** (CNPq, 11/12/2026)  
   https://www.gov.br/cnpq/pt-br/chamadas/todas-as-chamadas/chamadas-2026/chamada-no-30-2026/chamada-publica-cnpq-N-30-2026
+- **Chamada Pública para Envio de Proposta de Curso Novo - Edital nº 20/2026** (CAPES, 18/12/2026)  
+  https://www.gov.br/capes/pt-br/centrais-de-conteudo/editais/edital_2844920.pdf/@@display-file/file
 
 ## Fomento e editais (novidades)
 

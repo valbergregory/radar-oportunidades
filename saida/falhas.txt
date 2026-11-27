@@ -1,2 +1,2 @@
-CNPq (1ª falha seguida): ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))
-CAPES (1ª falha seguida): ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))
+CNPq (2ª falha seguida): ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))
+CAPES (2ª falha seguida): ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))
